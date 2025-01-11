@@ -30,7 +30,7 @@ export default function LoginPage() {
       });
 
       if (result?.ok) {
-        router.push("/welcome");
+        router.push("/dashboard");
       }
     } else {
       try {
