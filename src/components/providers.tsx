@@ -2,6 +2,7 @@
 
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
+import { Toaster } from "@/components/ui/toaster";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -11,10 +12,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         defaultTheme="system"
         enableSystem
         disableTransitionOnChange
-        suppressHydrationWarning
       >
         <div suppressHydrationWarning>
           {children}
+          <Toaster />
         </div>
       </ThemeProvider>
     </SessionProvider>
