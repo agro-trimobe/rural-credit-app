@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -31,6 +32,9 @@ import * as z from 'zod'
 import Link from 'next/link'
 import { ChevronRight, Home, Upload, X, User, Phone, Mail, FileText, Target, DollarSign, Building2, MapPin, FileUp } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
+import { useRouter } from 'next/navigation'
+import { apiClient } from '@/lib/api-client'
+import { toast } from '@/hooks/use-toast'
 
 const formSchema = z.object({
   clientName: z.string().min(1, 'Nome é obrigatório'),
@@ -47,6 +51,11 @@ const formSchema = z.object({
 })
 
 export default function NewProjectPage() {
+  const router = useRouter()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -61,36 +70,78 @@ export default function NewProjectPage() {
       propertyName: '',
       area: '',
       location: '',
-    },
+    }
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
-    // Implementar lógica de submissão
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (files) {
+      const newFiles = Array.from(files)
+      setSelectedFiles(prev => [...prev, ...newFiles])
+    }
+  }
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    try {
+      setIsSubmitting(true)
+
+      // 1. Criar o projeto
+      const project = await apiClient.projects.create(data)
+
+      // 2. Fazer upload dos documentos
+      if (selectedFiles.length > 0) {
+        const uploadPromises = selectedFiles.map(file => {
+          const formData = new FormData()
+          formData.append('file', file)
+          formData.append('projectId', project.id)
+          formData.append('category', 'documentos-pessoais')
+          return apiClient.documents.upload(formData)
+        })
+
+        await Promise.all(uploadPromises)
+      }
+
+      toast({
+        title: "Projeto criado com sucesso",
+        description: "O projeto e seus documentos foram salvos"
+      })
+
+      router.push('/dashboard')
+    } catch (error) {
+      console.error(error)
+      toast({
+        title: "Erro ao criar projeto",
+        description: "Tente novamente mais tarde",
+        variant: "destructive"
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
-    <div className="flex-1 space-y-6 p-8 pt-6">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Link href="/dashboard" className="hover:text-foreground flex items-center gap-1">
-          <Home className="h-4 w-4" />
-          <span>Dashboard</span>
-        </Link>
-        <ChevronRight className="h-4 w-4" />
-        <span className="text-foreground">Criar Novo Projeto</span>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Criar Novo Projeto</h1>
-          <p className="text-muted-foreground">
-            Preencha as informações abaixo para criar um novo projeto de crédito rural
-          </p>
+    <div className="container mx-auto py-10">
+      <div className="mb-8">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+          <Link href="/dashboard" className="hover:text-foreground transition-colors">
+            <Home className="h-4 w-4" />
+          </Link>
+          <ChevronRight className="h-4 w-4" />
+          <Link href="/projects" className="hover:text-foreground transition-colors">
+            Projetos
+          </Link>
+          <ChevronRight className="h-4 w-4" />
+          <span>Novo Projeto</span>
         </div>
+        <h1 className="text-3xl font-bold tracking-tight">Criar Novo Projeto</h1>
+        <p className="text-muted-foreground">
+          Preencha as informações abaixo para criar um novo projeto de crédito rural
+        </p>
       </div>
-
-      <Separator />
 
       <Card>
         <CardContent className="p-6">
@@ -101,7 +152,7 @@ export default function NewProjectPage() {
                 <div>
                   <h2 className="text-xl font-semibold">Informações do Cliente</h2>
                   <p className="text-sm text-muted-foreground">
-                    Dados do solicitante do crédito rural
+                    Dados do cliente solicitante do crédito
                   </p>
                 </div>
                 <div className="grid gap-6 md:grid-cols-2">
@@ -170,7 +221,7 @@ export default function NewProjectPage() {
                             <span className="absolute left-3 top-3 text-muted-foreground">
                               <Mail className="h-4 w-4" />
                             </span>
-                            <Input className="pl-9" {...field} type="email" />
+                            <Input className="pl-9" type="email" {...field} />
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -182,12 +233,12 @@ export default function NewProjectPage() {
 
               <Separator />
 
-              {/* Seção: Dados do Projeto */}
+              {/* Seção: Informações do Projeto */}
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-xl font-semibold">Dados do Projeto</h2>
+                  <h2 className="text-xl font-semibold">Informações do Projeto</h2>
                   <p className="text-sm text-muted-foreground">
-                    Informações sobre o projeto de financiamento
+                    Detalhes do projeto de financiamento
                   </p>
                 </div>
                 <div className="grid gap-6 md:grid-cols-2">
@@ -217,7 +268,8 @@ export default function NewProjectPage() {
                         <FormLabel>Finalidade do Financiamento</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          defaultValue={field.value || ""}
+                          value={field.value}
                         >
                           <FormControl>
                             <SelectTrigger className="pl-9">
@@ -264,7 +316,8 @@ export default function NewProjectPage() {
                         <FormLabel>Linha de Crédito</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          defaultValue={field.value || ""}
+                          value={field.value}
                         >
                           <FormControl>
                             <SelectTrigger className="pl-9">
@@ -322,11 +375,11 @@ export default function NewProjectPage() {
                     name="area"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Área Total (hectares)</FormLabel>
+                        <FormLabel>Área (hectares)</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <span className="absolute left-3 top-3 text-muted-foreground">
-                              <MapPin className="h-4 w-4" />
+                              <Target className="h-4 w-4" />
                             </span>
                             <Input className="pl-9" {...field} />
                           </div>
@@ -335,28 +388,28 @@ export default function NewProjectPage() {
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={form.control}
+                    name="location"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Localização</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <span className="absolute left-3 top-3 text-muted-foreground">
+                              <MapPin className="h-4 w-4" />
+                            </span>
+                            <Input className="pl-9" {...field} />
+                          </div>
+                        </FormControl>
+                        <FormDescription>
+                          Digite o endereço ou as coordenadas da propriedade
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-                <FormField
-                  control={form.control}
-                  name="location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Localização</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <span className="absolute left-3 top-3 text-muted-foreground">
-                            <MapPin className="h-4 w-4" />
-                          </span>
-                          <Input className="pl-9" {...field} />
-                        </div>
-                      </FormControl>
-                      <FormDescription>
-                        Digite o endereço ou as coordenadas da propriedade
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
 
               <Separator />
@@ -380,18 +433,62 @@ export default function NewProjectPage() {
                         Suportamos arquivos PDF, JPEG e PNG até 10MB
                       </p>
                     </div>
-                    <Button variant="outline" type="button">
-                      Selecionar Arquivos
-                    </Button>
+                    <div className="flex flex-col gap-4 w-full">
+                      <input
+                        type="file"
+                        id="file-upload"
+                        ref={fileInputRef}
+                        className="absolute w-0 h-0 opacity-0"
+                        onChange={handleFileChange}
+                        multiple
+                        accept=".pdf,.jpg,.jpeg,.png"
+                      />
+                      <Button 
+                        variant="outline" 
+                        className="w-full cursor-pointer" 
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Selecionar Arquivos
+                      </Button>
+                      {selectedFiles.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                          <p className="text-sm font-medium">Arquivos selecionados:</p>
+                          <div className="space-y-2">
+                            {selectedFiles.map((file, index) => (
+                              <div key={index} className="flex items-center justify-between bg-muted p-2 rounded-md">
+                                <span className="text-sm truncate">{file.name}</span>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  type="button"
+                                  onClick={() => removeFile(index)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="flex justify-end gap-4">
-                <Button variant="outline" type="button">
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => router.push('/dashboard')}
+                  disabled={isSubmitting}
+                >
                   Cancelar
                 </Button>
-                <Button type="submit">Salvar e Continuar</Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Salvando...' : 'Salvar Projeto'}
+                </Button>
               </div>
             </form>
           </Form>

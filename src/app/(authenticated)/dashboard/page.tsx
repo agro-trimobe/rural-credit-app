@@ -33,78 +33,81 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
-
-const projects = [
-  {
-    id: '1',
-    client: 'João Silva',
-    creditLine: 'Pronaf',
-    createdAt: '10/01/2025',
-    status: 'Em Andamento',
-  },
-  // ... outros projetos
-]
+import { useProjects } from '@/hooks/useProjects'
+import { Project } from '@/types/project'
 
 export default function DashboardPage() {
+  const { projects, isLoading, isError } = useProjects();
+
+  if (isLoading) return <div>Carregando...</div>;
+  if (isError) return <div>Erro ao carregar projetos</div>;
+
+  // Calcula o número de clientes únicos
+  const uniqueClients = new Set(projects?.map((project: Project) => project.clientName) || []).size;
+
   return (
     <div className="flex-1 space-y-6 p-8 pt-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <Link href="/projects/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Projeto
-          </Button>
-        </Link>
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+          <p className="text-muted-foreground">
+            Gerencie seus projetos de crédito rural
+          </p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Link href="/projects/new">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Projeto
+            </Button>
+          </Link>
+        </div>
       </div>
-
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">Total de Projetos</CardTitle>
-            <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Total Projetos
+            </CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">
-              +2 desde o último mês
-            </p>
+            <div className="text-2xl font-bold">{projects?.length || 0}</div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">Em Andamento</CardTitle>
-            <Timer className="h-4 w-4 text-yellow-500" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Clientes Ativos
+            </CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">5</div>
-            <p className="text-xs text-muted-foreground">
-              3 atualizados recentemente
-            </p>
+            <div className="text-2xl font-bold">{uniqueClients}</div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">Aprovados</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Em Andamento
+            </CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4</div>
-            <p className="text-xs text-muted-foreground">
-              +1 na última semana
-            </p>
+            <div className="text-2xl font-bold">
+              {projects?.filter((p: Project) => p.status === 'pending').length || 0}
+            </div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
-            <AlertOctagon className="h-4 w-4 text-red-500" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Concluídos</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
-            <p className="text-xs text-muted-foreground">
-              -2 desde o último mês
-            </p>
+            <div className="text-2xl font-bold">
+              {projects?.filter((p: Project) => p.status === 'completed').length || 0}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -113,7 +116,7 @@ export default function DashboardPage() {
         <CardHeader>
           <CardTitle>Projetos Recentes</CardTitle>
           <CardDescription>
-            Lista dos últimos projetos cadastrados no sistema
+            Lista dos últimos projetos cadastrados
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -122,57 +125,59 @@ export default function DashboardPage() {
               <TableRow>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Linha de Crédito</TableHead>
-                <TableHead>Data de Criação</TableHead>
+                <TableHead>Valor</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="w-[100px]">Ações</TableHead>
+                <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {projects.map((project) => (
+              {projects?.slice(0, 5).map((project: Project) => (
                 <TableRow key={project.id}>
-                  <TableCell className="font-medium">{project.client}</TableCell>
-                  <TableCell>{project.creditLine}</TableCell>
-                  <TableCell>{project.createdAt}</TableCell>
+                  <TableCell>{project.clientName || 'N/A'}</TableCell>
+                  <TableCell>{project.creditLine || 'N/A'}</TableCell>
                   <TableCell>
-                    <div className="flex items-center">
-                      <span
-                        className={cn(
-                          'flex items-center gap-2 rounded-full px-2 py-1 text-xs font-semibold',
-                          {
-                            'bg-yellow-100 text-yellow-800': project.status === 'Em Andamento',
-                            'bg-green-100 text-green-800': project.status === 'Aprovado',
-                            'bg-red-100 text-red-800': project.status === 'Pendente',
-                          }
-                        )}
-                      >
-                        {project.status === 'Em Andamento' && <Clock className="h-3 w-3" />}
-                        {project.status === 'Aprovado' && <CheckCircle className="h-3 w-3" />}
-                        {project.status === 'Pendente' && <AlertCircle className="h-3 w-3" />}
-                        {project.status}
-                      </span>
+                    {typeof project.amount === 'number' 
+                      ? new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL'
+                        }).format(project.amount)
+                      : 'R$ 0,00'
+                    }
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {project.status === 'pending' ? (
+                        <>
+                          <Timer className="h-4 w-4 text-yellow-500" />
+                          <span>Em Andamento</span>
+                        </>
+                      ) : project.status === 'completed' ? (
+                        <>
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          <span>Concluído</span>
+                        </>
+                      ) : (
+                        <>
+                          <AlertOctagon className="h-4 w-4 text-red-500" />
+                          <span>Cancelado</span>
+                        </>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Link href={`/projects/${project.id}`}>
-                        <Button size="icon" variant="ghost" className="h-8 w-8">
+                        <Button variant="ghost" size="icon">
                           <Eye className="h-4 w-4" />
-                          <span className="sr-only">Visualizar</span>
                         </Button>
                       </Link>
                       <Link href={`/projects/${project.id}/edit`}>
-                        <Button size="icon" variant="ghost" className="h-8 w-8">
+                        <Button variant="ghost" size="icon">
                           <Pencil className="h-4 w-4" />
-                          <span className="sr-only">Editar</span>
                         </Button>
                       </Link>
-                      <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                      >
+                      <Button variant="ghost" size="icon">
                         <Trash className="h-4 w-4" />
-                        <span className="sr-only">Excluir</span>
                       </Button>
                     </div>
                   </TableCell>
