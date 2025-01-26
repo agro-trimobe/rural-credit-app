@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { s3, dynamodb } from '@/lib/aws-config';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { PutCommand } from '@aws-sdk/lib-dynamodb';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from '@/app/api/auth/auth-options';
 import crypto from 'crypto';
 
 export async function POST(request: Request) {

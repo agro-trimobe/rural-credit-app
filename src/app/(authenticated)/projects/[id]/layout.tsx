@@ -1,10 +1,9 @@
-import { use } from 'react';
-import type { Usable } from 'react';
 import { Metadata } from 'next';
+import type { ReactNode } from 'react';
 
 interface LayoutProps {
-  children: React.ReactNode;
-  params: Usable<{ id: string }>;
+  children: ReactNode;
+  params: Promise<{ id: string }>;
 }
 
 export const metadata: Metadata = {
@@ -12,11 +11,11 @@ export const metadata: Metadata = {
   description: 'Visualize os detalhes do projeto',
 };
 
-export default function ProjectLayout({
+export default async function ProjectLayout({
   children,
   params,
 }: LayoutProps) {
-  const { id } = use(params);
+  const { id } = await params;
   
   return (
     <div className="container mx-auto px-4 py-8">

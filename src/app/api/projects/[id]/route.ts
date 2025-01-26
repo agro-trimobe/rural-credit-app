@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { dynamodb } from '@/lib/aws-config';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from '@/app/api/auth/auth-options';
 import { GetCommand } from '@aws-sdk/lib-dynamodb';
 
 async function getClientDetails(tenantId: string, clientId: string) {

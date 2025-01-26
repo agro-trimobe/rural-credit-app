@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { dynamodb } from '@/lib/aws-config';
 import { QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/app/api/auth/auth-options';
 import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {

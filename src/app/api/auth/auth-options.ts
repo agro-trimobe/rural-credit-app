@@ -1,4 +1,3 @@
-import NextAuth from 'next-auth';
 import Cognito from 'next-auth/providers/cognito';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { Session } from 'next-auth';
@@ -25,7 +24,7 @@ function calculateSecretHash(username: string) {
   return hmac.digest('base64');
 }
 
-const handler = NextAuth({
+export const authOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -129,6 +128,4 @@ const handler = NextAuth({
       return session;
     }
   }
-});
-
-export { handler as GET, handler as POST };
+};

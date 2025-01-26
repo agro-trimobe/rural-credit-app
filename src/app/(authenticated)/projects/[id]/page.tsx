@@ -16,11 +16,11 @@ import { ChevronRight, Download, FileText, Home, Pencil, Trash, User } from 'luc
 import { formatBytes, formatDate } from '@/lib/utils';
 
 interface PageProps {
-  params: Usable<{ id: string }>;
+  params: Promise<{ id: string }>;
 }
 
-export default function ProjectPage({ params }: PageProps) {
-  const { id } = use(params);
+export default async function ProjectPage({ params }: PageProps) {
+  const { id } = await params;
 
   return (
     <Suspense fallback={<div>Carregando...</div>}>

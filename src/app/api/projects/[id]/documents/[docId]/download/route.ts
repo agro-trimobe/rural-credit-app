@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { dynamodb } from '@/lib/aws-config';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/app/api/auth/auth-options';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { QueryCommand } from '@aws-sdk/client-dynamodb';
 import { s3 } from '@/lib/aws-config';
