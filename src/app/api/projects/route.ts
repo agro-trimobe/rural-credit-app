@@ -16,6 +16,8 @@ function parseBrazilianCurrency(value: string): number {
 
 async function getClientName(tenantId: string, clientId: string): Promise<string> {
   try {
+    console.log('Buscando cliente com:', { tenantId, clientId });
+    
     const command = new GetCommand({
       TableName: 'Clients',
       Key: {
@@ -24,7 +26,10 @@ async function getClientName(tenantId: string, clientId: string): Promise<string
       }
     });
 
+    console.log('Comando DynamoDB:', JSON.stringify(command.input, null, 2));
     const result = await dynamodb.send(command);
+    console.log('Resultado DynamoDB:', JSON.stringify(result.Item, null, 2));
+    
     return result.Item?.name || 'Cliente não encontrado';
   } catch (error) {
     console.error('Erro ao buscar cliente:', error);
@@ -58,13 +63,16 @@ export async function GET() {
       // Log de cada item para debug
       console.log('Item do DynamoDB:', item);
 
-      // Buscar o nome do cliente
-      const clientName = await getClientName(session.user.tenantId, item.clientId);
+      // Usar o clientName do projeto se existir, senão buscar do DynamoDB
+      let clientName = item.clientName;
+      if (!clientName && item.clientId) {
+        clientName = await getClientName(session.user.tenantId, item.clientId);
+      }
       
       return {
         id: item.id,
         clientId: item.clientId,
-        clientName: clientName,
+        clientName: clientName || 'Cliente não encontrado',
         document: item.document,
         phone: item.phone,
         email: item.email,

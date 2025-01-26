@@ -108,15 +108,6 @@ function ProjectDetails({ id }: ProjectDetailsProps) {
             <span className="font-medium">Telefone:</span>
             <span className="ml-2">{project.phone}</span>
           </div>
-          {project.document && (
-            <div>
-              <span className="font-medium">Documento:</span>
-              <span className="ml-2">{project.document.name}</span>
-              <span className="ml-2 text-sm text-muted-foreground">
-                ({formatBytes(project.document.size)})
-              </span>
-            </div>
-          )}
         </CardContent>
       </Card>
 

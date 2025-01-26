@@ -55,17 +55,27 @@ export async function GET(request: NextRequest) {
     // Log para debug
     console.log('Dados do DynamoDB:', JSON.stringify(result.Item, null, 2));
 
-    // Buscar detalhes do cliente
-    const clientDetails = await getClientDetails(session.user.tenantId, result.Item.clientId);
+    // Usar dados do cliente do projeto se disponíveis, senão buscar do DynamoDB
+    let clientDetails = null;
+    if (result.Item.clientName) {
+      clientDetails = {
+        name: result.Item.clientName,
+        cpf: result.Item.document,
+        email: result.Item.email,
+        phone: result.Item.phone
+      };
+    } else if (result.Item.clientId) {
+      clientDetails = await getClientDetails(session.user.tenantId, result.Item.clientId);
+    }
 
     // Formatar os dados antes de enviar
     const formattedProject = {
       id: result.Item.id,
       clientId: result.Item.clientId,
       clientName: clientDetails?.name || 'Cliente não encontrado',
-      document: clientDetails?.cpf || 'N/A',
-      email: clientDetails?.email || 'N/A',
-      phone: clientDetails?.phone || 'N/A',
+      document: clientDetails?.cpf || result.Item.document || 'N/A',
+      email: clientDetails?.email || result.Item.email || 'N/A',
+      phone: clientDetails?.phone || result.Item.phone || 'N/A',
       projectName: result.Item.projectName || result.Item.propertyName,
       purpose: result.Item.purpose,
       creditLine: result.Item.creditLine,
