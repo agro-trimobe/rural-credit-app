@@ -5,8 +5,9 @@ import { authOptions } from '@/app/api/auth/auth-options';
 import { QueryCommand, PutCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
 import crypto from 'crypto';
 
-function parseBrazilianCurrency(value: string): number {
+function parseBrazilianCurrency(value: string | number): number {
   if (!value) return 0;
+  if (typeof value === 'number') return value;
   // Remove o símbolo da moeda e espaços
   const cleanValue = value.replace('R$', '').trim();
   // Substitui vírgula por ponto e remove pontos de milhar
@@ -78,7 +79,7 @@ export async function GET() {
         email: item.email,
         projectName: item.projectName || item.propertyName,
         purpose: item.purpose,
-        amount: parseBrazilianCurrency(item.amount),
+        amount: typeof item.amount === 'number' ? item.amount : parseBrazilianCurrency(item.amount),
         creditLine: item.creditLine,
         propertyName: item.propertyName,
         area: typeof item.area === 'string' ? parseFloat(item.area) : item.area,

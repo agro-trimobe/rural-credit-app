@@ -14,6 +14,19 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { ChevronRight, Download, FileText, Home, Pencil, Trash, User } from 'lucide-react';
 import { formatBytes, formatDate } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
+import { apiClient } from '@/lib/api-client';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -21,6 +34,30 @@ interface PageProps {
 
 export default async function ProjectPage({ params }: PageProps) {
   const { id } = await params;
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+      await apiClient.projects.delete(id);
+      toast({
+        title: "Sucesso",
+        description: "Projeto excluído com sucesso",
+      });
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Erro ao excluir projeto:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o projeto",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <Suspense fallback={<div>Carregando...</div>}>
@@ -47,10 +84,32 @@ export default async function ProjectPage({ params }: PageProps) {
                 Editar
               </Button>
             </Link>
-            <Button variant="destructive" className="h-9">
-              <Trash className="mr-2 h-4 w-4" />
-              Excluir
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="h-9">
+                  <Trash className="mr-2 h-4 w-4" />
+                  Excluir
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Excluir Projeto</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Tem certeza que deseja excluir este projeto? Esta ação não pode ser desfeita.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {isDeleting ? "Excluindo..." : "Excluir"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
 
@@ -278,15 +337,49 @@ function DocumentsList({ id: projectId }: DocumentsListProps) {
                     >
                       <Download className={`h-4 w-4 ${downloadingId === doc.id ? 'animate-pulse' : ''}`} />
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => {
-                        // TODO: Implementar exclusão de documento
-                      }}
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Excluir Documento</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Tem certeza que deseja excluir este documento? Esta ação não pode ser desfeita.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={async () => {
+                              try {
+                                await apiClient.documents.delete(projectId, doc.id);
+                                mutate();
+                                toast({
+                                  title: "Sucesso",
+                                  description: "Documento excluído com sucesso",
+                                });
+                              } catch (error) {
+                                console.error('Erro ao excluir documento:', error);
+                                toast({
+                                  title: "Erro",
+                                  description: "Não foi possível excluir o documento",
+                                  variant: "destructive",
+                                });
+                              }
+                            }}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Excluir
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               ))}

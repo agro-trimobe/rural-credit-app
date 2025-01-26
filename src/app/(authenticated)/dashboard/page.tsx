@@ -35,15 +35,46 @@ import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { useProjects } from '@/hooks/useProjects'
 import { Project } from '@/types/project'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { toast } from '@/hooks/use-toast'
+import { apiClient } from '@/lib/api-client'
 
 export default function DashboardPage() {
-  const { projects, isLoading, isError } = useProjects();
+  const { projects, isLoading, isError, mutate } = useProjects();
 
   if (isLoading) return <div>Carregando...</div>;
   if (isError) return <div>Erro ao carregar projetos</div>;
 
   // Calcula o número de clientes únicos
   const uniqueClients = new Set(projects?.map((project: Project) => project.clientName) || []).size;
+
+  const handleDelete = async (id: string) => {
+    try {
+      await apiClient.projects.delete(id);
+      mutate(); // Atualiza a lista de projetos
+      toast({
+        title: 'Sucesso',
+        description: 'Projeto excluído com sucesso',
+      });
+    } catch (error) {
+      console.error('Erro ao excluir projeto:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível excluir o projeto',
+        variant: 'destructive',
+      });
+    }
+  };
 
   return (
     <div className="flex-1 space-y-6 p-8 pt-6">
@@ -176,9 +207,27 @@ export default function DashboardPage() {
                           <Pencil className="h-4 w-4" />
                         </Button>
                       </Link>
-                      <Button variant="ghost" size="icon">
-                        <Trash className="h-4 w-4" />
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja excluir este projeto? Esta ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(project.id)}>
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </TableCell>
                 </TableRow>
