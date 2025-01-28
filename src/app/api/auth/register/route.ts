@@ -60,8 +60,42 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("Erro no registro:", error);
+    
+    // Tratamento específico para usuário já existente
+    if (error.__type === 'UsernameExistsException') {
+      return NextResponse.json(
+        { error: "Este email já está cadastrado. Por favor, use outro email ou faça login." },
+        { status: 409 }
+      );
+    }
+
+    // Tratamento para outros erros do Cognito
+    if (error.__type) {
+      let errorMessage = "Erro ao criar usuário";
+      
+      switch (error.__type) {
+        case 'InvalidPasswordException':
+          errorMessage = "A senha não atende aos requisitos mínimos de segurança";
+          break;
+        case 'InvalidParameterException':
+          errorMessage = "Dados inválidos fornecidos";
+          break;
+        case 'CodeDeliveryFailureException':
+          errorMessage = "Erro ao enviar código de verificação";
+          break;
+        default:
+          errorMessage = "Erro ao criar usuário. Por favor, tente novamente.";
+      }
+      
+      return NextResponse.json(
+        { error: errorMessage },
+        { status: 400 }
+      );
+    }
+
+    // Erro genérico
     return NextResponse.json(
-      { error: error.message || "Erro ao criar usuário" },
+      { error: "Erro interno do servidor. Por favor, tente novamente mais tarde." },
       { status: 500 }
     );
   }
