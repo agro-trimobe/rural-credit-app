@@ -15,10 +15,7 @@ export interface Project {
   updatedAt: string;
   propertyName: string;
   area: number;
-  location: {
-    latitude: number;
-    longitude: number;
-  } | string;
+  location: string;
 }
 
 export function useProject(id: string) {

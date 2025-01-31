@@ -40,17 +40,29 @@ export function DocumentsList({ id: projectId }: DocumentsListProps) {
       setDownloadingId(docId);
       const response = await fetch(`/api/projects/${projectId}/documents/${docId}/download`);
       if (!response.ok) {
-        throw new Error('Erro ao gerar link de download');
+        throw new Error('Erro ao baixar documento');
       }
-      const { url } = await response.json();
+
+      // Obter o nome do arquivo do header Content-Disposition
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const fileName = contentDisposition
+        ? decodeURIComponent(contentDisposition.split('filename="')[1].split('"')[0])
+        : 'documento.pdf';
+
+      // Criar um blob a partir da resposta
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
       
       // Criar um link temporário e clicar nele para iniciar o download
       const link = document.createElement('a');
       link.href = url;
-      link.target = '_blank';
+      link.download = fileName; // Usar o nome do arquivo do header
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      
+      // Limpar a URL do objeto
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Erro ao baixar documento:', error);
       toast({
@@ -69,6 +81,7 @@ export function DocumentsList({ id: projectId }: DocumentsListProps) {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('projectId', projectId);
+      formData.append('category', 'documentos-pessoais'); // Categoria padrão
 
       await apiClient.documents.upload(formData);
       
@@ -82,8 +95,8 @@ export function DocumentsList({ id: projectId }: DocumentsListProps) {
     } catch (error) {
       console.error('Erro ao enviar documento:', error);
       toast({
-        title: "Erro",
-        description: "Erro ao enviar documento",
+        title: "Erro ao enviar documento",
+        description: "Verifique se o arquivo é válido e tente novamente",
         variant: "destructive",
       });
     } finally {

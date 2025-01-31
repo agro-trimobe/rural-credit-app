@@ -72,10 +72,12 @@ export function ProjectDetails({ id }: ProjectDetailsProps) {
           <div>
             <span className="font-medium">Valor:</span>
             <span className="ml-2">
-              {new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-              }).format(project.amount)}
+              {project.amount
+                ? new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                  }).format(project.amount)
+                : 'R$ 0,00'}
             </span>
           </div>
           <div>
@@ -111,14 +113,10 @@ export function ProjectDetails({ id }: ProjectDetailsProps) {
               {project.area.toLocaleString('pt-BR')} hectares
             </span>
           </div>
-          <div>
+          <div className="flex gap-2">
             <span className="font-medium">Localização:</span>
-            <span className="ml-2">
-              {project.location && typeof project.location === 'object' && 'latitude' in project.location
-                ? `Latitude: ${project.location.latitude}, Longitude: ${project.location.longitude}`
-                : typeof project.location === 'string'
-                ? project.location
-                : 'N/A'}
+            <span>
+              {project.location || 'N/A'}
             </span>
           </div>
         </CardContent>

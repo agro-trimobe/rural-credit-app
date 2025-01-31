@@ -1,47 +1,87 @@
-import { NextResponse } from 'next/server';
-import { dynamodb } from '@/lib/aws-config';
-import { QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { NextRequest, NextResponse } from 'next/server';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient, QueryCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/auth-options';
-import { NextRequest } from 'next/server';
+import { authOptions } from '@/lib/auth';
+
+const client = new DynamoDBClient({});
+const docClient = DynamoDBDocumentClient.from(client);
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.tenantId) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    console.log('Session:', JSON.stringify(session, null, 2));
+    
+    if (!session) {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
+
+    if (!session.user?.tenantId) {
+      return new NextResponse('Tenant ID is required', { status: 400 });
     }
 
     // Extrair o ID do projeto da URL
-    const projectId = request.nextUrl.pathname.split('/').slice(-2)[0];
+    const id = request.nextUrl.pathname.split('/')[3];
+    if (!id) {
+      return new NextResponse('Project ID is required', { status: 400 });
+    }
 
-    const command = new QueryCommand({
-      TableName: 'Documents',
-      KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
-      ExpressionAttributeValues: {
-        ':pk': `TENANT#${session.user.tenantId}`,
-        ':sk': `PROJECT#${projectId}#DOC#`
-      }
+    console.log('Buscando projeto:', {
+      tenantId: session.user.tenantId,
+      projectId: id
     });
 
-    const result = await dynamodb.send(command);
+    // Primeiro, vamos buscar o projeto para garantir que ele existe
+    const projectResult = await docClient.send(
+      new GetCommand({
+        TableName: 'Projects',
+        Key: {
+          PK: `TENANT#${session.user.tenantId}`,
+          SK: `PROJECT#${id}`
+        }
+      })
+    );
 
-    const documents = result.Items?.map(item => ({
+    console.log('Resultado do projeto:', JSON.stringify(projectResult, null, 2));
+
+    if (!projectResult.Item) {
+      return new NextResponse('Project not found', { status: 404 });
+    }
+
+    console.log('Buscando documentos para o projeto:', {
+      tenantId: session.user.tenantId,
+      projectId: id
+    });
+
+    // Buscar os documentos do projeto
+    const documentsResult = await docClient.send(
+      new QueryCommand({
+        TableName: 'Documents',
+        KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
+        ExpressionAttributeValues: {
+          ':pk': `TENANT#${session.user.tenantId}`,
+          ':sk': `PROJECT#${id}#DOC#`
+        }
+      })
+    );
+
+    console.log('Resultado dos documentos:', JSON.stringify(documentsResult, null, 2));
+
+    const documents = documentsResult.Items?.map(item => ({
       id: item.id,
       name: item.name,
+      fileName: item.fileName || item.name,
+      url: item.url,
       size: item.size,
       type: item.type,
-      url: item.url,
       category: item.category || 'general',
       createdAt: item.createdAt,
+      updatedAt: item.updatedAt
     })) || [];
 
     return NextResponse.json(documents);
   } catch (error) {
     console.error('Error fetching documents:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch documents' },
-      { status: 500 }
-    );
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 }

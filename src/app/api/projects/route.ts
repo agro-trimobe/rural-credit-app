@@ -8,11 +8,16 @@ import crypto from 'crypto';
 function parseBrazilianCurrency(value: string | number): number {
   if (!value) return 0;
   if (typeof value === 'number') return value;
-  // Remove o símbolo da moeda e espaços
-  const cleanValue = value.replace('R$', '').trim();
-  // Substitui vírgula por ponto e remove pontos de milhar
-  const numberStr = cleanValue.replace(/\./g, '').replace(',', '.');
-  return parseFloat(numberStr);
+  
+  // Remove o símbolo da moeda, espaços e pontos de milhar
+  const cleanValue = value
+    .replace('R$', '')
+    .replace(/\s/g, '')
+    .replace(/\./g, '')
+    .replace(',', '.');
+  
+  const parsedValue = parseFloat(cleanValue);
+  return isNaN(parsedValue) ? 0 : parsedValue;
 }
 
 async function getClientName(tenantId: string, clientId: string): Promise<string> {
@@ -71,7 +76,7 @@ export async function GET() {
       }
       
       return {
-        id: item.id,
+        id: item.SK.replace('PROJECT#', ''),
         clientId: item.clientId,
         clientName: clientName || 'Cliente não encontrado',
         document: item.document,
@@ -83,7 +88,7 @@ export async function GET() {
         creditLine: item.creditLine,
         propertyName: item.propertyName,
         area: typeof item.area === 'string' ? parseFloat(item.area) : item.area,
-        location: item.propertyLocation || item.location,
+        location: item.location || 'N/A',
         status: item.status || 'pending',
         createdAt: item.createdAt,
         updatedAt: item.updatedAt
@@ -131,10 +136,7 @@ export async function POST(request: Request) {
         creditLine: data.creditLine,
         propertyName: data.propertyName,
         area: parseFloat(data.area),
-        propertyLocation: {
-          latitude: 0,
-          longitude: 0
-        },
+        location: data.location,
         status: 'pending',
         createdAt: timestamp,
         updatedAt: timestamp,

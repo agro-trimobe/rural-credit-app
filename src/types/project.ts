@@ -8,11 +8,6 @@ export interface Document {
   updatedAt?: string;
 }
 
-interface PropertyLocation {
-  latitude: number;
-  longitude: number;
-}
-
 export interface Project {
   id: string;
   clientName: string;
@@ -25,7 +20,7 @@ export interface Project {
   creditLine: string;
   propertyName: string;
   area: number;
-  location: string | PropertyLocation;
+  location: string;
   status: string;
   createdAt: string;
   updatedAt: string;

@@ -1,22 +1,10 @@
-import NextAuth from 'next-auth';
+import { NextAuthOptions } from 'next-auth';
 import Cognito from 'next-auth/providers/cognito';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { Session } from 'next-auth';
-import { JWT } from 'next-auth/jwt';
 import { CognitoIdentityProviderClient, InitiateAuthCommand } from '@aws-sdk/client-cognito-identity-provider';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { getUserByEmail } from '@/lib/tenant-utils';
-
-interface CustomSession extends Session {
-  user: {
-    id: string;
-    email: string;
-    name: string;
-    tenantId: string;
-    cognitoId: string;
-  }
-}
 
 function calculateSecretHash(username: string) {
   const message = username + process.env.COGNITO_CLIENT_ID;
@@ -25,7 +13,7 @@ function calculateSecretHash(username: string) {
   return hmac.digest('base64');
 }
 
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -114,21 +102,21 @@ const handler = NextAuth({
     signIn: "/auth/login",
   },
   callbacks: {
-    async jwt({ token, user }: { token: JWT; user: any }) {
+    async jwt({ token, user }) {
       if (user) {
         token.tenantId = user.tenantId;
         token.cognitoId = user.cognitoId;
       }
       return token;
     },
-    async session({ session, token, user }) {
+    async session({ session, token }) {
       if (session.user) {
         session.user.tenantId = token.tenantId as string;
         session.user.cognitoId = token.cognitoId as string;
+        session.user.email = session.user.email || '';
+        session.user.name = session.user.name || '';
       }
       return session;
     }
   }
-});
-
-export { handler as GET, handler as POST };
+};

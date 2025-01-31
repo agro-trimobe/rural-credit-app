@@ -4,6 +4,21 @@ import { dynamodb } from '@/lib/aws-config';
 import { authOptions } from '@/app/api/auth/auth-options';
 import { GetCommand, UpdateCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 
+function parseBrazilianCurrency(value: string | number): number {
+  if (!value) return 0;
+  if (typeof value === 'number') return value;
+  
+  // Remove o símbolo da moeda, espaços e pontos de milhar
+  const cleanValue = value
+    .replace('R$', '')
+    .replace(/\s/g, '')
+    .replace(/\./g, '')
+    .replace(',', '.');
+  
+  const parsedValue = parseFloat(cleanValue);
+  return isNaN(parsedValue) ? 0 : parsedValue;
+}
+
 async function getClientDetails(tenantId: string, clientId: string) {
   try {
     const command = new GetCommand({
@@ -75,21 +90,17 @@ export async function GET(request: NextRequest) {
       clientName: clientDetails?.name || 'Cliente não encontrado',
       document: clientDetails?.cpf || result.Item.document || 'N/A',
       email: clientDetails?.email || result.Item.email || 'N/A',
-      phone: clientDetails?.phone || result.Item.phone || 'N/A',
+      phone: clientDetails?.phone || result.Item.phone || '',
       projectName: result.Item.projectName || result.Item.propertyName,
-      purpose: result.Item.purpose,
+      purpose: result.Item.purpose || '',
       creditLine: result.Item.creditLine,
-      amount: typeof result.Item.amount === 'string' 
-        ? parseFloat(result.Item.amount.replace(/\./g, '').replace(',', '.'))
-        : result.Item.amount || 0,
+      amount: parseBrazilianCurrency(result.Item.amount),
       status: result.Item.status === 'pending' ? 'Em Andamento' :
               result.Item.status === 'completed' ? 'Concluído' :
               'Cancelado',
       propertyName: result.Item.propertyName,
-      area: typeof result.Item.area === 'string'
-        ? parseFloat(result.Item.area)
-        : result.Item.area || 0,
-      location: result.Item.propertyLocation || result.Item.location || 'N/A',
+      area: result.Item.area,
+      location: result.Item.location || 'N/A',
       createdAt: result.Item.createdAt,
       updatedAt: result.Item.updatedAt
     };
