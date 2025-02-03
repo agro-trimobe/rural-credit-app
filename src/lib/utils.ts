@@ -15,12 +15,19 @@ export function formatBytes(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-export function formatDate(date: string): string {
-  return new Date(date).toLocaleDateString('pt-BR', {
+export function formatDate(date: string | Date): string {
+  return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: '2-digit',
-    year: 'numeric',
-  });
+    year: 'numeric'
+  }).format(typeof date === 'string' ? new Date(date) : date);
+}
+
+export function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(value);
 }
 
 export const fetcher = (url: string) => fetch(url).then((res) => res.json());

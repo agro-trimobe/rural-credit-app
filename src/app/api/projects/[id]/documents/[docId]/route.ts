@@ -1,80 +1,100 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, GetCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
+import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
-
-const dynamoClient = new DynamoDBClient({});
-const docClient = DynamoDBDocumentClient.from(dynamoClient);
-const s3Client = new S3Client({});
+import { DeleteCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
+import { DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { s3Client } from '@/lib/s3';
+import { ddbDocClient } from '@/lib/dynamodb';
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; docId: string }> }
-): Promise<NextResponse> {
+) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.tenantId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
     }
 
+    const tenantId = session.user.tenantId;
     const resolvedParams = await params;
-    const { id, docId } = resolvedParams;
+    const projectId = resolvedParams.id;
+    const docId = resolvedParams.docId;
 
-    if (!id || !docId) {
-      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+    if (!projectId || !docId) {
+      return NextResponse.json(
+        { error: 'Missing required parameters' },
+        { status: 400 }
+      );
     }
 
-    // Primeiro, buscar o documento para obter a chave do S3
-    const getResult = await docClient.send(
-      new GetCommand({
-        TableName: 'Documents',
-        Key: {
-          PK: `TENANT#${session.user.tenantId}`,
-          SK: `PROJECT#${id}#DOC#${docId}`
-        }
-      })
-    );
+    console.log('Buscando documento para excluir:', {
+      tenantId,
+      projectId,
+      docId
+    });
 
-    if (!getResult.Item) {
-      return NextResponse.json({ error: 'Document not found' }, { status: 404 });
+    // Buscar o documento para obter a chave do S3
+    const getDocumentCommand = new GetCommand({
+      TableName: 'Documents',
+      Key: {
+        PK: `TENANT#${tenantId}`,
+        SK: `PROJECT#${projectId}#DOC#${docId}`
+      }
+    });
+
+    const documentResult = await ddbDocClient.send(getDocumentCommand);
+    const document = documentResult.Item;
+
+    if (!document) {
+      return NextResponse.json(
+        { error: 'Document not found' },
+        { status: 404 }
+      );
     }
+
+    console.log('Documento encontrado:', {
+      name: document.name,
+      fileName: document.fileName,
+      s3Key: document.s3Key
+    });
 
     // Deletar o arquivo do S3
-    if (getResult.Item.s3Key) {
-      try {
-        console.log('Deletando arquivo do S3:', {
-          bucket: process.env.S3_BUCKET_NAME,
-          key: getResult.Item.s3Key
-        });
+    if (document.s3Key) {
+      console.log('Deletando arquivo do S3:', {
+        bucket: process.env.S3_BUCKET_NAME,
+        key: document.s3Key
+      });
 
-        await s3Client.send(
-          new DeleteObjectCommand({
-            Bucket: process.env.S3_BUCKET_NAME!,
-            Key: getResult.Item.s3Key
-          })
-        );
-      } catch (error) {
-        console.error('Error deleting file from S3:', error);
-        // Continuar mesmo se falhar a deleção do S3
-      }
+      const deleteS3Command = new DeleteObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME || '',
+        Key: document.s3Key
+      });
+
+      await s3Client.send(deleteS3Command);
     }
 
     // Deletar o registro do DynamoDB
-    await docClient.send(
-      new DeleteCommand({
-        TableName: 'Documents',
-        Key: {
-          PK: `TENANT#${session.user.tenantId}`,
-          SK: `PROJECT#${id}#DOC#${docId}`
-        }
-      })
-    );
+    const deleteDocCommand = new DeleteCommand({
+      TableName: 'Documents',
+      Key: {
+        PK: `TENANT#${tenantId}`,
+        SK: `PROJECT#${projectId}#DOC#${docId}`
+      }
+    });
 
-    return NextResponse.json(null, { status: 204 });
+    await ddbDocClient.send(deleteDocCommand);
+
+    // Return 204 No Content without a response body
+    return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error('Error deleting document:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }

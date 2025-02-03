@@ -8,22 +8,26 @@ export interface Document {
   updatedAt?: string;
 }
 
-export interface Project {
+export type ProjectStatus = 
+  | 'em_andamento'
+  | 'concluido'
+  | 'cancelado'
+  | 'aguardando_documentos'
+  | 'em_analise';
+
+export type Project = {
   id: string;
   clientName: string;
-  document?: Document;
-  phone: string;
   email: string;
+  phone: string;
   projectName: string;
   purpose?: string;
-  amount: number;
   creditLine: string;
-  propertyName: string;
-  area: number;
-  location: string;
+  amount: number;
   status: string;
   createdAt: string;
   updatedAt: string;
-  PK?: string;
-  SK?: string;
+  propertyName: string;
+  area: number;
+  location: string;
 }

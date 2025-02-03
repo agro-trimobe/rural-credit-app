@@ -36,6 +36,14 @@ import { useRouter, useParams } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import { toast } from '@/hooks/use-toast'
 
+const PROJECT_STATUS = {
+  'em_andamento': 'Em Andamento',
+  'concluido': 'Concluído',
+  'cancelado': 'Cancelado',
+  'aguardando_documentos': 'Aguardando Documentos',
+  'em_analise': 'Em Análise'
+} as const;
+
 const formSchema = z.object({
   clientName: z.string().min(1, 'Nome é obrigatório'),
   document: z.string().min(1, 'CPF/CNPJ é obrigatório'),
@@ -48,6 +56,7 @@ const formSchema = z.object({
   propertyName: z.string().min(1, 'Nome da propriedade é obrigatório'),
   area: z.string().min(1, 'Área é obrigatória'),
   location: z.string().min(1, 'Localização é obrigatória'),
+  status: z.string().min(1, 'Status é obrigatório'),
 })
 
 export default function EditProjectPage() {
@@ -69,6 +78,7 @@ export default function EditProjectPage() {
       propertyName: '',
       area: '',
       location: '',
+      status: '',
     },
   })
 
@@ -90,6 +100,7 @@ export default function EditProjectPage() {
           propertyName: project.propertyName,
           area: project.area.toString(),
           location: project.location,
+          status: project.status,
         })
       } catch (error) {
         console.error('Erro ao carregar projeto:', error)
@@ -315,6 +326,30 @@ export default function EditProjectPage() {
                           <SelectItem value="inovagro">INOVAGRO</SelectItem>
                           <SelectItem value="moderagro">MODERAGRO</SelectItem>
                           <SelectItem value="abc">ABC</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status do Projeto</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.entries(PROJECT_STATUS).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />

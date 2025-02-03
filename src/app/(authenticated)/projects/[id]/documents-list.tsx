@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useDocuments } from '@/hooks/useDocuments';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { FileText, Download, Trash } from 'lucide-react';
+import { FileText, Download, Trash, Upload } from 'lucide-react';
 import { formatBytes, formatDate } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/lib/api-client';
@@ -30,9 +30,10 @@ interface DocumentsListProps {
 }
 
 export function DocumentsList({ id: projectId }: DocumentsListProps) {
-  const { data, isLoading, error, mutate } = useDocuments(projectId);
+  const { data: documents, isLoading, error, mutate } = useDocuments(projectId);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const handleDownload = async (docId: string) => {
@@ -43,25 +44,21 @@ export function DocumentsList({ id: projectId }: DocumentsListProps) {
         throw new Error('Erro ao baixar documento');
       }
 
-      // Obter o nome do arquivo do header Content-Disposition
       const contentDisposition = response.headers.get('Content-Disposition');
       const fileName = contentDisposition
         ? decodeURIComponent(contentDisposition.split('filename="')[1].split('"')[0])
         : 'documento.pdf';
 
-      // Criar um blob a partir da resposta
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       
-      // Criar um link temporário e clicar nele para iniciar o download
       const link = document.createElement('a');
       link.href = url;
-      link.download = fileName; // Usar o nome do arquivo do header
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       
-      // Limpar a URL do objeto
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Erro ao baixar documento:', error);
@@ -75,17 +72,17 @@ export function DocumentsList({ id: projectId }: DocumentsListProps) {
     }
   };
 
-  const handleUpload = async (file: File) => {
+  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
     try {
       setIsUploading(true);
       const formData = new FormData();
       formData.append('file', file);
       formData.append('projectId', projectId);
-      formData.append('category', 'documentos-pessoais'); // Categoria padrão
 
       await apiClient.documents.upload(formData);
-      
-      // Força uma nova requisição para buscar a lista atualizada
       await mutate();
       
       toast({
@@ -95,79 +92,106 @@ export function DocumentsList({ id: projectId }: DocumentsListProps) {
     } catch (error) {
       console.error('Erro ao enviar documento:', error);
       toast({
+        variant: "destructive",
         title: "Erro ao enviar documento",
         description: "Verifique se o arquivo é válido e tente novamente",
-        variant: "destructive",
       });
     } finally {
       setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
-  if (isLoading) return <div>Carregando documentos...</div>;
-  if (error) return <div>Erro ao carregar documentos</div>;
+  const handleDelete = async (docId: string) => {
+    try {
+      await apiClient.documents.delete(projectId, docId);
+      await mutate();
+      
+      toast({
+        title: "Sucesso",
+        description: "Documento excluído com sucesso",
+      });
+    } catch (error) {
+      console.error('Erro ao excluir documento:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao excluir documento",
+        description: "Tente novamente mais tarde",
+      });
+    }
+  };
 
-  const documents = data || [];
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-muted-foreground">Carregando documentos...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-destructive">Erro ao carregar documentos</div>
+      </div>
+    );
+  }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-medium">
-            <FileText className="mr-2 inline-block h-5 w-5" />
-            Documentos do Projeto
-          </CardTitle>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <CardTitle>Documentos do Projeto</CardTitle>
+        <div className="flex items-center gap-2">
           <input
             type="file"
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              await handleUpload(file);
-              // Limpa o input para permitir selecionar o mesmo arquivo novamente
-              e.target.value = '';
-            }}
+            ref={fileInputRef}
+            onChange={handleUpload}
             className="hidden"
-            id="file-upload"
-            disabled={isUploading}
+            accept=".pdf,.doc,.docx,.xls,.xlsx"
           />
-          <label htmlFor="file-upload">
-            <Button variant="outline" className="h-9" asChild disabled={isUploading}>
-              <span>{isUploading ? "Enviando..." : "Upload"}</span>
-            </Button>
-          </label>
+          <Button
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            {isUploading ? 'Enviando...' : 'Enviar Documento'}
+          </Button>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {documents.length > 0 ? (
-            <div className="divide-y divide-gray-200">
-              {documents.map((doc) => (
-                <div key={doc.id} className="flex items-center justify-between py-3">
-                  <div className="flex items-center space-x-4">
-                    <FileText className="h-6 w-6 text-blue-500" />
+      </div>
+
+      {documents && documents.length > 0 ? (
+        <div className="grid gap-4">
+          {documents.map((doc) => (
+            <Card key={doc.id}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-5 w-5 text-muted-foreground" />
                     <div>
-                      <p className="font-medium">{doc.name || 'Sem nome'}</p>
+                      <p className="font-medium">{doc.name}</p>
                       <p className="text-sm text-muted-foreground">
                         {formatBytes(doc.size)} • {formatDate(doc.createdAt)}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => handleDownload(doc.id)}
                       disabled={downloadingId === doc.id}
                     >
-                      <Download className={`h-4 w-4 ${downloadingId === doc.id ? 'animate-pulse' : ''}`} />
+                      <Download className="h-4 w-4 mr-2" />
+                      {downloadingId === doc.id ? 'Baixando...' : 'Baixar'}
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                        >
-                          <Trash className="h-4 w-4" />
+                        <Button variant="outline" size="sm">
+                          <Trash className="h-4 w-4 mr-2" />
+                          Excluir
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
@@ -180,23 +204,7 @@ export function DocumentsList({ id: projectId }: DocumentsListProps) {
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancelar</AlertDialogCancel>
                           <AlertDialogAction
-                            onClick={async () => {
-                              try {
-                                await apiClient.documents.delete(projectId, doc.id);
-                                await mutate();
-                                toast({
-                                  title: "Sucesso",
-                                  description: "Documento excluído com sucesso",
-                                });
-                              } catch (error) {
-                                console.error('Erro ao excluir documento:', error);
-                                toast({
-                                  title: "Erro",
-                                  description: "Não foi possível excluir o documento",
-                                  variant: "destructive",
-                                });
-                              }
-                            }}
+                            onClick={() => handleDelete(doc.id)}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           >
                             Excluir
@@ -206,15 +214,19 @@ export function DocumentsList({ id: projectId }: DocumentsListProps) {
                     </AlertDialog>
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-6 text-muted-foreground">
-              Nenhum documento encontrado
-            </div>
-          )}
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      </CardContent>
-    </Card>
+      ) : (
+        <div className="flex flex-col items-center justify-center p-8 text-center">
+          <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+          <p className="text-lg font-medium">Nenhum documento encontrado</p>
+          <p className="text-sm text-muted-foreground">
+            Clique no botão "Enviar Documento" para adicionar documentos ao projeto.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }

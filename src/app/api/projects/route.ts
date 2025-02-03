@@ -89,7 +89,7 @@ export async function GET() {
         propertyName: item.propertyName,
         area: typeof item.area === 'string' ? parseFloat(item.area) : item.area,
         location: item.location || 'N/A',
-        status: item.status || 'pending',
+        status: item.status,
         createdAt: item.createdAt,
         updatedAt: item.updatedAt
       };

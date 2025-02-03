@@ -95,9 +95,7 @@ export async function GET(request: NextRequest) {
       purpose: result.Item.purpose || '',
       creditLine: result.Item.creditLine,
       amount: parseBrazilianCurrency(result.Item.amount),
-      status: result.Item.status === 'pending' ? 'Em Andamento' :
-              result.Item.status === 'completed' ? 'Concluído' :
-              'Cancelado',
+      status: result.Item.status,
       propertyName: result.Item.propertyName,
       area: result.Item.area,
       location: result.Item.location || 'N/A',
