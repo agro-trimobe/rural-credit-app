@@ -81,7 +81,21 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(documents);
   } catch (error) {
-    console.error('Error fetching documents:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    console.error('Erro detalhado ao buscar documentos:', {
+      error: error instanceof Error ? {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      } : error,
+      timestamp: new Date().toISOString()
+    });
+    
+    return NextResponse.json({ 
+      error: error instanceof Error ? error.message : 'Erro desconhecido',
+      errorType: error instanceof Error ? error.name : 'UnknownError',
+      timestamp: new Date().toISOString()
+    }, { 
+      status: 500 
+    });
   }
 }
