@@ -3,8 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { DeleteCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
 import { DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { s3Client } from '@/lib/s3';
-import { ddbDocClient } from '@/lib/dynamodb';
+import { s3, dynamodb } from '@/lib/aws-config';
 
 export async function DELETE(
   request: NextRequest,
@@ -46,7 +45,7 @@ export async function DELETE(
       }
     });
 
-    const documentResult = await ddbDocClient.send(getDocumentCommand);
+    const documentResult = await dynamodb.send(getDocumentCommand);
     const document = documentResult.Item;
 
     if (!document) {
@@ -74,7 +73,7 @@ export async function DELETE(
         Key: document.s3Key
       });
 
-      await s3Client.send(deleteS3Command);
+      await s3.send(deleteS3Command);
     }
 
     // Deletar o registro do DynamoDB
@@ -86,7 +85,7 @@ export async function DELETE(
       }
     });
 
-    await ddbDocClient.send(deleteDocCommand);
+    await dynamodb.send(deleteDocCommand);
 
     // Return 204 No Content without a response body
     return new NextResponse(null, { status: 204 });
