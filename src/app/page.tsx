@@ -8,7 +8,7 @@ export default function Home() {
       <div className="text-center space-y-6">
         <h1 className="text-4xl font-bold text-gray-900">Rural Credit App</h1>
         <p className="text-lg text-gray-600">
-          Bem-vindo ao sistema de crédito rural
+          Bem-vindo ao sistema de crédito rural.
         </p>
         <div className="space-x-4">
           <Link href="/auth/login">
