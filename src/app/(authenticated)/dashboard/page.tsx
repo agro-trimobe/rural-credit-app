@@ -15,23 +15,18 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
+} from "@/components/ui/table"
 import { 
   FileText, 
   Plus,
-  Timer,
-  CheckCircle2,
-  AlertOctagon,
-  FileUp,
-  Search,
-  Eye, 
-  Pencil, 
-  Trash,
+  Eye,
+  Pencil,
+  Trash
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { useProjects } from '@/hooks/useProjects'
-import { Project, ProjectStatus } from '@/types/project'
+import { Project, ProjectStatus as ProjectStatusType } from '@/types/project'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,45 +40,25 @@ import {
 } from "@/components/ui/alert-dialog"
 import { toast } from '@/hooks/use-toast'
 import { apiClient } from '@/lib/api-client'
-import { ProjectStatus as ProjectStatusComponent } from '@/components/project-status'
+import { ProjectStatus } from '@/components/project-status'
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Legend, Tooltip } from 'recharts'
 
-const STATUS_CARDS = [
-  { 
-    status: 'em_andamento' as ProjectStatus, 
-    label: 'Em Andamento',
-    icon: Timer,
-    iconClass: 'text-yellow-500 bg-yellow-50',
-    bgClass: 'bg-yellow-50/50'
-  },
-  { 
-    status: 'concluido' as ProjectStatus, 
-    label: 'Concluídos',
-    icon: CheckCircle2,
-    iconClass: 'text-green-500 bg-green-50',
-    bgClass: 'bg-green-50/50'
-  },
-  { 
-    status: 'cancelado' as ProjectStatus, 
-    label: 'Cancelados',
-    icon: AlertOctagon,
-    iconClass: 'text-red-500 bg-red-50',
-    bgClass: 'bg-red-50/50'
-  },
-  { 
-    status: 'aguardando_documentos' as ProjectStatus, 
-    label: 'Aguardando Documentos',
-    icon: FileUp,
-    iconClass: 'text-blue-500 bg-blue-50',
-    bgClass: 'bg-blue-50/50'
-  },
-  { 
-    status: 'em_analise' as ProjectStatus, 
-    label: 'Em Análise',
-    icon: Search,
-    iconClass: 'text-purple-500 bg-purple-50',
-    bgClass: 'bg-purple-50/50'
-  }
-];
+const STATUS_CONFIG = {
+  'em_andamento': { label: 'Em Andamento', color: 'hsl(var(--chart-1))' },
+  'concluido': { label: 'Concluído', color: 'hsl(var(--chart-2))' },
+  'cancelado': { label: 'Cancelado', color: 'hsl(var(--chart-3))' },
+  'aguardando_documentos': { label: 'Aguardando Documentos', color: 'hsl(var(--chart-4))' },
+  'em_analise': { label: 'Em Análise', color: 'hsl(var(--chart-5))' }
+};
+
+const CREDIT_LINE_COLORS: Record<string, string> = {
+  'pronaf': 'hsl(var(--chart-1))',
+  'pronamp': 'hsl(var(--chart-2))',
+  'inovagro': 'hsl(var(--chart-3))',
+  'moderagro': 'hsl(var(--chart-4))',
+  'abc': 'hsl(var(--chart-5))',
+  'outros': 'hsl(var(--muted-foreground))'
+};
 
 export default function DashboardPage() {
   const { projects, isLoading, isError, mutate } = useProjects();
@@ -109,76 +84,149 @@ export default function DashboardPage() {
     }
   };
 
+  // Prepare data for pie chart
+  const statusData = Object.entries(STATUS_CONFIG).map(([status, config]) => ({
+    name: config.label,
+    value: projects?.filter((p: Project) => p.status === status).length || 0,
+    color: config.color
+  })).filter(item => item.value > 0);
+
+  // Calculate credit line data for bar chart
+  const creditLineData = projects?.reduce((acc: { [key: string]: number }, project: Project) => {
+    const creditLine = project.creditLine?.toLowerCase() || 'outros';
+    acc[creditLine] = (acc[creditLine] || 0) + 1;
+    return acc;
+  }, {});
+
+  const barChartData = Object.entries(creditLineData || {}).map(([line, count]) => ({
+    name: line.charAt(0).toUpperCase() + line.slice(1),
+    value: count,
+    fill: CREDIT_LINE_COLORS[line.toLowerCase()] || CREDIT_LINE_COLORS.outros
+  })).sort((a, b) => b.value - a.value);
+
   return (
-    <div className="flex-1 space-y-8 p-8 pt-6">
+    <div className="flex-1 space-y-4 p-4 pt-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
+          <p className="text-sm text-muted-foreground">
             Gerencie seus projetos de crédito rural
           </p>
         </div>
         <Link href="/projects/new">
-          <Button size="sm" className="h-9">
+          <Button size="sm" className="h-8">
             <Plus className="mr-2 h-4 w-4" />
             Novo Projeto
           </Button>
         </Link>
       </div>
 
-      <div className="space-y-4">
-        {/* Card Total */}
-        <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-full bg-gray-100/50">
-              <FileText className="h-5 w-5 text-gray-500" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Total de Projetos</p>
-              <p className="text-2xl font-bold">{projects?.length || 0}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Status Cards Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-          {STATUS_CARDS.map((statusCard) => {
-            const count = projects?.filter((p: Project) => p.status === statusCard.status).length || 0;
-            const Icon = statusCard.icon;
-            
-            return (
-              <div 
-                key={statusCard.status}
-                className={cn(
-                  "rounded-lg border bg-card text-card-foreground shadow-sm p-6",
-                  "transition-all duration-200 hover:shadow-md",
-                  statusCard.bgClass
-                )}
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className={cn("p-2 rounded-full", statusCard.iconClass)}>
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    <span className="text-sm font-medium">{statusCard.label}</span>
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Status Distribution Chart */}
+        <Card className="shadow-sm">
+          <CardHeader className="p-3 pb-2">
+            <CardTitle className="text-base">Distribuição por Status</CardTitle>
+            <CardDescription className="text-xs">Visão geral dos status dos projetos</CardDescription>
+          </CardHeader>
+          <CardContent className="p-3 pt-0">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                {statusData.map((entry, index) => (
+                  <div key={entry.name} className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: entry.color }}
+                    />
+                    <span className="text-sm text-muted-foreground">{entry.name}</span>
+                    <span className="text-sm font-medium">({entry.value})</span>
                   </div>
-                  <p className="text-2xl font-bold">{count}</p>
-                </div>
+                ))}
               </div>
-            );
-          })}
-        </div>
+              <div className="h-[200px] w-[200px] relative">
+                <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+                  <span className="text-sm text-muted-foreground">Total</span>
+                  <span className="text-xl font-bold">{statusData.reduce((sum, item) => sum + item.value, 0)}</span>
+                </div>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={statusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={45}
+                      outerRadius={75}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {statusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Distribuição por Modalidade */}
+        <Card className="shadow-sm">
+          <CardHeader className="p-3 pb-2">
+            <CardTitle className="text-base">Distribuição por Modalidade</CardTitle>
+            <CardDescription className="text-xs">Distribuição dos projetos por linha de crédito</CardDescription>
+          </CardHeader>
+          <CardContent className="p-3 pt-0">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                {barChartData.map((entry, index) => (
+                  <div key={entry.name} className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: entry.fill }}
+                    />
+                    <span className="text-sm text-muted-foreground">{entry.name}</span>
+                    <span className="text-sm font-medium">({entry.value})</span>
+                  </div>
+                ))}
+              </div>
+              <div className="h-[200px] w-[200px] relative">
+                <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+                  <span className="text-sm text-muted-foreground">Total</span>
+                  <span className="text-xl font-bold">{barChartData.reduce((sum, item) => sum + item.value, 0)}</span>
+                </div>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={barChartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={45}
+                      outerRadius={75}
+                      paddingAngle={5}
+                      dataKey="value"
+                      nameKey="name"
+                    >
+                      {barChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Projetos Recentes */}
-      <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
-        <div className="p-6 space-y-1.5">
-          <h3 className="font-semibold text-lg">Projetos Recentes</h3>
-          <p className="text-sm text-muted-foreground">
-            Lista dos últimos projetos cadastrados
-          </p>
-        </div>
-        <div className="p-0">
+      <Card className="shadow-sm">
+        <CardHeader className="p-3 pb-2">
+          <CardTitle className="text-base">Projetos Recentes</CardTitle>
+          <CardDescription className="text-xs">Lista dos últimos projetos cadastrados</CardDescription>
+        </CardHeader>
+        <CardContent className="p-3 pt-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -190,63 +238,54 @@ export default function DashboardPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {projects?.slice(0, 5).map((project: Project) => (
+              {projects?.slice(0, 5).map((project) => (
                 <TableRow key={project.id}>
-                  <TableCell className="font-medium">{project.clientName || 'N/A'}</TableCell>
-                  <TableCell>{project.creditLine || 'N/A'}</TableCell>
+                  <TableCell className="font-medium">{project.clientName}</TableCell>
+                  <TableCell>{project.creditLine}</TableCell>
                   <TableCell>
-                    {typeof project.amount === 'number' 
-                      ? new Intl.NumberFormat('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL'
-                        }).format(project.amount)
-                      : 'R$ 0,00'
-                    }
+                    {new Intl.NumberFormat('pt-BR', {
+                      style: 'currency',
+                      currency: 'BRL'
+                    }).format(project.amount)}
                   </TableCell>
                   <TableCell>
-                    <ProjectStatusComponent status={project.status} />
+                    <ProjectStatus status={project.status} />
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center justify-end gap-2">
-                      <Link href={`/projects/${project.id}`}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        asChild
+                      >
+                        <Link href={`/projects/${project.id}`}>
                           <Eye className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                      <Link href={`/projects/${project.id}/edit`}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        asChild
+                      >
+                        <Link href={`/projects/${project.id}/edit`}>
                           <Pencil className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Tem certeza que deseja excluir este projeto? Esta ação não pode ser desfeita.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(project.id)}>
-                              Excluir
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(project.id)}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
-  )
+  );
 }
