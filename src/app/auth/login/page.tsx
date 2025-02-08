@@ -8,28 +8,59 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 
 export default function LoginPage() {
   const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
+
+  const formSchema = z.object({
+    name: isLogin ? z.string().optional() : z.string().min(1, "Nome é obrigatório"),
+    email: z.string().email("Email inválido"),
+    password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
+    confirmPassword: isLogin 
+      ? z.string().optional() 
+      : z.string().min(1, "Confirmação de senha é obrigatória"),
+  }).refine(data => {
+    if (!isLogin && data.password !== data.confirmPassword) {
+      return false;
+    }
+    return true;
+  }, {
+    message: "As senhas não coincidem",
+    path: ["confirmPassword"],
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     
     try {
       if (isLogin) {
         const result = await signIn("credentials", {
-          email: formData.email,
-          password: formData.password,
+          email: values.email,
+          password: values.password,
           redirect: false,
           callbackUrl: "/dashboard"
         });
@@ -44,24 +75,15 @@ export default function LoginPage() {
           router.push("/dashboard");
         }
       } else {
-        if (formData.password !== formData.confirmPassword) {
-          toast({
-            title: "Erro no cadastro",
-            description: "As senhas não coincidem",
-            variant: "destructive",
-          });
-          return;
-        }
-
         const response = await fetch("/api/auth/register", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            name: formData.name,
-            email: formData.email,
-            password: formData.password,
+            name: values.name,
+            email: values.email,
+            password: values.password,
           }),
         });
 
@@ -70,7 +92,7 @@ export default function LoginPage() {
             title: "Cadastro realizado",
             description: "Por favor, verifique seu email e insira o código de confirmação",
           });
-          router.push(`/auth/confirm?email=${encodeURIComponent(formData.email)}`);
+          router.push(`/auth/confirm?email=${encodeURIComponent(values.email)}`);
         } else {
           const data = await response.json();
           toast({
@@ -92,103 +114,96 @@ export default function LoginPage() {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
   return (
-    <div className="container relative h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
-      <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
-        <div className="absolute inset-0 bg-zinc-900" />
-        <div className="relative z-20 flex items-center text-lg font-medium">
-          <img src="/logo.png" alt="Logo" className="h-8 w-8 mr-2" />
-          Rural Credit App
-        </div>
-        <div className="relative z-20 mt-auto">
-          <blockquote className="space-y-2">
-            <p className="text-lg">
-              Simplifique o processo de crédito rural com nossa plataforma intuitiva e eficiente.
-            </p>
-          </blockquote>
-        </div>
-      </div>
-      <div className="lg:p-8">
-        <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-          <Card>
-            <CardHeader>
-              <CardTitle>{isLogin ? "Login" : "Criar Conta"}</CardTitle>
-              <CardDescription>
-                {isLogin
-                  ? "Entre com seu email e senha"
-                  : "Preencha os dados para criar sua conta"}
-              </CardDescription>
-            </CardHeader>
-            <form onSubmit={handleSubmit}>
+    <div className="container flex h-screen w-full flex-col items-center justify-center">
+      <div className="mx-auto w-full max-w-[350px] space-y-6">
+        <Card className="w-full">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl text-center">
+              {isLogin ? "Login" : "Criar Conta"}
+            </CardTitle>
+            <CardDescription className="text-center">
+              {isLogin
+                ? "Entre com seu email e senha"
+                : "Preencha os dados para criar sua conta"}
+            </CardDescription>
+          </CardHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <CardContent className="space-y-4">
                 {!isLogin && (
-                  <div className="space-y-2">
-                    <label htmlFor="name">Nome</label>
-                    <Input
-                      id="name"
-                      name="name"
-                      type="text"
-                      required={!isLogin}
-                      value={formData.name}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                )}
-                <div className="space-y-2">
-                  <label htmlFor="email">Email</label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={handleInputChange}
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="password">Senha</label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      required
-                      value={formData.password}
-                      onChange={handleInputChange}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-gray-500" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-gray-500" />
-                      )}
-                    </button>
-                  </div>
-                </div>
+                )}
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="email" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Senha</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            {...field}
+                            type={showPassword ? "text" : "password"}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <Eye className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </Button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 {!isLogin && (
-                  <div className="space-y-2">
-                    <label htmlFor="confirmPassword">Confirmar Senha</label>
-                    <Input
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      type="password"
-                      required={!isLogin}
-                      value={formData.confirmPassword}
-                      onChange={handleInputChange}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirmar Senha</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="password" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 )}
               </CardContent>
               <CardFooter className="flex flex-col space-y-4">
@@ -207,7 +222,10 @@ export default function LoginPage() {
                   type="button"
                   variant="link"
                   className="w-full"
-                  onClick={() => setIsLogin(!isLogin)}
+                  onClick={() => {
+                    setIsLogin(!isLogin);
+                    form.reset();
+                  }}
                 >
                   {isLogin
                     ? "Não tem uma conta? Cadastre-se"
@@ -215,8 +233,8 @@ export default function LoginPage() {
                 </Button>
               </CardFooter>
             </form>
-          </Card>
-        </div>
+          </Form>
+        </Card>
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ import { ProjectStatus } from "@/components/project-status";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Suspense, use } from 'react';
 import { DocumentsList } from './documents-list';
+import { Card, CardContent } from "@/components/ui/card";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -104,14 +105,16 @@ function ProjectClient({ id }: { id: string }) {
           <TabsTrigger value="documents">Documentos</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview">
+        <TabsContent value="overview" className="mt-6">
           <ProjectDetails id={id} />
         </TabsContent>
 
-        <TabsContent value="documents">
-          <div className="rounded-lg border bg-card p-6">
-            <DocumentsList id={id} />
-          </div>
+        <TabsContent value="documents" className="mt-6">
+          <Card>
+            <CardContent className="p-6">
+              <DocumentsList id={id} />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

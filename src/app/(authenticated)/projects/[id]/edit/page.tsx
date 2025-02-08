@@ -146,39 +146,35 @@ export default function EditProjectPage() {
   }
 
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
+    <div className="flex-1 space-y-4 p-6">
+      <div className="flex items-center text-sm text-muted-foreground">
+        <Link href="/dashboard" className="hover:text-primary">Dashboard</Link>
+        <ChevronRight className="h-4 w-4 mx-1" />
+        <Link href="/projects" className="hover:text-primary">Projetos</Link>
+        <ChevronRight className="h-4 w-4 mx-1" />
+        <span className="text-foreground">Editar Projeto</span>
+      </div>
+
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Editar Projeto</h2>
-          <p className="text-muted-foreground">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold">Editar Projeto</h1>
+          <p className="text-sm text-muted-foreground">
             Atualize as informações do projeto
           </p>
         </div>
       </div>
 
-      <div className="space-y-4">
-        <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-          <Link href="/dashboard" className="hover:text-primary">
-            <Home className="h-4 w-4" />
-          </Link>
-          <ChevronRight className="h-4 w-4" />
-          <Link href="/dashboard" className="hover:text-primary">
-            Dashboard
-          </Link>
-          <ChevronRight className="h-4 w-4" />
-          <span>Editar Projeto</span>
-        </div>
-
+      <div className="space-y-6">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Card>
-              <CardHeader>
-                <CardTitle>Informações do Cliente</CardTitle>
-                <CardDescription>
+              <CardHeader className="p-4 pb-2">
+                <CardTitle className="text-base">Informações do Cliente</CardTitle>
+                <CardDescription className="text-xs">
                   Dados do cliente responsável pelo projeto
                 </CardDescription>
               </CardHeader>
-              <CardContent className="grid gap-6">
+              <CardContent className="p-4 pt-2 grid gap-4">
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -251,13 +247,13 @@ export default function EditProjectPage() {
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle>Informações do Projeto</CardTitle>
-                <CardDescription>
+              <CardHeader className="p-4 pb-2">
+                <CardTitle className="text-base">Informações do Projeto</CardTitle>
+                <CardDescription className="text-xs">
                   Dados do projeto de crédito rural
                 </CardDescription>
               </CardHeader>
-              <CardContent className="grid gap-6">
+              <CardContent className="p-4 pt-2 grid gap-4">
                 <FormField
                   control={form.control}
                   name="projectName"
@@ -360,13 +356,13 @@ export default function EditProjectPage() {
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle>Informações da Propriedade</CardTitle>
-                <CardDescription>
+              <CardHeader className="p-4 pb-2">
+                <CardTitle className="text-base">Informações da Propriedade</CardTitle>
+                <CardDescription className="text-xs">
                   Dados da propriedade rural
                 </CardDescription>
               </CardHeader>
-              <CardContent className="grid gap-6">
+              <CardContent className="p-4 pt-2 grid gap-4">
                 <FormField
                   control={form.control}
                   name="propertyName"
@@ -418,10 +414,19 @@ export default function EditProjectPage() {
             </Card>
 
             <div className="flex justify-end space-x-4">
-              <Button variant="outline" type="button" onClick={() => router.back()}>
+              <Button 
+                variant="outline" 
+                type="button" 
+                onClick={() => router.back()}
+                className="w-24"
+              >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isLoading}>
+              <Button 
+                type="submit" 
+                disabled={isLoading}
+                className="w-24"
+              >
                 {isLoading ? 'Salvando...' : 'Salvar'}
               </Button>
             </div>
