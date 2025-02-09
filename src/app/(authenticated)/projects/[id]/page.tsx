@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Suspense, use } from 'react';
 import { DocumentsList } from './documents-list';
 import { Card, CardContent } from "@/components/ui/card";
+import { toast } from "@/hooks/use-toast";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -37,13 +38,23 @@ function ProjectClient({ id }: { id: string }) {
 
   const handleDelete = async () => {
     try {
-      await fetch(`/api/projects/${id}`, {
+      const response = await fetch(`/api/projects/${id}`, {
         method: 'DELETE',
       });
+
+      if (!response.ok) {
+        throw new Error('Erro ao excluir projeto');
+      }
+
       mutate();
-      window.location.href = '/projects';
+      window.location.href = '/dashboard';
     } catch (error) {
       console.error('Erro ao excluir projeto:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o projeto",
+        variant: "destructive",
+      });
     }
   };
 

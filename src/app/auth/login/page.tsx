@@ -25,16 +25,17 @@ export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
 
   const formSchema = z.object({
     name: isLogin ? z.string().optional() : z.string().min(1, "Nome é obrigatório"),
     email: z.string().email("Email inválido"),
-    password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
-    confirmPassword: isLogin 
+    password: isForgotPassword ? z.string().optional() : z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
+    confirmPassword: isLogin || isForgotPassword
       ? z.string().optional() 
       : z.string().min(1, "Confirmação de senha é obrigatória"),
   }).refine(data => {
-    if (!isLogin && data.password !== data.confirmPassword) {
+    if (!isLogin && !isForgotPassword && data.password !== data.confirmPassword) {
       return false;
     }
     return true;
@@ -57,7 +58,33 @@ export default function LoginPage() {
     setIsLoading(true);
     
     try {
-      if (isLogin) {
+      if (isForgotPassword) {
+        const response = await fetch("/api/auth/forgot-password", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: values.email,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          toast({
+            title: "Email enviado",
+            description: "Verifique seu email para redefinir sua senha",
+          });
+          router.push(`/auth/reset-password?email=${encodeURIComponent(values.email)}`);
+        } else {
+          toast({
+            title: "Erro",
+            description: data.message || "Erro ao solicitar redefinição de senha",
+            variant: "destructive",
+          });
+        }
+      } else if (isLogin) {
         const result = await signIn("credentials", {
           email: values.email,
           password: values.password,
@@ -120,10 +147,12 @@ export default function LoginPage() {
         <Card className="w-full">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">
-              {isLogin ? "Login" : "Criar Conta"}
+              {isForgotPassword ? "Recuperar Senha" : isLogin ? "Login" : "Criar Conta"}
             </CardTitle>
             <CardDescription className="text-center">
-              {isLogin
+              {isForgotPassword
+                ? "Digite seu email para receber as instruções de recuperação de senha"
+                : isLogin
                 ? "Entre com seu email e senha"
                 : "Preencha os dados para criar sua conta"}
             </CardDescription>
@@ -131,7 +160,7 @@ export default function LoginPage() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <CardContent className="space-y-4">
-                {!isLogin && (
+                {!isLogin && !isForgotPassword && (
                   <FormField
                     control={form.control}
                     name="name"
@@ -139,13 +168,14 @@ export default function LoginPage() {
                       <FormItem>
                         <FormLabel>Nome</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input placeholder="Digite seu nome" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 )}
+
                 <FormField
                   control={form.control}
                   name="email"
@@ -153,44 +183,53 @@ export default function LoginPage() {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input {...field} type="email" />
+                        <Input
+                          type="email"
+                          placeholder="Digite seu email"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Senha</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            {...field}
-                            type={showPassword ? "text" : "password"}
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                            onClick={() => setShowPassword(!showPassword)}
-                          >
-                            {showPassword ? (
-                              <EyeOff className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                              <Eye className="h-4 w-4 text-muted-foreground" />
-                            )}
-                          </Button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {!isLogin && (
+
+                {!isForgotPassword && (
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Senha</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              {...field}
+                              type={showPassword ? "text" : "password"}
+                              placeholder="Digite sua senha"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                              onClick={() => setShowPassword(!showPassword)}
+                            >
+                              {showPassword ? (
+                                <EyeOff className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <Eye className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </Button>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {!isLogin && !isForgotPassword && (
                   <FormField
                     control={form.control}
                     name="confirmPassword"
@@ -198,7 +237,11 @@ export default function LoginPage() {
                       <FormItem>
                         <FormLabel>Confirmar Senha</FormLabel>
                         <FormControl>
-                          <Input {...field} type="password" />
+                          <Input
+                            type="password"
+                            placeholder="Confirme sua senha"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -206,31 +249,59 @@ export default function LoginPage() {
                   />
                 )}
               </CardContent>
-              <CardFooter className="flex flex-col space-y-4">
+
+              <CardFooter className="flex flex-col">
                 <Button
                   type="submit"
                   className="w-full"
                   disabled={isLoading}
                 >
-                  {isLoading
-                    ? "Carregando..."
-                    : isLogin
-                    ? "Entrar"
-                    : "Criar Conta"}
+                  {isLoading ? "Carregando..." : isForgotPassword ? "Enviar Email" : isLogin ? "Entrar" : "Cadastrar"}
                 </Button>
-                <Button
-                  type="button"
-                  variant="link"
-                  className="w-full"
-                  onClick={() => {
-                    setIsLogin(!isLogin);
-                    form.reset();
-                  }}
-                >
-                  {isLogin
-                    ? "Não tem uma conta? Cadastre-se"
-                    : "Já tem uma conta? Entre"}
-                </Button>
+
+                <div className="mt-4 text-center space-y-2">
+                  {isLogin && !isForgotPassword && (
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="text-sm text-primary hover:text-primary/90"
+                      onClick={() => {
+                        setIsForgotPassword(true);
+                        form.reset({ email: form.getValues("email") });
+                      }}
+                    >
+                      Esqueci minha senha
+                    </Button>
+                  )}
+
+                  {isForgotPassword && (
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="text-sm text-primary hover:text-primary/90"
+                      onClick={() => {
+                        setIsForgotPassword(false);
+                        form.reset({ email: form.getValues("email") });
+                      }}
+                    >
+                      Voltar ao login
+                    </Button>
+                  )}
+
+                  {!isForgotPassword && (
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="text-sm text-primary hover:text-primary/90"
+                      onClick={() => {
+                        setIsLogin(!isLogin);
+                        form.reset();
+                      }}
+                    >
+                      {isLogin ? "Não tem uma conta? Cadastre-se" : "Já tem uma conta? Entre"}
+                    </Button>
+                  )}
+                </div>
               </CardFooter>
             </form>
           </Form>
