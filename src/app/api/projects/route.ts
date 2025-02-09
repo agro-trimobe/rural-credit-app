@@ -137,7 +137,7 @@ export async function POST(request: Request) {
         propertyName: data.propertyName,
         area: parseFloat(data.area),
         location: data.location,
-        status: 'pending',
+        status: 'em_andamento',
         createdAt: timestamp,
         updatedAt: timestamp,
         // GSI1 para busca por cliente

@@ -319,9 +319,16 @@ export default function EditProjectPage() {
                         <SelectContent>
                           <SelectItem value="pronaf">PRONAF</SelectItem>
                           <SelectItem value="pronamp">PRONAMP</SelectItem>
+                          <SelectItem value="moderfrota">MODERFROTA</SelectItem>
+                          <SelectItem value="pca">PCA</SelectItem>
                           <SelectItem value="inovagro">INOVAGRO</SelectItem>
-                          <SelectItem value="moderagro">MODERAGRO</SelectItem>
+                          <SelectItem value="moderinfra">MODERINFRA</SelectItem>
+                          <SelectItem value="prodecoop">PRODECOOP</SelectItem>
                           <SelectItem value="abc">ABC</SelectItem>
+                          <SelectItem value="proirriga">PROIRRIGA</SelectItem>
+                          <SelectItem value="pronara">PRONARA</SelectItem>
+                          <SelectItem value="finame">FINAME</SelectItem>
+                          <SelectItem value="outros">OUTROS</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

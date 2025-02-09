@@ -328,10 +328,18 @@ export default function NewProjectPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="pronaf">Pronaf</SelectItem>
-                            <SelectItem value="pronamp">Pronamp</SelectItem>
-                            <SelectItem value="inovagro">Inovagro</SelectItem>
-                            <SelectItem value="moderfrota">Moderfrota</SelectItem>
+                            <SelectItem value="pronaf">PRONAF</SelectItem>
+                            <SelectItem value="pronamp">PRONAMP</SelectItem>
+                            <SelectItem value="moderfrota">MODERFROTA</SelectItem>
+                            <SelectItem value="pca">PCA</SelectItem>
+                            <SelectItem value="inovagro">INOVAGRO</SelectItem>
+                            <SelectItem value="moderinfra">MODERINFRA</SelectItem>
+                            <SelectItem value="prodecoop">PRODECOOP</SelectItem>
+                            <SelectItem value="abc">ABC</SelectItem>
+                            <SelectItem value="proirriga">PROIRRIGA</SelectItem>
+                            <SelectItem value="pronara">PRONARA</SelectItem>
+                            <SelectItem value="finame">FINAME</SelectItem>
+                            <SelectItem value="outros">OUTROS</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />

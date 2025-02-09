@@ -54,10 +54,16 @@ const STATUS_CONFIG = {
 const CREDIT_LINE_COLORS: Record<string, string> = {
   'pronaf': 'hsl(var(--chart-1))',
   'pronamp': 'hsl(var(--chart-2))',
-  'inovagro': 'hsl(var(--chart-3))',
-  'moderagro': 'hsl(var(--chart-4))',
-  'abc': 'hsl(var(--chart-5))',
-  'outros': 'hsl(var(--muted-foreground))'
+  'moderfrota': 'hsl(var(--chart-3))',
+  'pca': 'hsl(var(--chart-4))',
+  'inovagro': 'hsl(var(--chart-5))',
+  'moderinfra': 'hsl(200, 70%, 50%)',
+  'prodecoop': 'hsl(150, 70%, 50%)',
+  'abc': 'hsl(100, 70%, 50%)',
+  'proirriga': 'hsl(250, 70%, 50%)',
+  'pronara': 'hsl(300, 70%, 50%)',
+  'finame': 'hsl(50, 70%, 50%)',
+  'outros': 'hsl(0, 0%, 60%)'
 };
 
 export default function DashboardPage() {
