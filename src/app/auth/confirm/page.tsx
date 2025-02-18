@@ -5,10 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 function ConfirmPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { toast } = useToast();
   const email = searchParams.get("email");
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
@@ -32,19 +34,33 @@ function ConfirmPageContent() {
       const data = await response.json();
 
       if (response.ok) {
-        alert("Email confirmado com sucesso! Por favor, faça login.");
+        toast({
+          title: "Email confirmado!",
+          description: "Por favor, faça login para continuar.",
+          duration: 5000,
+        });
         router.push("/auth/login");
       } else {
         setError(data.error || "Erro ao confirmar código");
+        toast({
+          title: "Erro",
+          description: data.error || "Erro ao confirmar código",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Erro na confirmação:", error);
       setError("Erro ao confirmar código");
+      toast({
+        title: "Erro",
+        description: "Erro ao confirmar código",
+        variant: "destructive",
+      });
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <Card className="w-[400px]">
         <CardHeader>
           <CardTitle>Confirmar Email</CardTitle>
@@ -55,16 +71,16 @@ function ConfirmPageContent() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Código de Confirmação</label>
               <Input
-                type="text"
+                id="code"
+                placeholder="0/2d8b"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="Digite o código"
-                required
               />
+              {error && (
+                <p className="text-sm text-destructive">{error}</p>
+              )}
             </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
             <Button type="submit" className="w-full">
               Confirmar
             </Button>

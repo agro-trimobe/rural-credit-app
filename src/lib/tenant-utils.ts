@@ -1,10 +1,14 @@
 import { DynamoDBDocumentClient, PutCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
 import { dynamodb } from './aws-config';
 import crypto from 'crypto';
+import { validateAsaasConfig } from './asaas-config';
 
 export async function createTenantAndUser(cognitoId: string, email: string, name: string) {
   const timestamp = new Date().toISOString();
   const tenantId = crypto.randomUUID();
+  const trialEndsAt = new Date();
+  const config = validateAsaasConfig();
+  trialEndsAt.setDate(trialEndsAt.getDate() + config.TRIAL_PERIOD_DAYS);
 
   try {
     // 1. Criar o Tenant
@@ -42,6 +46,11 @@ export async function createTenantAndUser(cognitoId: string, email: string, name
         name: name,
         role: 'ADMIN', // Primeiro usuário é sempre admin
         status: 'ACTIVE',
+        subscription: {
+          createdAt: timestamp,
+          trialEndsAt: trialEndsAt.toISOString(),
+          status: 'TRIAL'
+        },
         createdAt: timestamp,
         updatedAt: timestamp,
         // GSI1 (busca global por Cognito ID)
