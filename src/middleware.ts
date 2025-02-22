@@ -1,56 +1,46 @@
-import { withAuth } from "next-auth/middleware";
-import { NextResponse } from "next/server";
-import { getUserByEmail } from "@/lib/tenant-utils";
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { getToken } from 'next-auth/jwt';
+import { checkSubscriptionAccess } from './lib/subscription-service';
 
-export default withAuth(
-  async function middleware(req) {
-    const token = req.nextauth.token;
-    
-    // Se não houver token, redireciona para login
-    if (!token) {
-      return NextResponse.redirect(new URL("/auth/signin", req.url));
-    }
+// Páginas que não precisam de verificação de assinatura
+const PUBLIC_PATHS = [
+  '/api/auth',
+  '/api/webhooks',
+  '/subscription',
+  '/login',
+  '/register',
+  '/_next',
+  '/favicon.ico',
+];
 
-    // Verifica se a rota atual é a página de assinatura
-    if (req.nextUrl.pathname === "/subscription") {
-      return NextResponse.next();
-    }
-
-    try {
-      // Busca dados do usuário
-      const user = await getUserByEmail(token.email!);
-      
-      if (!user?.subscription) {
-        // Se não tiver dados de assinatura, cria com período de teste
-        return NextResponse.redirect(new URL("/subscription", req.url));
-      }
-
-      const now = new Date();
-      const trialEndsAt = new Date(user.subscription.trialEndsAt);
-      
-      // Se estiver no período de teste, permite acesso
-      if (user.subscription.status === 'TRIAL' && now < trialEndsAt) {
-        return NextResponse.next();
-      }
-      
-      // Se a assinatura estiver ativa, permite acesso
-      if (user.subscription.status === 'ACTIVE') {
-        return NextResponse.next();
-      }
-      
-      // Caso contrário, redireciona para página de assinatura
-      return NextResponse.redirect(new URL("/subscription", req.url));
-    } catch (error) {
-      console.error('Erro ao verificar assinatura:', error);
-      return NextResponse.redirect(new URL("/auth/signin", req.url));
-    }
-  },
-  {
-    callbacks: {
-      authorized: ({ token }) => !!token,
-    },
+export async function middleware(request: NextRequest) {
+  // Verificar se é uma página pública
+  if (PUBLIC_PATHS.some(path => request.nextUrl.pathname.startsWith(path))) {
+    return NextResponse.next();
   }
-);
+
+  // Verificar autenticação
+  const token = await getToken({ req: request });
+  console.log('Token do usuário:', token);
+
+  if (!token?.tenantId || !token?.cognitoId) {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  // Verificar status da assinatura
+  const { hasAccess, message } = await checkSubscriptionAccess(token.tenantId, token.cognitoId);
+  console.log('Resultado do checkSubscriptionAccess:', { hasAccess, message });
+
+  if (!hasAccess) {
+    // Redirecionar para página de assinatura com mensagem
+    const subscriptionUrl = new URL('/subscription', request.url);
+    subscriptionUrl.searchParams.set('message', message || '');
+    return NextResponse.redirect(subscriptionUrl);
+  }
+
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [

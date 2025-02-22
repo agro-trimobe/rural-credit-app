@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, UpdateCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { updateUserSubscriptionStatus } from '@/lib/subscription-service';
 
 const dynamoDb = DynamoDBDocumentClient.from(new DynamoDBClient({
   region: process.env.AWS_REGION,
@@ -16,6 +17,23 @@ const statusMapping: Record<string, string> = {
   INACTIVE: 'INACTIVE',
   OVERDUE: 'OVERDUE',
   CANCELED: 'INACTIVE'
+};
+
+// Tipos de evento que o Asaas pode enviar
+const PAYMENT_EVENTS = {
+  PAYMENT_RECEIVED: 'PAYMENT_RECEIVED',
+  PAYMENT_CONFIRMED: 'PAYMENT_CONFIRMED',
+  PAYMENT_RECEIVED_IN_CASH_UNDONE: 'PAYMENT_RECEIVED_IN_CASH_UNDONE',
+  PAYMENT_OVERDUE: 'PAYMENT_OVERDUE',
+  PAYMENT_DELETED: 'PAYMENT_DELETED',
+  PAYMENT_RESTORED: 'PAYMENT_RESTORED',
+  PAYMENT_REFUNDED: 'PAYMENT_REFUNDED',
+  PAYMENT_UPDATED: 'PAYMENT_UPDATED',
+  PAYMENT_CHARGEBACK_REQUESTED: 'PAYMENT_CHARGEBACK_REQUESTED',
+  PAYMENT_CHARGEBACK_DISPUTE: 'PAYMENT_CHARGEBACK_DISPUTE',
+  PAYMENT_AWAITING_CHARGEBACK_REVERSAL: 'PAYMENT_AWAITING_CHARGEBACK_REVERSAL',
+  PAYMENT_DUNNING_RECEIVED: 'PAYMENT_DUNNING_RECEIVED',
+  PAYMENT_DUNNING_REQUESTED: 'PAYMENT_DUNNING_REQUESTED',
 };
 
 async function getUserByAsaasSubscriptionId(subscriptionId: string) {
@@ -62,33 +80,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
     }
 
-    // Mapear status do pagamento para status da assinatura
-    let subscriptionStatus = 'ACTIVE';
-    if (event === 'PAYMENT_RECEIVED') {
-      subscriptionStatus = 'ACTIVE';
-    } else if (event === 'PAYMENT_OVERDUE') {
-      subscriptionStatus = 'OVERDUE';
-    } else if (event === 'PAYMENT_CANCELED') {
-      subscriptionStatus = 'INACTIVE';
-    }
+    // Atualiza o status da assinatura do usuário baseado no evento
+    switch (event) {
+      case PAYMENT_EVENTS.PAYMENT_CONFIRMED:
+      case PAYMENT_EVENTS.PAYMENT_RECEIVED:
+        await updateUserSubscriptionStatus(payment.subscription, 'active', payment.dueDate);
+        break;
 
-    // Atualizar status da assinatura no DynamoDB
-    await dynamoDb.send(new UpdateCommand({
-      TableName: 'Users',
-      Key: {
-        PK: `USER#${user.email}`,
-        SK: `USER#${user.email}`,
-      },
-      UpdateExpression: 'SET subscription.status = :status, subscription.updatedAt = :updatedAt',
-      ExpressionAttributeValues: {
-        ':status': subscriptionStatus,
-        ':updatedAt': new Date().toISOString(),
-      },
-    }));
+      case PAYMENT_EVENTS.PAYMENT_OVERDUE:
+        await updateUserSubscriptionStatus(payment.subscription, 'overdue');
+        break;
+
+      case PAYMENT_EVENTS.PAYMENT_REFUNDED:
+      case PAYMENT_EVENTS.PAYMENT_DELETED:
+      case PAYMENT_EVENTS.PAYMENT_CHARGEBACK_REQUESTED:
+        await updateUserSubscriptionStatus(payment.subscription, 'canceled');
+        break;
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Erro ao processar webhook:', error);
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
+    return NextResponse.json({ error: 'Erro ao processar webhook' }, { status: 500 });
   }
 }

@@ -1,8 +1,8 @@
 // Define URL padrão baseada no ambiente
 const apiBaseUrl = process.env.ASAAS_API_URL || (
   process.env.NODE_ENV === 'production'
-    ? 'https://api.asaas.com/v3'
-    : 'https://api-sandbox.asaas.com/v3'
+    ? 'https://api.asaas.com'
+    : 'https://api-sandbox.asaas.com'
 );
 
 // Formata a chave da API adicionando o prefixo $ se necessário
@@ -65,7 +65,7 @@ export async function createAsaasCustomer(data: {
 
   console.log('Criando cliente no Asaas:', requestData);
 
-  const response = await fetch(`${config.API_URL}/customers`, {
+  const response = await fetch(`${config.API_URL}/v3/customers`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -160,7 +160,7 @@ export async function createAsaasSubscription(data: {
 
   console.log('Criando assinatura no Asaas:', requestData);
 
-  const response = await fetch(`${config.API_URL}/subscriptions`, {
+  const response = await fetch(`${config.API_URL}/v3/subscriptions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
