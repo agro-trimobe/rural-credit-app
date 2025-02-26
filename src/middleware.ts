@@ -7,9 +7,11 @@ import { checkSubscriptionAccess } from './lib/subscription-service';
 const PUBLIC_PATHS = [
   '/api/auth',
   '/api/webhooks',
+  '/api/subscription',
   '/subscription',
-  '/login',
-  '/register',
+  '/auth/login',
+  '/auth/register',
+  '/auth/confirm',
   '/_next',
   '/favicon.ico',
 ];
@@ -25,7 +27,7 @@ export async function middleware(request: NextRequest) {
   console.log('Token do usuário:', token);
 
   if (!token?.tenantId || !token?.cognitoId) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
   // Verificar status da assinatura
@@ -44,9 +46,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/dashboard/:path*",
-    "/projects/:path*",
-    "/api/projects/:path*",
-    "/api/documents/:path*"
+    "/((?!api/auth|api/webhooks|api/subscription|subscription|auth/login|auth/register|auth/confirm|_next|favicon.ico).*)",
   ],
 };

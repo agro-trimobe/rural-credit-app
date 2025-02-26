@@ -1,3 +1,5 @@
+export const runtime = 'nodejs';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { getUserByEmail } from '@/lib/tenant-utils';
@@ -58,7 +60,50 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(subscription);
     }
 
-    return NextResponse.json(user.subscription);
+    // Verificar e atualizar status da assinatura se necessário
+    const now = new Date();
+    let status = user.subscription.status;
+    const trialEndsAt = user.subscription.trialEndsAt;
+    const subscriptionEndsAt = user.subscription.subscriptionEndsAt;
+
+    if (status === 'TRIAL' && trialEndsAt && new Date(trialEndsAt) <= now) {
+      status = 'TRIAL_EXPIRED';
+      await dynamoDb.send(new UpdateCommand({
+        TableName: 'Users',
+        Key: {
+          PK: user.PK,
+          SK: user.SK,
+        },
+        UpdateExpression: 'SET subscription.#st = :status',
+        ExpressionAttributeNames: {
+          '#st': 'status'
+        },
+        ExpressionAttributeValues: {
+          ':status': status,
+        },
+      }));
+    } else if (status === 'ACTIVE' && subscriptionEndsAt && new Date(subscriptionEndsAt) <= now) {
+      status = 'EXPIRED';
+      await dynamoDb.send(new UpdateCommand({
+        TableName: 'Users',
+        Key: {
+          PK: user.PK,
+          SK: user.SK,
+        },
+        UpdateExpression: 'SET subscription.#st = :status',
+        ExpressionAttributeNames: {
+          '#st': 'status'
+        },
+        ExpressionAttributeValues: {
+          ':status': status,
+        },
+      }));
+    }
+
+    return NextResponse.json({
+      ...user.subscription,
+      status,
+    });
   } catch (error) {
     console.error('Erro ao buscar assinatura:', error);
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
@@ -80,13 +125,61 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { creditCard, creditCardHolderInfo } = body;
+    const { 
+      name, 
+      email, 
+      cpf, 
+      cardNumber, 
+      cardExpiry, 
+      cardCvc, 
+      postalCode, 
+      addressNumber,
+      phone, 
+    } = body;
 
-    // Validar CPF
-    const formattedCpf = creditCardHolderInfo.cpfCnpj.replace(/\D/g, '');
-    if (!formattedCpf || formattedCpf.length !== 11) {
+    // Validar campos obrigatórios
+    if (!name || !email || !cpf || !cardNumber || !cardExpiry || !cardCvc || !postalCode || !addressNumber || !phone) {
+      return NextResponse.json(
+        { error: 'Por favor, preencha todos os campos obrigatórios.' },
+        { status: 400 }
+      );
+    }
+
+    // Validar formato do CPF
+    const cpfRegex = /^\d{11}$/;
+    const cleanCpf = cpf.replace(/\D/g, '');
+    if (!cpfRegex.test(cleanCpf)) {
       return NextResponse.json({ 
-        error: 'CPF inválido. Por favor, forneça um CPF válido.' 
+        error: 'CPF inválido. Por favor, forneça um CPF válido com 11 dígitos.' 
+      }, { status: 400 });
+    }
+
+    // Validar formato do telefone
+    const phoneRegex = /^\d{10,11}$/;
+    const cleanPhone = phone.replace(/\D/g, '');
+    if (!phoneRegex.test(cleanPhone)) {
+      return NextResponse.json({ 
+        error: 'Telefone inválido. Por favor, forneça um número de telefone válido com DDD.' 
+      }, { status: 400 });
+    }
+
+    // Validar formato do CEP
+    const cepRegex = /^\d{8}$/;
+    const cleanCep = postalCode.replace(/\D/g, '');
+    if (!cepRegex.test(cleanCep)) {
+      return NextResponse.json({ 
+        error: 'CEP inválido. Por favor, forneça um CEP válido com 8 dígitos.' 
+      }, { status: 400 });
+    }
+
+    // Validar data de validade do cartão
+    const [expiryMonth, expiryYear] = cardExpiry.split('/');
+    const now = new Date();
+    const cardExpiration = new Date(2000 + parseInt(expiryYear), parseInt(expiryMonth) - 1);
+    
+    if (cardExpiration <= now) {
+      return NextResponse.json({ 
+        error: 'Cartão vencido. Por favor, use um cartão com data de validade válida.' 
       }, { status: 400 });
     }
 
@@ -94,11 +187,11 @@ export async function POST(req: NextRequest) {
       name: user.name,
       email: user.email,
       currentCpf: user.cpf,
-      newCpf: formattedCpf
+      newCpf: cpf
     });
 
     // Atualizar CPF do usuário se necessário
-    if (!user.cpf || user.cpf !== formattedCpf) {
+    if (!user.cpf || user.cpf !== cpf) {
       console.log('Atualizando CPF do usuário no DynamoDB...');
       
       await dynamoDb.send(new UpdateCommand({
@@ -109,7 +202,7 @@ export async function POST(req: NextRequest) {
         },
         UpdateExpression: 'SET cpf = :cpf',
         ExpressionAttributeValues: {
-          ':cpf': formattedCpf,
+          ':cpf': cpf,
         },
       }));
 
@@ -118,14 +211,14 @@ export async function POST(req: NextRequest) {
 
     // Cria cliente no Asaas
     console.log('Criando cliente no Asaas com os dados:', {
-      name: creditCardHolderInfo.name || user.name,
+      name: name || user.name,
       email: user.email,
-      cpfMasked: formattedCpf.replace(/\d/g, '*')
+      cpfMasked: cpf.replace(/\d/g, '*')
     });
 
     const customer = await createAsaasCustomer({
-      name: creditCardHolderInfo.name || user.name,
-      cpfCnpj: formattedCpf,
+      name: name || user.name,
+      cpfCnpj: cpf,
       email: user.email,
     });
 
@@ -140,29 +233,30 @@ export async function POST(req: NextRequest) {
       req.headers.get('x-real-ip') ||
       '127.0.0.1';
 
-    // Cria assinatura no Asaas
-    console.log('Criando assinatura com os dados:', {
-      customerId: customer.id,
-      value: config.SUBSCRIPTION_VALUE,
-      nextDueDate: new Date().toISOString().split('T')[0],
-      holderName: creditCard.holderName,
-      email: user.email
-    });
-
-    const subscription = await createAsaasSubscription({
+    // Cria assinatura
+    const subscriptionData = {
       customer: customer.id,
       value: config.SUBSCRIPTION_VALUE,
       nextDueDate: new Date().toISOString().split('T')[0],
-      creditCard,
+      creditCard: {
+        holderName: name,
+        number: cardNumber,
+        expiryMonth: cardExpiry.split('/')[0],
+        expiryYear: cardExpiry.split('/')[1],
+        ccv: cardCvc,
+      },
       creditCardHolderInfo: {
-        name: creditCardHolderInfo.name,
+        name,
         email: user.email,
-        cpfCnpj: formattedCpf, // Incluir CPF nas informações do titular
-        postalCode: creditCardHolderInfo.postalCode,
-        addressNumber: creditCardHolderInfo.addressNumber
+        cpfCnpj: cpf,
+        postalCode,
+        addressNumber,
+        phone,
       },
       remoteIp: clientIp,
-    });
+    };
+
+    const subscription = await createAsaasSubscription(subscriptionData);
 
     console.log('Assinatura criada com sucesso:', {
       subscriptionId: subscription.id,

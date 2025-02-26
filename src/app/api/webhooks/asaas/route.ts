@@ -1,55 +1,54 @@
+export const runtime = 'nodejs';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, UpdateCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
-import { updateUserSubscriptionStatus } from '@/lib/subscription-service';
+import { DynamoDBDocumentClient, UpdateCommand, ScanCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { updateUserSubscriptionStatus, type SubscriptionStatus } from '@/lib/subscription-service';
 
 const dynamoDb = DynamoDBDocumentClient.from(new DynamoDBClient({
   region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.ACCESS_KEY_ID_AWS!,
-    secretAccessKey: process.env.SECRET_ACCESS_KEY_AWS!,
-  },
 }));
-
-// Mapeamento de status do Asaas para nosso sistema
-const statusMapping: Record<string, string> = {
-  ACTIVE: 'ACTIVE',
-  INACTIVE: 'INACTIVE',
-  OVERDUE: 'OVERDUE',
-  CANCELED: 'INACTIVE'
-};
 
 // Tipos de evento que o Asaas pode enviar
 const PAYMENT_EVENTS = {
-  PAYMENT_RECEIVED: 'PAYMENT_RECEIVED',
   PAYMENT_CONFIRMED: 'PAYMENT_CONFIRMED',
-  PAYMENT_RECEIVED_IN_CASH_UNDONE: 'PAYMENT_RECEIVED_IN_CASH_UNDONE',
+  PAYMENT_RECEIVED: 'PAYMENT_RECEIVED',
   PAYMENT_OVERDUE: 'PAYMENT_OVERDUE',
-  PAYMENT_DELETED: 'PAYMENT_DELETED',
-  PAYMENT_RESTORED: 'PAYMENT_RESTORED',
   PAYMENT_REFUNDED: 'PAYMENT_REFUNDED',
-  PAYMENT_UPDATED: 'PAYMENT_UPDATED',
-  PAYMENT_CHARGEBACK_REQUESTED: 'PAYMENT_CHARGEBACK_REQUESTED',
-  PAYMENT_CHARGEBACK_DISPUTE: 'PAYMENT_CHARGEBACK_DISPUTE',
-  PAYMENT_AWAITING_CHARGEBACK_REVERSAL: 'PAYMENT_AWAITING_CHARGEBACK_REVERSAL',
-  PAYMENT_DUNNING_RECEIVED: 'PAYMENT_DUNNING_RECEIVED',
-  PAYMENT_DUNNING_REQUESTED: 'PAYMENT_DUNNING_REQUESTED',
-};
+  PAYMENT_DELETED: 'PAYMENT_DELETED',
+  PAYMENT_CHARGEBACK_REQUESTED: 'PAYMENT_CHARGEBACK_REQUESTED'
+} as const;
+
+const SUBSCRIPTION_EVENTS = {
+  SUBSCRIPTION_DELETED: 'SUBSCRIPTION_DELETED',
+  SUBSCRIPTION_UPDATED: 'SUBSCRIPTION_UPDATED',
+  SUBSCRIPTION_CANCELED: 'SUBSCRIPTION_CANCELED'
+} as const;
 
 async function getUserByAsaasSubscriptionId(subscriptionId: string) {
-  const command = new QueryCommand({
-    TableName: 'Users',
-    IndexName: 'GSI1',
-    KeyConditionExpression: 'GSI1PK = :pk',
-    FilterExpression: 'subscription.asaasSubscriptionId = :subscriptionId',
-    ExpressionAttributeValues: {
-      ':pk': 'USER',
-      ':subscriptionId': subscriptionId
-    }
-  });
+  try {
+    const command = new ScanCommand({
+      TableName: 'Users',
+      FilterExpression: 'subscription.asaasSubscriptionId = :subscriptionId',
+      ExpressionAttributeValues: {
+        ':subscriptionId': subscriptionId
+      }
+    });
 
-  const result = await dynamoDb.send(command);
-  return result.Items?.[0];
+    console.log('Buscando usuário com asaasSubscriptionId:', subscriptionId);
+    const result = await dynamoDb.send(command);
+    
+    if (!result.Items || result.Items.length === 0) {
+      console.log('Nenhum usuário encontrado com asaasSubscriptionId:', subscriptionId);
+      return null;
+    }
+
+    console.log('Usuário encontrado:', result.Items[0]);
+    return result.Items[0];
+  } catch (error) {
+    console.error('Erro ao buscar usuário por asaasSubscriptionId:', error);
+    throw error;
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -67,40 +66,63 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { event, payment } = body;
+    console.log('Webhook recebido:', JSON.stringify(body, null, 2));
+    
+    const { event, payment, subscription } = body;
 
-    // Processar apenas eventos relacionados a assinaturas
-    if (!event.startsWith('PAYMENT_')) {
+    // Identificar o ID da assinatura baseado no tipo de evento
+    let subscriptionId: string | undefined;
+    
+    if (event in SUBSCRIPTION_EVENTS) {
+      subscriptionId = subscription?.id;
+    } else if (event in PAYMENT_EVENTS) {
+      subscriptionId = payment?.subscription;
+    }
+
+    if (!subscriptionId) {
+      console.log('Evento não possui ID de assinatura:', event);
       return NextResponse.json({ success: true });
     }
 
-    const user = await getUserByAsaasSubscriptionId(payment.subscription);
+    const user = await getUserByAsaasSubscriptionId(subscriptionId);
     if (!user) {
-      console.error('Usuário não encontrado para assinatura:', payment.subscription);
+      console.error('Usuário não encontrado para assinatura:', subscriptionId);
       return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
     }
 
     // Atualiza o status da assinatura do usuário baseado no evento
+    console.log('Processando evento:', event, 'para usuário:', user.email);
+    
     switch (event) {
       case PAYMENT_EVENTS.PAYMENT_CONFIRMED:
       case PAYMENT_EVENTS.PAYMENT_RECEIVED:
-        await updateUserSubscriptionStatus(payment.subscription, 'active', payment.dueDate);
+        // Obter a data do próximo vencimento da assinatura
+        const nextDueDate = new Date();
+        nextDueDate.setMonth(nextDueDate.getMonth() + 1); // Adiciona 1 mês
+        nextDueDate.setHours(23, 59, 59, 999);
+        
+        await updateUserSubscriptionStatus(subscriptionId, 'ACTIVE', nextDueDate.toISOString());
         break;
 
       case PAYMENT_EVENTS.PAYMENT_OVERDUE:
-        await updateUserSubscriptionStatus(payment.subscription, 'overdue');
+        await updateUserSubscriptionStatus(subscriptionId, 'OVERDUE');
         break;
 
       case PAYMENT_EVENTS.PAYMENT_REFUNDED:
       case PAYMENT_EVENTS.PAYMENT_DELETED:
       case PAYMENT_EVENTS.PAYMENT_CHARGEBACK_REQUESTED:
-        await updateUserSubscriptionStatus(payment.subscription, 'canceled');
+      case SUBSCRIPTION_EVENTS.SUBSCRIPTION_DELETED:
+      case SUBSCRIPTION_EVENTS.SUBSCRIPTION_CANCELED:
+        await updateUserSubscriptionStatus(subscriptionId, 'CANCELED');
         break;
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Erro ao processar webhook:', error);
-    return NextResponse.json({ error: 'Erro ao processar webhook' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    );
   }
 }

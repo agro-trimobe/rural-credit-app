@@ -114,17 +114,29 @@ export default function LoginPage() {
           }),
         });
 
+        const data = await response.json();
+
         if (response.ok) {
+          console.log('Registro bem-sucedido:', data);
+          
           toast({
             title: "Cadastro realizado",
-            description: "Por favor, verifique seu email e insira o código de confirmação",
+            description: data.message || "Por favor, verifique seu email e insira o código de confirmação",
           });
-          router.push(`/auth/confirm?email=${encodeURIComponent(values.email)}`);
+          
+          if (data.requiresConfirmation) {
+            const confirmUrl = `/auth/confirm?email=${encodeURIComponent(values.email)}`;
+            console.log('Redirecionando para:', confirmUrl);
+            
+            // Usando replace em vez de push para garantir que o histórico seja limpo
+            router.replace(confirmUrl);
+          } else {
+            console.log('Registro não requer confirmação');
+          }
         } else {
-          const data = await response.json();
           toast({
             title: "Erro no cadastro",
-            description: data.message || "Erro ao criar conta",
+            description: data.error || "Erro ao criar conta",
             variant: "destructive",
           });
         }

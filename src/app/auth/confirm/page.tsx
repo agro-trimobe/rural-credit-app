@@ -1,23 +1,47 @@
 "use client";
 
-import { useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from 'react';
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
-function ConfirmPageContent() {
+function ConfirmForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const email = searchParams.get("email");
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Efeito para verificar o email e redirecionar se necessário
+  useEffect(() => {
+    if (!email) {
+      console.log('Email não encontrado nos parâmetros');
+      toast({
+        title: "Erro",
+        description: "Email não fornecido. Por favor, faça o registro novamente.",
+        variant: "destructive",
+      });
+      router.replace('/auth/login');
+      return;
+    }
+    console.log('Email encontrado:', email);
+  }, [email, router, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
     try {
       const response = await fetch("/api/auth/confirm", {
@@ -39,7 +63,7 @@ function ConfirmPageContent() {
           description: "Por favor, faça login para continuar.",
           duration: 5000,
         });
-        router.push("/auth/login");
+        router.replace("/auth/login");
       } else {
         setError(data.error || "Erro ao confirmar código");
         toast({
@@ -56,8 +80,15 @@ function ConfirmPageContent() {
         description: "Erro ao confirmar código",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  // Se não houver email, não renderiza o conteúdo
+  if (!email) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -65,7 +96,7 @@ function ConfirmPageContent() {
         <CardHeader>
           <CardTitle>Confirmar Email</CardTitle>
           <CardDescription>
-            Digite o código de confirmação enviado para seu email
+            Digite o código de confirmação enviado para {email}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -73,16 +104,17 @@ function ConfirmPageContent() {
             <div className="space-y-2">
               <Input
                 id="code"
-                placeholder="0/2d8b"
+                placeholder="Digite o código de confirmação"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
+                disabled={isLoading}
               />
               {error && (
                 <p className="text-sm text-destructive">{error}</p>
               )}
             </div>
-            <Button type="submit" className="w-full">
-              Confirmar
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Confirmando..." : "Confirmar"}
             </Button>
           </form>
         </CardContent>
@@ -94,7 +126,7 @@ function ConfirmPageContent() {
 export default function ConfirmPage() {
   return (
     <Suspense fallback={<div>Carregando...</div>}>
-      <ConfirmPageContent />
+      <ConfirmForm />
     </Suspense>
   );
 }

@@ -67,7 +67,7 @@ const CREDIT_LINE_COLORS: Record<string, string> = {
 };
 
 export default function DashboardPage() {
-  const { projects, isLoading, isError, mutate } = useProjects();
+  const { projects = [], isLoading, isError, mutate } = useProjects();
 
   if (isLoading) return <div>Carregando...</div>;
   if (isError) return <div>Erro ao carregar projetos</div>;
@@ -93,12 +93,12 @@ export default function DashboardPage() {
   // Prepare data for pie chart
   const statusData = Object.entries(STATUS_CONFIG).map(([status, config]) => ({
     name: config.label,
-    value: projects?.filter((p: Project) => p.status === status).length || 0,
+    value: projects.filter((p: Project) => p.status === status).length || 0,
     color: config.color
   })).filter(item => item.value > 0);
 
   // Calculate credit line data for bar chart
-  const creditLineData = projects?.reduce((acc: { [key: string]: number }, project: Project) => {
+  const creditLineData = projects.reduce((acc: { [key: string]: number }, project: Project) => {
     const creditLine = project.creditLine?.toLowerCase() || 'outros';
     acc[creditLine] = (acc[creditLine] || 0) + 1;
     return acc;
@@ -244,7 +244,7 @@ export default function DashboardPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {projects?.slice(0, 5).map((project) => (
+              {projects.slice(0, 5).map((project) => (
                 <TableRow key={project.id}>
                   <TableCell className="font-medium">{project.clientName}</TableCell>
                   <TableCell>{project.creditLine}</TableCell>

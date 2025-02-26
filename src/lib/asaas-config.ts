@@ -8,7 +8,9 @@ const apiBaseUrl = process.env.ASAAS_API_URL || (
 // Formata a chave da API adicionando o prefixo $ se necessário
 const formatApiKey = (key?: string) => {
   if (!key) return undefined;
-  return key.startsWith('$') ? key : `$${key}`;
+  // Sempre remove o $ do início (caso exista) e adiciona novamente
+  const cleanKey = key.startsWith('$') ? key.slice(1) : key;
+  return `$${cleanKey}`;
 };
 
 // Remove caracteres não numéricos
@@ -26,12 +28,16 @@ const asaasConfig = {
 
 // Validação e retorno da configuração
 export function validateAsaasConfig() {
-  if (!process.env.ASAAS_API_KEY) {
+  const formattedKey = formatApiKey(process.env.ASAAS_API_KEY);
+  if (!formattedKey) {
     throw new Error(
       'ASAAS_API_KEY é obrigatória. Crie uma conta no ambiente sandbox (https://sandbox.asaas.com) e configure a chave de API.'
     );
   }
-  return asaasConfig;
+  return {
+    ...asaasConfig,
+    API_KEY: formattedKey
+  };
 }
 
 export interface AsaasCustomer {
@@ -108,6 +114,32 @@ export async function createAsaasCustomer(data: {
   return responseData;
 }
 
+// Função auxiliar para traduzir erros do Asaas
+function translateAsaasError(error: any): string {
+  if (!error || !error.errors || !error.errors.length) {
+    return 'Erro desconhecido ao processar o pagamento.';
+  }
+
+  const errorMap: { [key: string]: string } = {
+    'invalid_creditCard': 'Cartão de crédito inválido.',
+    'expired_creditCard': 'Cartão de crédito vencido.',
+    'invalid_creditCardNumber': 'Número do cartão de crédito inválido.',
+    'invalid_creditCardHolderName': 'Nome do titular do cartão inválido.',
+    'invalid_creditCardExpiryMonth': 'Mês de validade do cartão inválido.',
+    'invalid_creditCardExpiryYear': 'Ano de validade do cartão inválido.',
+    'invalid_creditCardCcv': 'Código de segurança do cartão inválido.',
+    'invalid_creditCardHolderInfo': 'Informações do titular do cartão inválidas.',
+    'invalid_creditCardHolderPhone': 'Telefone do titular do cartão inválido.',
+    'invalid_creditCardHolderEmail': 'E-mail do titular do cartão inválido.',
+    'invalid_creditCardHolderCpfCnpj': 'CPF/CNPJ do titular do cartão inválido.',
+    'invalid_creditCardHolderPostalCode': 'CEP do titular do cartão inválido.',
+    'invalid_creditCardHolderAddressNumber': 'Número do endereço do titular do cartão inválido.',
+  };
+
+  const firstError = error.errors[0];
+  return errorMap[firstError.code] || firstError.description || 'Erro ao processar o pagamento.';
+}
+
 export async function createAsaasSubscription(data: {
   customer: string;
   value: number;
@@ -125,27 +157,34 @@ export async function createAsaasSubscription(data: {
     cpfCnpj: string;
     postalCode: string;
     addressNumber: string;
-    phone?: string; 
+    phone: string;
   };
   remoteIp: string;
 }): Promise<AsaasSubscription> {
   const config = validateAsaasConfig();
 
+  // Calcular próxima data de vencimento (1 mês a partir de hoje)
+  const nextDueDate = new Date();
+  nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+
+  // Garantir que sempre tenhamos um número de telefone válido
+  const phone = data.creditCardHolderInfo.phone 
+    ? removeNonNumeric(data.creditCardHolderInfo.phone)
+    : '11999999999'; // Número padrão caso não seja fornecido
+  
   const requestData = {
     customer: data.customer,
-    billingType: 'CREDIT_CARD' as const,
+    billingType: 'CREDIT_CARD',
     value: data.value,
-    nextDueDate: data.nextDueDate,
-    cycle: 'MONTHLY' as const,
+    nextDueDate: nextDueDate.toISOString().split('T')[0], // Formato YYYY-MM-DD
+    cycle: 'MONTHLY',
     description: 'Assinatura Rural Credit App',
     creditCard: {
       holderName: data.creditCard.holderName,
-      number: removeNonNumeric(data.creditCard.number),
+      number: data.creditCard.number,
       expiryMonth: data.creditCard.expiryMonth,
-      expiryYear: data.creditCard.expiryYear.length === 2 
-        ? `20${data.creditCard.expiryYear}` 
-        : data.creditCard.expiryYear,
-      ccv: data.creditCard.ccv
+      expiryYear: data.creditCard.expiryYear,
+      ccv: data.creditCard.ccv,
     },
     creditCardHolderInfo: {
       name: data.creditCardHolderInfo.name,
@@ -153,7 +192,7 @@ export async function createAsaasSubscription(data: {
       cpfCnpj: removeNonNumeric(data.creditCardHolderInfo.cpfCnpj),
       postalCode: removeNonNumeric(data.creditCardHolderInfo.postalCode),
       addressNumber: data.creditCardHolderInfo.addressNumber,
-      phone: data.creditCardHolderInfo.phone || '11999999999' 
+      phone: phone,
     },
     remoteIp: data.remoteIp
   };
@@ -169,36 +208,12 @@ export async function createAsaasSubscription(data: {
     body: JSON.stringify(requestData)
   });
 
-  // Log da resposta bruta para debug
-  const responseText = await response.text();
-  console.log('Resposta bruta do Asaas:', {
-    status: response.status,
-    statusText: response.statusText,
-    body: responseText
-  });
-
-  // Tenta fazer o parse do JSON apenas se houver conteúdo
-  let responseData;
-  try {
-    responseData = responseText ? JSON.parse(responseText) : null;
-  } catch (error) {
-    console.error('Erro ao fazer parse da resposta:', error);
-    throw new Error(`Falha ao processar resposta do Asaas. Status: ${response.status}, Resposta: ${responseText}`);
-  }
+  const responseData = await response.json();
 
   if (!response.ok) {
-    console.error('Erro ao criar assinatura:', {
-      status: response.status,
-      statusText: response.statusText,
-      error: responseData
-    });
-    throw new Error(`Falha ao criar assinatura no Asaas: ${JSON.stringify(responseData || 'Sem resposta')}`);
+    console.error('Erro ao criar assinatura:', responseData);
+    throw new Error(translateAsaasError(responseData));
   }
 
-  if (!responseData) {
-    throw new Error('Resposta vazia do Asaas');
-  }
-
-  console.log('Assinatura criada com sucesso:', responseData);
   return responseData;
 }

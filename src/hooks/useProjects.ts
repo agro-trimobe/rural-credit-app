@@ -8,7 +8,7 @@ export function useProjects() {
   );
 
   return {
-    projects: data,
+    projects: data || [], // Garantir que sempre retorne um array
     isLoading: !error && !data,
     isError: error,
     mutate,

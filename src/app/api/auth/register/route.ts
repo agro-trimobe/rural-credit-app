@@ -57,7 +57,12 @@ export async function POST(request: Request) {
     // 2. Criar tenant e usuário no DynamoDB
     await createTenantAndUser(cognitoId, email, name);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ 
+      success: true,
+      requiresConfirmation: true,
+      email: email,
+      message: 'Usuário registrado com sucesso. Por favor, confirme seu email.'
+    });
   } catch (error: any) {
     console.error("Erro no registro:", error);
     
