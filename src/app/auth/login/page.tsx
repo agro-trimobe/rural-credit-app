@@ -99,7 +99,9 @@ export default function LoginPage() {
             variant: "destructive",
           });
         } else if (result?.ok) {
-          router.push("/dashboard");
+          console.log("Login bem-sucedido, redirecionando para dashboard...");
+          // Forçar redirecionamento com replace para evitar problemas de histórico
+          window.location.href = "/dashboard";
         }
       } else {
         const response = await fetch("/api/auth/register", {

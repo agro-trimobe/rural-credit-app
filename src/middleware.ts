@@ -13,6 +13,8 @@ const PUBLIC_PATHS = [
   '/auth/confirm',
   '/_next',
   '/favicon.ico',
+  // Adicionar redirecionamento inicial para o dashboard como público
+  '/dashboard',
 ];
 
 export async function middleware(request: NextRequest) {

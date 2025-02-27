@@ -238,8 +238,8 @@ const handler = NextAuth({
     maxAge: 30 * 24 * 60 * 60, // 30 dias
   },
   pages: {
-    signIn: '/login',
-    error: '/login',
+    signIn: '/auth/login',
+    error: '/auth/login',
   },
   // Configuração de cookies para garantir compatibilidade entre ambientes
   cookies: {
@@ -249,7 +249,16 @@ const handler = NextAuth({
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        secure: true, // Sempre usar conexão segura em produção
+      },
+    },
+    callbackUrl: {
+      name: `next-auth.callback-url`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true,
       },
     },
   },
