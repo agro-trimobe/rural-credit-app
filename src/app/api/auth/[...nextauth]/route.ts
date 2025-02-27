@@ -134,7 +134,8 @@ const handler = NextAuth({
     signIn: "/auth/login",
     error: "/auth/login",
   },
-  debug: process.env.NODE_ENV !== 'production',
+  // Configuração de debug para NextAuth
+  debug: process.env.NODE_ENV === "development",
   logger: {
     error(code, metadata) {
       console.error('NextAuth Error:', { code, metadata });

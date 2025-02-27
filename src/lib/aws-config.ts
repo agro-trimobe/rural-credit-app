@@ -30,10 +30,7 @@ const awsConfig = {
   credentials: {
     accessKeyId: process.env.ACCESS_KEY_ID_AWS || "",
     secretAccessKey: process.env.SECRET_ACCESS_KEY_AWS || ""
-  },
-  // Adicionar configurações para melhorar desempenho em ambiente serverless
-  maxAttempts: 3,
-  retryMode: "standard"
+  }
 };
 
 // Inicializar clientes com configuração otimizada

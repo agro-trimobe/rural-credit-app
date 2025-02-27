@@ -29,8 +29,6 @@ export async function middleware(request: NextRequest) {
   try {
     const token = await getToken({ 
       req: request,
-      // Adicionar logs para depuração
-      debug: process.env.NODE_ENV !== 'production',
     });
     console.log('Token do usuário:', token ? 'Presente' : 'Ausente');
 
