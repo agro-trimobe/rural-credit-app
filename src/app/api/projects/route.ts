@@ -64,8 +64,14 @@ export async function GET() {
     // Log dos dados brutos para debug
     console.log('Dados do DynamoDB:', JSON.stringify(result.Items, null, 2));
 
+    // Verificar se Items existe e é um array
+    if (!result.Items || !Array.isArray(result.Items)) {
+      console.log('Nenhum projeto encontrado ou resultado inválido');
+      return NextResponse.json([]);
+    }
+
     // Buscar os nomes dos clientes
-    const projects = await Promise.all(result.Items?.map(async item => {
+    const projects = await Promise.all(result.Items.map(async item => {
       // Log de cada item para debug
       console.log('Item do DynamoDB:', item);
 
@@ -80,20 +86,20 @@ export async function GET() {
         clientId: item.clientId,
         clientName: clientName || 'Cliente não encontrado',
         document: item.document,
-        phone: item.phone,
-        email: item.email,
-        projectName: item.projectName || item.propertyName,
-        purpose: item.purpose,
-        amount: typeof item.amount === 'number' ? item.amount : parseBrazilianCurrency(item.amount),
-        creditLine: item.creditLine,
-        propertyName: item.propertyName,
-        area: typeof item.area === 'string' ? parseFloat(item.area) : item.area,
+        phone: item.phone || 'N/A',
+        email: item.email || 'N/A',
+        projectName: item.projectName || item.propertyName || 'Sem nome',
+        purpose: item.purpose || 'N/A',
+        amount: typeof item.amount === 'number' ? item.amount : parseBrazilianCurrency(item.amount || '0'),
+        creditLine: item.creditLine || 'Outros',
+        propertyName: item.propertyName || 'N/A',
+        area: typeof item.area === 'string' ? parseFloat(item.area || '0') : (item.area || 0),
         location: item.location || 'N/A',
-        status: item.status,
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt
+        status: item.status || 'em_andamento',
+        createdAt: item.createdAt || new Date().toISOString(),
+        updatedAt: item.updatedAt || new Date().toISOString()
       };
-    }) || []);
+    }));
 
     // Log dos projetos mapeados para debug
     console.log('Projetos mapeados:', JSON.stringify(projects, null, 2));

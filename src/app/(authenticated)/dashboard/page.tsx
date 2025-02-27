@@ -51,23 +51,21 @@ const STATUS_CONFIG = {
   'em_analise': { label: 'Em Análise', color: 'hsl(var(--chart-5))' }
 };
 
+// Definir cores para as linhas de crédito
 const CREDIT_LINE_COLORS: Record<string, string> = {
   'pronaf': 'hsl(var(--chart-1))',
   'pronamp': 'hsl(var(--chart-2))',
-  'moderfrota': 'hsl(var(--chart-3))',
-  'pca': 'hsl(var(--chart-4))',
-  'inovagro': 'hsl(var(--chart-5))',
-  'moderinfra': 'hsl(200, 70%, 50%)',
-  'prodecoop': 'hsl(150, 70%, 50%)',
-  'abc': 'hsl(100, 70%, 50%)',
-  'proirriga': 'hsl(250, 70%, 50%)',
-  'pronara': 'hsl(300, 70%, 50%)',
-  'finame': 'hsl(50, 70%, 50%)',
-  'outros': 'hsl(0, 0%, 60%)'
+  'inovagro': 'hsl(var(--chart-3))',
+  'moderfrota': 'hsl(var(--chart-4))',
+  'moderagro': 'hsl(var(--chart-5))',
+  'outros': 'hsl(var(--chart-6))'
 };
 
 export default function DashboardPage() {
   const { projects = [], isLoading, isError, mutate } = useProjects();
+
+  // Garantir que projects seja sempre um array
+  const projectsArray = Array.isArray(projects) ? projects : [];
 
   if (isLoading) return <div>Carregando...</div>;
   if (isError) return <div>Erro ao carregar projetos</div>;
@@ -93,12 +91,12 @@ export default function DashboardPage() {
   // Prepare data for pie chart
   const statusData = Object.entries(STATUS_CONFIG).map(([status, config]) => ({
     name: config.label,
-    value: projects.filter((p: Project) => p.status === status).length || 0,
+    value: projectsArray.filter((p: Project) => p.status === status).length || 0,
     color: config.color
   })).filter(item => item.value > 0);
 
   // Calculate credit line data for bar chart
-  const creditLineData = projects.reduce((acc: { [key: string]: number }, project: Project) => {
+  const creditLineData = projectsArray.reduce((acc: { [key: string]: number }, project: Project) => {
     const creditLine = project.creditLine?.toLowerCase() || 'outros';
     acc[creditLine] = (acc[creditLine] || 0) + 1;
     return acc;
@@ -244,7 +242,7 @@ export default function DashboardPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {projects.slice(0, 5).map((project) => (
+              {projectsArray.slice(0, 5).map((project) => (
                 <TableRow key={project.id}>
                   <TableCell className="font-medium">{project.clientName}</TableCell>
                   <TableCell>{project.creditLine}</TableCell>
