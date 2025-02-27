@@ -1,4 +1,4 @@
-import { UpdateCommand, ScanCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { dynamodb } from './aws-config';
 
 export type SubscriptionStatus = 
@@ -8,78 +8,6 @@ export type SubscriptionStatus =
   | 'EXPIRED' 
   | 'OVERDUE' 
   | 'CANCELED';
-
-export async function updateUserSubscriptionStatus(
-  subscriptionId: string,
-  status: SubscriptionStatus,
-  expiresAt?: string
-) {
-  try {
-    console.log(`Iniciando atualização de status da assinatura ${subscriptionId} para ${status}`);
-    
-    // Buscar usuário usando scan para encontrar o usuário com o asaasSubscriptionId
-    const result = await dynamodb.send(new ScanCommand({
-      TableName: 'Users',
-      FilterExpression: '#sub.#id = :subscriptionId',
-      ExpressionAttributeNames: {
-        '#sub': 'subscription',
-        '#id': 'asaasSubscriptionId'
-      },
-      ExpressionAttributeValues: {
-        ':subscriptionId': subscriptionId,
-      },
-    }));
-
-    console.log('Resultado da busca:', JSON.stringify(result, null, 2));
-
-    const user = result.Items?.[0];
-    if (!user) {
-      console.log(`Nenhum usuário encontrado com asaasSubscriptionId: ${subscriptionId}`);
-      throw new Error(`Usuário não encontrado para a assinatura ${subscriptionId}`);
-    }
-
-    console.log(`Usuário encontrado - Tenant: ${user.tenantId}, CognitoId: ${user.cognitoId}`);
-
-    // Atualizar status da assinatura
-    const updateParams = {
-      TableName: 'Users',
-      Key: {
-        PK: `TENANT#${user.tenantId}`,
-        SK: `USER#${user.cognitoId}`,
-      },
-      UpdateExpression: 'SET #sub.#status = :status, #sub.#updatedAt = :updatedAt, #sub.#endsAt = :expiresAt',
-      ExpressionAttributeNames: {
-        '#sub': 'subscription',
-        '#status': 'status',
-        '#updatedAt': 'updatedAt',
-        '#endsAt': 'subscriptionEndsAt'
-      },
-      ExpressionAttributeValues: {
-        ':status': status.toUpperCase(),
-        ':updatedAt': new Date().toISOString(),
-        ':expiresAt': expiresAt ? new Date(expiresAt).toISOString() : null,
-      },
-    };
-
-    console.log('Parâmetros de atualização:', JSON.stringify(updateParams, null, 2));
-    
-    await dynamodb.send(new UpdateCommand(updateParams));
-
-    console.log(`Assinatura atualizada com sucesso - Status: ${status}, ExpiresAt: ${expiresAt || 'null'}`);
-    console.log(`Detalhes do usuário - Tenant: ${user.tenantId}, CognitoId: ${user.cognitoId}`);
-  } catch (error) {
-    const err = error as Error;
-    console.error('Erro ao atualizar status da assinatura:', err);
-    console.error('Detalhes do erro:', {
-      subscriptionId,
-      status,
-      expiresAt,
-      errorMessage: err.message,
-      errorStack: err.stack
-    });
-    throw err;
-  }
-}
 
 export async function checkSubscriptionAccess(tenantId: string, cognitoId: string): Promise<{
   hasAccess: boolean;

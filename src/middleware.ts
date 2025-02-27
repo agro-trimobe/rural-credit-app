@@ -6,7 +6,6 @@ import { checkSubscriptionAccess } from './lib/subscription-service';
 // Páginas que não precisam de verificação de assinatura
 const PUBLIC_PATHS = [
   '/api/auth',
-  '/api/webhooks',
   '/api/subscription',
   '/subscription',
   '/auth/login',
@@ -46,6 +45,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api/auth|api/webhooks|api/subscription|subscription|auth/login|auth/register|auth/confirm|_next|favicon.ico).*)",
+    "/((?!api/auth|api/subscription|subscription|auth/login|auth/register|auth/confirm|_next|favicon.ico).*)",
   ],
 };

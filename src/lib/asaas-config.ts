@@ -24,6 +24,8 @@ const asaasConfig = {
   API_KEY: formatApiKey(process.env.ASAAS_API_KEY),
   SUBSCRIPTION_VALUE: 47.90,
   TRIAL_PERIOD_DAYS: 7,
+  TRIAL_PERIOD_MONTHS: 0, // Período de teste em meses (0 = sem período de teste em meses)
+  SUBSCRIPTION_PERIOD_MONTHS: 1, // Período padrão para próximo vencimento (1 mês)
 };
 
 // Validação e retorno da configuração
@@ -121,9 +123,9 @@ function translateAsaasError(error: any): string {
   }
 
   const errorMap: { [key: string]: string } = {
-    'invalid_creditCard': 'Cartão de crédito inválido.',
-    'expired_creditCard': 'Cartão de crédito vencido.',
-    'invalid_creditCardNumber': 'Número do cartão de crédito inválido.',
+    'invalid_creditCard': 'Dados do cartão de crédito inválidos. Verifique todas as informações.',
+    'expired_creditCard': 'Cartão de crédito vencido. Por favor, use um cartão válido.',
+    'invalid_creditCardNumber': 'Número do cartão de crédito inválido. Verifique os dígitos.',
     'invalid_creditCardHolderName': 'Nome do titular do cartão inválido.',
     'invalid_creditCardExpiryMonth': 'Mês de validade do cartão inválido.',
     'invalid_creditCardExpiryYear': 'Ano de validade do cartão inválido.',
@@ -137,7 +139,11 @@ function translateAsaasError(error: any): string {
   };
 
   const firstError = error.errors[0];
-  return errorMap[firstError.code] || firstError.description || 'Erro ao processar o pagamento.';
+  // Se temos uma tradução específica, usamos ela, senão usamos a descrição do erro
+  // Se não temos nem descrição, usamos uma mensagem genérica
+  return errorMap[firstError.code] || 
+         firstError.description || 
+         'Erro ao processar o pagamento. Verifique os dados do cartão.';
 }
 
 export async function createAsaasSubscription(data: {
@@ -172,6 +178,9 @@ export async function createAsaasSubscription(data: {
     ? removeNonNumeric(data.creditCardHolderInfo.phone)
     : '11999999999'; // Número padrão caso não seja fornecido
   
+  // Garantir que sempre tenhamos um número de endereço
+  const addressNumber = data.creditCardHolderInfo.addressNumber || '0';
+  
   const requestData = {
     customer: data.customer,
     billingType: 'CREDIT_CARD',
@@ -191,7 +200,7 @@ export async function createAsaasSubscription(data: {
       email: data.creditCardHolderInfo.email,
       cpfCnpj: removeNonNumeric(data.creditCardHolderInfo.cpfCnpj),
       postalCode: removeNonNumeric(data.creditCardHolderInfo.postalCode),
-      addressNumber: data.creditCardHolderInfo.addressNumber,
+      addressNumber: addressNumber,
       phone: phone,
     },
     remoteIp: data.remoteIp

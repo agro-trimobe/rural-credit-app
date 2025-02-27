@@ -49,27 +49,9 @@ ASAAS_API_KEY='sua_chave_sandbox_aqui'
 
 # Opcional - URL base da API (caso não definida, usa URL padrão do ambiente)
 ASAAS_API_URL=https://api-sandbox.asaas.com/v3
-
-# Opcional - Token para validação de webhooks
-ASAAS_WEBHOOK_TOKEN=seu_token_webhook_aqui
 ```
 
-### 3. Configurar Webhook (Opcional)
-1. No painel do sandbox, vá em "Configurações" > "Notificações"
-2. Adicione uma nova URL de webhook: `https://seu-dominio.com/api/webhooks/asaas`
-3. Gere um token de webhook
-4. Adicione o token ao `.env.local`:
-```
-ASAAS_WEBHOOK_TOKEN=seu_token_webhook_aqui
-```
-
-### 4. Testar Localmente
-Para testar webhooks em ambiente local:
-1. Instale o ngrok: `npm install -g ngrok`
-2. Execute: `ngrok http 3000`
-3. Use a URL gerada pelo ngrok + `/api/webhooks/asaas` no painel do Asaas
-
-### 5. Cartões de Teste
+### 3. Cartões de Teste
 - Aprovado: 5162306219378829
 - Recusado: 5162306219378828
 - Timeout: 5162306219378827

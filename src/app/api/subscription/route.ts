@@ -19,6 +19,47 @@ const dynamoDb = DynamoDBDocumentClient.from(new DynamoDBClient({
   },
 }));
 
+/**
+ * Adiciona meses a uma data, respeitando o último dia do mês
+ * @param date Data inicial
+ * @param months Número de meses a adicionar
+ * @returns Nova data com os meses adicionados
+ */
+function addMonths(date: Date, months: number): Date {
+  const result = new Date(date);
+  const currentMonth = result.getMonth();
+  const targetMonth = currentMonth + months;
+  
+  const daysInCurrentMonth = new Date(
+    result.getFullYear(),
+    currentMonth + 1,
+    0
+  ).getDate();
+  
+  const daysInTargetMonth = new Date(
+    result.getFullYear(),
+    targetMonth + 1,
+    0
+  ).getDate();
+  
+  const currentDay = result.getDate();
+  
+  // Se o dia atual é o último dia do mês atual, defina para o último dia do mês alvo
+  if (currentDay === daysInCurrentMonth) {
+    result.setMonth(targetMonth, daysInTargetMonth);
+  } 
+  // Se o dia atual é maior que o número de dias no mês alvo, ajuste para o último dia do mês alvo
+  else if (currentDay > daysInTargetMonth) {
+    result.setMonth(targetMonth, daysInTargetMonth);
+  } 
+  // Caso contrário, apenas ajuste o mês mantendo o mesmo dia
+  else {
+    result.setMonth(targetMonth);
+  }
+  
+  return result;
+}
+
 export async function GET(req: NextRequest) {
   try {
     const config = validateAsaasConfig();
@@ -36,8 +77,7 @@ export async function GET(req: NextRequest) {
     // Se não tiver dados de assinatura, cria com período de teste
     if (!user.subscription) {
       const now = new Date();
-      const trialEndsAt = new Date(now);
-      trialEndsAt.setDate(now.getDate() + config.TRIAL_PERIOD_DAYS);
+      const trialEndsAt = addMonths(now, config.TRIAL_PERIOD_MONTHS);
 
       const subscription = {
         createdAt: now.toISOString(),
@@ -65,9 +105,20 @@ export async function GET(req: NextRequest) {
     let status = user.subscription.status;
     const trialEndsAt = user.subscription.trialEndsAt;
     const subscriptionEndsAt = user.subscription.subscriptionEndsAt;
+    const nextBillingDate = user.subscription.nextBillingDate;
+
+    console.log('Verificando status da assinatura:', {
+      currentStatus: status,
+      currentDate: now.toISOString(),
+      trialEndsAt: trialEndsAt,
+      nextBillingDate: nextBillingDate,
+      subscriptionEndsAt: subscriptionEndsAt
+    });
 
     if (status === 'TRIAL' && trialEndsAt && new Date(trialEndsAt) <= now) {
       status = 'TRIAL_EXPIRED';
+      console.log('Período de teste expirado, atualizando status para:', status);
+      
       await dynamoDb.send(new UpdateCommand({
         TableName: 'Users',
         Key: {
@@ -84,6 +135,8 @@ export async function GET(req: NextRequest) {
       }));
     } else if (status === 'ACTIVE' && subscriptionEndsAt && new Date(subscriptionEndsAt) <= now) {
       status = 'EXPIRED';
+      console.log('Assinatura expirada, atualizando status para:', status);
+      
       await dynamoDb.send(new UpdateCommand({
         TableName: 'Users',
         Key: {
@@ -125,20 +178,23 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { 
-      name, 
-      email, 
-      cpf, 
-      cardNumber, 
-      cardExpiry, 
-      cardCvc, 
-      postalCode, 
-      addressNumber,
-      phone, 
-    } = body;
+    
+    // Extrair dados do formato aninhado
+    const creditCard = body.creditCard || {};
+    const creditCardHolderInfo = body.creditCardHolderInfo || {};
+    
+    const name = creditCardHolderInfo.name;
+    const email = creditCardHolderInfo.email;
+    const cpf = creditCardHolderInfo.cpfCnpj;
+    const cardNumber = creditCard.number;
+    const cardExpiry = `${creditCard.expiryMonth}/${creditCard.expiryYear}`;
+    const cardCvc = creditCard.ccv;
+    const postalCode = creditCardHolderInfo.postalCode;
+    const addressNumber = creditCardHolderInfo.addressNumber || '0';
+    const phone = creditCardHolderInfo.phone;
 
     // Validar campos obrigatórios
-    if (!name || !email || !cpf || !cardNumber || !cardExpiry || !cardCvc || !postalCode || !addressNumber || !phone) {
+    if (!name || !email || !cpf || !cardNumber || !cardExpiry || !cardCvc || !postalCode || !phone) {
       return NextResponse.json(
         { error: 'Por favor, preencha todos os campos obrigatórios.' },
         { status: 400 }
@@ -237,7 +293,7 @@ export async function POST(req: NextRequest) {
     const subscriptionData = {
       customer: customer.id,
       value: config.SUBSCRIPTION_VALUE,
-      nextDueDate: new Date().toISOString().split('T')[0],
+      nextDueDate: addMonths(new Date(), config.SUBSCRIPTION_PERIOD_MONTHS).toISOString().split('T')[0],
       creditCard: {
         holderName: name,
         number: cardNumber,
@@ -264,6 +320,16 @@ export async function POST(req: NextRequest) {
       status: subscription.status
     });
 
+    // Calcular a data real de término da assinatura (1 mês após o próximo vencimento)
+    const nextDueDate = new Date(subscription.nextDueDate);
+    const subscriptionEndsAt = addMonths(nextDueDate, 1);
+    
+    console.log('Datas da assinatura:', {
+      nextDueDate: subscription.nextDueDate,
+      nextDueDateObj: nextDueDate.toISOString(),
+      subscriptionEndsAt: subscriptionEndsAt.toISOString().split('T')[0]
+    });
+
     // Atualiza dados da assinatura no DynamoDB
     console.log('Atualizando dados da assinatura no DynamoDB...');
 
@@ -280,7 +346,8 @@ export async function POST(req: NextRequest) {
           asaasCustomerId: customer.id,
           asaasSubscriptionId: subscription.id,
           createdAt: new Date().toISOString(),
-          subscriptionEndsAt: subscription.nextDueDate,
+          nextBillingDate: subscription.nextDueDate,
+          subscriptionEndsAt: subscriptionEndsAt.toISOString().split('T')[0],
         },
       },
     }));
@@ -290,8 +357,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Erro ao criar assinatura:', error);
+    
+    // Determinar o código de status apropriado
+    let statusCode = 500;
+    let errorMessage = error instanceof Error ? error.message : 'Erro ao processar assinatura';
+    
+    // Se o erro contém a palavra "cartão", provavelmente é um erro de validação do cartão
+    if (errorMessage.toLowerCase().includes('cartão') || 
+        errorMessage.toLowerCase().includes('cpf') || 
+        errorMessage.toLowerCase().includes('cep') || 
+        errorMessage.toLowerCase().includes('endereço')) {
+      statusCode = 400; // Bad Request para erros de validação
+    }
+    
     return NextResponse.json({ 
-      error: error instanceof Error ? error.message : 'Erro ao processar assinatura' 
-    }, { status: 500 });
+      message: errorMessage
+    }, { status: statusCode });
   }
 }
