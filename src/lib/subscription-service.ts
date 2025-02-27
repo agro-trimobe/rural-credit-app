@@ -52,21 +52,50 @@ export async function checkSubscriptionAccess(tenantId: string, cognitoId: strin
 
       const subscription = user.subscription;
       if (!subscription) {
+        console.log('Nenhuma assinatura encontrada para o usuário');
         return { hasAccess: false, message: 'Nenhuma assinatura encontrada' };
       }
 
+      console.log('Dados completos da assinatura:', JSON.stringify(subscription, null, 2));
       console.log('Status da assinatura:', subscription.status);
-      console.log('Data de expiração do trial:', subscription.trialEndsAt);
-      console.log('Data de expiração da assinatura:', subscription.subscriptionEndsAt);
+      console.log('Data de expiração do trial (raw):', subscription.trialEndsAt);
+      console.log('Data de expiração da assinatura (raw):', subscription.subscriptionEndsAt);
 
       const now = new Date();
+      console.log('Data atual (UTC):', now.toISOString());
 
       // Se estiver em período de trial
       if (subscription.status === 'TRIAL' && subscription.trialEndsAt) {
-        const trialEndsAt = new Date(subscription.trialEndsAt);
+        let trialEndsAt: Date;
+        
+        try {
+          // Garantir que a data seja tratada corretamente
+          trialEndsAt = new Date(subscription.trialEndsAt);
+          console.log('Data de expiração do trial (parsed):', trialEndsAt.toISOString());
+          console.log('Trial expirado?', trialEndsAt <= now ? 'SIM' : 'NÃO');
+          
+          // Verificar se a data é válida
+          if (isNaN(trialEndsAt.getTime())) {
+            console.error('Data de expiração do trial inválida:', subscription.trialEndsAt);
+            return { 
+              hasAccess: false, 
+              message: 'Erro ao verificar período de teste. Entre em contato com o suporte.' 
+            };
+          }
+        } catch (error) {
+          console.error('Erro ao processar data de expiração do trial:', error);
+          return { 
+            hasAccess: false, 
+            message: 'Erro ao verificar período de teste. Entre em contato com o suporte.' 
+          };
+        }
+        
         if (trialEndsAt > now) {
+          console.log('Usuário com trial válido, permitindo acesso');
           return { hasAccess: true };
         }
+        
+        console.log('Trial expirado, negando acesso');
         return { 
           hasAccess: false, 
           message: 'Seu período de teste expirou. Por favor, assine para continuar.' 
@@ -75,16 +104,39 @@ export async function checkSubscriptionAccess(tenantId: string, cognitoId: strin
 
       // Se a assinatura estiver ativa
       if (subscription.status === 'ACTIVE' && subscription.subscriptionEndsAt) {
-        const subscriptionEndsAt = new Date(subscription.subscriptionEndsAt);
-        console.log('Comparando datas da assinatura:');
-        console.log('- Data atual:', now.toISOString());
-        console.log('- Data de expiração:', subscriptionEndsAt.toISOString());
+        let subscriptionEndsAt: Date;
+        
+        try {
+          // Garantir que a data seja tratada corretamente
+          subscriptionEndsAt = new Date(subscription.subscriptionEndsAt);
+          console.log('Data de expiração da assinatura (parsed):', subscriptionEndsAt.toISOString());
+          console.log('Assinatura expirada?', subscriptionEndsAt <= now ? 'SIM' : 'NÃO');
+          
+          // Verificar se a data é válida
+          if (isNaN(subscriptionEndsAt.getTime())) {
+            console.error('Data de expiração da assinatura inválida:', subscription.subscriptionEndsAt);
+            return { 
+              hasAccess: false, 
+              message: 'Erro ao verificar assinatura. Entre em contato com o suporte.' 
+            };
+          }
+        } catch (error) {
+          console.error('Erro ao processar data de expiração da assinatura:', error);
+          return { 
+            hasAccess: false, 
+            message: 'Erro ao verificar assinatura. Entre em contato com o suporte.' 
+          };
+        }
 
         if (subscriptionEndsAt > now) {
+          console.log('Usuário com assinatura ativa, permitindo acesso');
           return { hasAccess: true };
         }
+        
+        console.log('Assinatura expirada, negando acesso');
       }
 
+      console.log('Nenhuma condição de acesso válida encontrada, negando acesso');
       return { 
         hasAccess: false, 
         message: 'Sua assinatura expirou. Por favor, renove para continuar.' 

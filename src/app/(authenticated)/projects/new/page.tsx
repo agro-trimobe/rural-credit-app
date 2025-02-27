@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -55,6 +55,24 @@ export default function NewProjectPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Verificar autenticação
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // Fazer uma chamada simples para a API para verificar a autenticação
+        await apiClient.projects.list();
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Erro ao verificar autenticação:', error);
+        // Redirecionar para login se não estiver autenticado
+        router.push('/auth/login');
+      }
+    };
+
+    checkAuth();
+  }, [router]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -121,6 +139,10 @@ export default function NewProjectPage() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (isLoading) {
+    return <div>Carregando...</div>
   }
 
   return (

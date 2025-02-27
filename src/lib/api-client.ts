@@ -1,12 +1,32 @@
 import axios from 'axios';
 
-export const api = axios.create({
+// Interceptor para tratar erros de autenticação
+const api = axios.create({
   baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
   },
   withCredentials: true
 });
+
+// Adicionar interceptor para tratar erros de autenticação
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Se o erro for 401 (não autorizado), redirecionar para a página de login
+    if (error.response && error.response.status === 401) {
+      console.error('Erro de autenticação detectado:', error.response.data);
+      
+      // Em ambiente de navegador, redirecionar para login
+      if (typeof window !== 'undefined') {
+        window.location.href = '/auth/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+export { api };
 
 export const apiClient = {
   projects: {

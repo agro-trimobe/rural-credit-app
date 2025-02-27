@@ -13,8 +13,8 @@ const PUBLIC_PATHS = [
   '/auth/confirm',
   '/_next',
   '/favicon.ico',
-  // Adicionar redirecionamento inicial para o dashboard como público
-  '/dashboard',
+  // Adicionar rota de criação de projetos como pública para evitar deslogamento
+  '/projects/new',
 ];
 
 export async function middleware(request: NextRequest) {
@@ -49,16 +49,46 @@ export async function middleware(request: NextRequest) {
     }
 
   // Verificar status da assinatura
-  const { hasAccess, message } = await checkSubscriptionAccess(token.tenantId, token.cognitoId);
-  console.log('Status da assinatura:', { hasAccess, message });
+  try {
+    console.log('Verificando status da assinatura para tenantId:', token.tenantId, 'cognitoId:', token.cognitoId);
+    const { hasAccess, message } = await checkSubscriptionAccess(token.tenantId, token.cognitoId);
+    console.log('Status da assinatura:', { hasAccess, message });
 
-  if (!hasAccess) {
-    console.log('Acesso negado, redirecionando para página de assinatura');
-    return NextResponse.redirect(new URL('/subscription', request.url));
+    if (!hasAccess) {
+      console.log('Acesso negado, redirecionando para página de assinatura');
+      // Forçar o redirecionamento com cache-control para evitar problemas de cache
+      const response = NextResponse.redirect(new URL('/subscription', request.url));
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      response.headers.set('Pragma', 'no-cache');
+      response.headers.set('Expires', '0');
+      return response;
+    }
+
+    console.log('Acesso permitido para usuário autenticado');
+    return NextResponse.next();
+  } catch (error: unknown) {
+    console.error('Erro ao verificar status da assinatura:', error);
+    
+    // Tratamento seguro para o erro com verificação de tipo
+    const errorDetails: Record<string, unknown> = {};
+    
+    if (error && typeof error === 'object') {
+      if ('name' in error && error.name) {
+        errorDetails.name = error.name;
+      }
+      
+      if ('message' in error && error.message) {
+        errorDetails.message = error.message;
+      }
+      
+      if ('stack' in error && error.stack) {
+        errorDetails.stack = error.stack;
+      }
+    }
+    
+    console.error('Detalhes do erro:', errorDetails);
+    return NextResponse.redirect(new URL('/auth/login', request.url));
   }
-
-  console.log('Acesso permitido para usuário autenticado');
-  return NextResponse.next();
   } catch (error: unknown) {
     console.error('Erro no middleware:', error);
     
@@ -86,6 +116,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api/auth|api/subscription|subscription|auth/login|auth/register|auth/confirm|_next|favicon.ico).*)",
+    "/((?!api/auth|api/subscription|subscription|auth/login|auth/register|auth/confirm|_next|favicon.ico|projects/new).*)",
   ],
 };

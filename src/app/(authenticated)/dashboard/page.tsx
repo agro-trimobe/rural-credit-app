@@ -42,6 +42,8 @@ import { toast } from '@/hooks/use-toast'
 import { apiClient } from '@/lib/api-client'
 import { ProjectStatus } from '@/components/project-status'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Legend, Tooltip } from 'recharts'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 const STATUS_CONFIG = {
   'em_andamento': { label: 'Em Andamento', color: 'hsl(var(--chart-1))' },
@@ -63,6 +65,22 @@ const CREDIT_LINE_COLORS: Record<string, string> = {
 
 export default function DashboardPage() {
   const { projects = [], isLoading, isError, mutate } = useProjects();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Verificar assinatura através de uma chamada à API
+    const checkSubscription = async () => {
+      try {
+        // Tentar fazer uma chamada à API para verificar se o usuário tem acesso
+        await apiClient.projects.list();
+      } catch (error) {
+        console.error('Erro ao verificar assinatura:', error);
+        // Se houver erro 401 ou outro erro, o interceptor do axios já redirecionará
+      }
+    };
+
+    checkSubscription();
+  }, [router]);
 
   // Garantir que projects seja sempre um array
   const projectsArray = Array.isArray(projects) ? projects : [];
