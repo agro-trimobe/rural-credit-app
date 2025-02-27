@@ -55,8 +55,29 @@ export async function middleware(request: NextRequest) {
     console.log('Status da assinatura:', { hasAccess, message });
 
     if (!hasAccess) {
-      console.log('Acesso negado, redirecionando para página de assinatura');
-      // Forçar o redirecionamento com cache-control para evitar problemas de cache
+      console.log('Acesso negado, retornando status 403');
+      
+      // Para requisições de API, retornar 403 para que o interceptor do cliente redirecione
+      if (request.nextUrl.pathname.startsWith('/api/') && !request.nextUrl.pathname.startsWith('/api/auth')) {
+        const response = new NextResponse(
+          JSON.stringify({ 
+            error: 'Acesso negado', 
+            message: message || 'Sua assinatura expirou. Por favor, renove para continuar.' 
+          }),
+          { 
+            status: 403,
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0'
+            }
+          }
+        );
+        return response;
+      }
+      
+      // Para páginas normais, redirecionar para a página de assinatura
       const response = NextResponse.redirect(new URL('/subscription', request.url));
       response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       response.headers.set('Pragma', 'no-cache');

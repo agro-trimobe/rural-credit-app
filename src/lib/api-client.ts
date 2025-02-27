@@ -22,6 +22,17 @@ api.interceptors.response.use(
         window.location.href = '/auth/login';
       }
     }
+    
+    // Se o erro for 403 (acesso negado), redirecionar para a página de assinatura
+    if (error.response && error.response.status === 403) {
+      console.error('Erro de assinatura detectado:', error.response.data);
+      
+      // Em ambiente de navegador, redirecionar para página de assinatura
+      if (typeof window !== 'undefined') {
+        window.location.href = '/subscription';
+      }
+    }
+    
     return Promise.reject(error);
   }
 );
