@@ -16,31 +16,44 @@ const PUBLIC_PATHS = [
 ];
 
 export async function middleware(request: NextRequest) {
+  // Adicionar logs para depuração em produção
+  console.log('Middleware executando para URL:', request.nextUrl.pathname);
+
   // Verificar se é uma página pública
   if (PUBLIC_PATHS.some(path => request.nextUrl.pathname.startsWith(path))) {
+    console.log('Rota pública detectada, permitindo acesso');
     return NextResponse.next();
   }
 
   // Verificar autenticação
-  const token = await getToken({ req: request });
-  console.log('Token do usuário:', token);
+  try {
+    const token = await getToken({ 
+      req: request,
+      // Adicionar logs para depuração
+      debug: process.env.NODE_ENV !== 'production',
+    });
+    console.log('Token do usuário:', token ? 'Presente' : 'Ausente');
 
-  if (!token?.tenantId || !token?.cognitoId) {
-    return NextResponse.redirect(new URL('/auth/login', request.url));
-  }
+    if (!token?.tenantId || !token?.cognitoId) {
+      console.log('Token inválido ou ausente, redirecionando para login');
+      return NextResponse.redirect(new URL('/auth/login', request.url));
+    }
 
   // Verificar status da assinatura
   const { hasAccess, message } = await checkSubscriptionAccess(token.tenantId, token.cognitoId);
-  console.log('Resultado do checkSubscriptionAccess:', { hasAccess, message });
+  console.log('Status da assinatura:', { hasAccess, message });
 
   if (!hasAccess) {
-    // Redirecionar para página de assinatura com mensagem
-    const subscriptionUrl = new URL('/subscription', request.url);
-    subscriptionUrl.searchParams.set('message', message || '');
-    return NextResponse.redirect(subscriptionUrl);
+    console.log('Acesso negado, redirecionando para página de assinatura');
+    return NextResponse.redirect(new URL('/subscription', request.url));
   }
 
+  console.log('Acesso permitido para usuário autenticado');
   return NextResponse.next();
+  } catch (error) {
+    console.error('Erro no middleware:', error);
+    return NextResponse.redirect(new URL('/auth/login', request.url));
+  }
 }
 
 export const config = {

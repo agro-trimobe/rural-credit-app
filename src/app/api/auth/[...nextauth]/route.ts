@@ -30,8 +30,8 @@ const handler = NextAuth({
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        email: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" }
+        email: { label: "Email", type: "email" },
+        password: { label: "Senha", type: "password" }
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -39,6 +39,13 @@ const handler = NextAuth({
         }
 
         try {
+          console.log('Iniciando autenticação com Cognito para:', credentials.email);
+          console.log('Configuração Cognito - Região:', process.env.COGNITO_REGION);
+          console.log('Configuração Cognito - Client ID:', process.env.COGNITO_CLIENT_ID ? 'Configurado' : 'Não configurado');
+          console.log('Configuração Cognito - User Pool ID:', process.env.COGNITO_USER_POOL_ID ? 'Configurado' : 'Não configurado');
+          console.log('Configuração AWS - Access Key:', process.env.ACCESS_KEY_ID_AWS ? 'Configurado' : 'Não configurado');
+          console.log('Configuração AWS - Secret Key:', process.env.SECRET_ACCESS_KEY_AWS ? 'Configurado' : 'Não configurado');
+          
           const cognitoClient = new CognitoIdentityProviderClient({
             region: process.env.COGNITO_REGION,
             credentials: {
@@ -58,7 +65,9 @@ const handler = NextAuth({
           });
 
           try {
+            console.log('Enviando comando de autenticação para Cognito');
             const response = await cognitoClient.send(command);
+            console.log('Resposta recebida do Cognito:', response.AuthenticationResult ? 'Autenticação bem-sucedida' : 'Sem resultado de autenticação');
             const idToken = response.AuthenticationResult?.IdToken;
             
             if (!idToken) {
@@ -66,6 +75,7 @@ const handler = NextAuth({
               return null;
             }
 
+            console.log('Decodificando token JWT');
             const decoded = jwt.decode(idToken) as { sub: string; email: string; given_name: string };
             
             if (!decoded) {
@@ -74,12 +84,15 @@ const handler = NextAuth({
             }
 
             // Buscar informações do usuário no DynamoDB
+            console.log('Buscando usuário no DynamoDB pelo email:', decoded.email);
             const user = await getUserByEmail(decoded.email);
             
             if (!user) {
               console.error('Usuário não encontrado no DynamoDB');
               return null;
             }
+            
+            console.log('Usuário encontrado no DynamoDB, tenantId:', user.tenantId);
 
             return {
               id: decoded.sub,
@@ -90,6 +103,13 @@ const handler = NextAuth({
             };
           } catch (cognitoError: any) {
             console.error('Erro Cognito:', cognitoError);
+            console.error('Detalhes do erro Cognito:', {
+              name: cognitoError.name,
+              message: cognitoError.message,
+              code: cognitoError.$metadata?.httpStatusCode,
+              requestId: cognitoError.$metadata?.requestId
+            });
+            
             if (cognitoError.name === 'NotAuthorizedException') {
               throw new Error('Email ou senha incorretos');
             }
@@ -112,6 +132,31 @@ const handler = NextAuth({
   ],
   pages: {
     signIn: "/auth/login",
+    error: "/auth/login",
+  },
+  debug: process.env.NODE_ENV !== 'production',
+  logger: {
+    error(code, metadata) {
+      console.error('NextAuth Error:', { code, metadata });
+    },
+    warn(code) {
+      console.warn('NextAuth Warning:', code);
+    },
+    debug(code, metadata) {
+      console.log('NextAuth Debug:', { code, metadata });
+    },
+  },
+  // Configuração de cookies para garantir compatibilidade entre ambientes
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
   },
   callbacks: {
     async jwt({ token, user }: { token: JWT; user: any }) {
