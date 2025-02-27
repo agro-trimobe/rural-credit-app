@@ -14,7 +14,7 @@ export function PlanCard({ onSubscribe }: PlanCardProps) {
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">Plano Premium</CardTitle>
         <CardDescription className="text-xl">
-          R$ 99,90<span className="text-sm">/mês</span>
+          R$ 1,00<span className="text-sm">/semana</span>
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">

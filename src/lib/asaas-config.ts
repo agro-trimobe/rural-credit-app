@@ -22,7 +22,7 @@ const removeNonNumeric = (str: string) => {
 const asaasConfig = {
   API_URL: apiBaseUrl,
   API_KEY: formatApiKey(process.env.ASAAS_API_KEY),
-  SUBSCRIPTION_VALUE: 47.90,
+  SUBSCRIPTION_VALUE: 1.00,
   TRIAL_PERIOD_DAYS: 7,
   TRIAL_PERIOD_MONTHS: 0, // Período de teste em meses (0 = sem período de teste em meses)
   SUBSCRIPTION_PERIOD_MONTHS: 1, // Período padrão para próximo vencimento (1 mês)
@@ -186,7 +186,7 @@ export async function createAsaasSubscription(data: {
     billingType: 'CREDIT_CARD',
     value: data.value,
     nextDueDate: nextDueDate.toISOString().split('T')[0], // Formato YYYY-MM-DD
-    cycle: 'MONTHLY',
+    cycle: 'WEEKLY',
     description: 'Assinatura Rural Credit App',
     creditCard: {
       holderName: data.creditCard.holderName,

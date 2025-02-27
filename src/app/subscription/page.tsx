@@ -261,7 +261,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, isLoading }) => {
             <span>Processando...</span>
           </>
         ) : (
-          `Assinar por R$ 99,90/mês`
+          `Assinar por R$ 1,00/semana`
         )}
       </Button>
     </form>
@@ -494,7 +494,7 @@ export default function SubscriptionPage() {
         <CardHeader>
           <CardTitle className="text-2xl font-bold">Assinatura Rural Credit App</CardTitle>
           <CardDescription>
-            Tenha acesso completo a todas as funcionalidades do sistema por apenas R$ 99,90/mês
+            Tenha acesso completo a todas as funcionalidades do sistema por apenas R$ 1,00/semana
           </CardDescription>
         </CardHeader>
 
