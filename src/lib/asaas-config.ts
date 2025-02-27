@@ -94,7 +94,7 @@ export async function createAsaasCustomer(data: {
   let responseData;
   try {
     responseData = responseText ? JSON.parse(responseText) : null;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Erro ao fazer parse da resposta:', error);
     throw new Error(`Falha ao processar resposta do Asaas. Status: ${response.status}, Resposta: ${responseText}`);
   }

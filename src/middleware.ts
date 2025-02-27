@@ -31,6 +31,15 @@ export async function middleware(request: NextRequest) {
       req: request,
     });
     console.log('Token do usuário:', token ? 'Presente' : 'Ausente');
+    
+    if (token) {
+      console.log('Detalhes do token:', {
+        id: token.id,
+        email: token.email,
+        tenantId: token.tenantId,
+        cognitoId: token.cognitoId
+      });
+    }
 
     if (!token?.tenantId || !token?.cognitoId) {
       console.log('Token inválido ou ausente, redirecionando para login');
@@ -48,8 +57,27 @@ export async function middleware(request: NextRequest) {
 
   console.log('Acesso permitido para usuário autenticado');
   return NextResponse.next();
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Erro no middleware:', error);
+    
+    // Tratamento seguro para o erro com verificação de tipo
+    const errorDetails: Record<string, unknown> = {};
+    
+    if (error && typeof error === 'object') {
+      if ('name' in error && error.name) {
+        errorDetails.name = error.name;
+      }
+      
+      if ('message' in error && error.message) {
+        errorDetails.message = error.message;
+      }
+      
+      if ('stack' in error && error.stack) {
+        errorDetails.stack = error.stack;
+      }
+    }
+    
+    console.error('Detalhes do erro:', errorDetails);
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 }
