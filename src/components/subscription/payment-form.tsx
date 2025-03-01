@@ -14,71 +14,42 @@ interface PaymentFormProps {
 }
 
 interface PaymentFormData {
-  creditCard: {
-    holderName: string;
-    number: string;
-    expiryMonth: string;
-    expiryYear: string;
-    ccv: string;
-  };
-  creditCardHolderInfo: {
-    name: string;
-    email: string;
-    cpfCnpj: string;
-    postalCode: string;
-    addressNumber: string;
-    phone: string;
-  };
+  fullName: string;
+  email: string;
+  cpf: string;
+  phone: string;
+  zipCode: string;
+  addressNumber: string;
+  cardNumber: string;
+  cardName: string;
+  cardExpiryDate: string;
+  cardCvv: string;
 }
 
 export function PaymentForm({ onSubmit, isLoading }: PaymentFormProps) {
   const { toast } = useToast();
   const [formData, setFormData] = useState<PaymentFormData>({
-    creditCard: {
-      holderName: '',
-      number: '',
-      expiryMonth: '',
-      expiryYear: '',
-      ccv: '',
-    },
-    creditCardHolderInfo: {
-      name: '',
-      email: '',
-      cpfCnpj: '',
-      postalCode: '',
-      addressNumber: '',
-      phone: ''
-    }
+    fullName: '',
+    email: '',
+    cpf: '',
+    phone: '',
+    zipCode: '',
+    addressNumber: '',
+    cardNumber: '',
+    cardName: '',
+    cardExpiryDate: '',
+    cardCvv: ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleInputChange = (
-    section: 'creditCard' | 'creditCardHolderInfo',
     field: string,
     value: string
   ) => {
-    // Se for o campo holderName do cartão, atualizar também o name do titular
-    if (section === 'creditCard' && field === 'holderName') {
-      setFormData(prev => ({
-        ...prev,
-        creditCard: {
-          ...prev.creditCard,
-          holderName: value
-        },
-        creditCardHolderInfo: {
-          ...prev.creditCardHolderInfo,
-          name: value // Sincronizar com o nome do titular
-        }
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [section]: {
-          ...prev[section],
-          [field]: value
-        }
-      }));
-    }
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
     
     if (errors[field]) {
       setErrors(prev => {
@@ -91,55 +62,83 @@ export function PaymentForm({ onSubmit, isLoading }: PaymentFormProps) {
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
-    const { creditCard, creditCardHolderInfo } = formData;
-
-    // Validar dados do cartão
-    if (!creditCard.holderName.trim()) {
-      newErrors.holderName = 'Nome é obrigatório';
-    }
-
-    if (!validateCreditCardNumber(creditCard.number)) {
-      newErrors.number = 'Número do cartão inválido';
-    }
-
-    if (!validateExpiryDate(creditCard.expiryMonth, creditCard.expiryYear)) {
-      newErrors.expiryMonth = 'Data de expiração inválida';
-      newErrors.expiryYear = 'Data de expiração inválida';
-    }
-
-    if (!validateCCV(creditCard.ccv)) {
-      newErrors.ccv = 'CCV inválido';
-    }
+    const { 
+      fullName, 
+      email, 
+      cpf, 
+      phone, 
+      zipCode, 
+      addressNumber, 
+      cardNumber, 
+      cardName, 
+      cardExpiryDate, 
+      cardCvv 
+    } = formData;
 
     // Validar dados do titular
-    if (!creditCardHolderInfo.name.trim()) {
-      newErrors.name = 'Nome do titular é obrigatório';
+    if (!fullName.trim()) {
+      newErrors.fullName = 'Nome é obrigatório';
     }
 
-    if (!creditCardHolderInfo.cpfCnpj.trim()) {
-      newErrors.cpfCnpj = 'CPF é obrigatório';
+    if (!email.trim()) {
+      newErrors.email = 'E-mail é obrigatório';
+    }
+
+    if (!cpf.trim()) {
+      newErrors.cpf = 'CPF é obrigatório';
     } else {
-      const cpf = creditCardHolderInfo.cpfCnpj.replace(/\D/g, '');
-      if (cpf.length !== 11) {
-        newErrors.cpfCnpj = 'CPF inválido';
+      const cpfValue = cpf.replace(/\D/g, '');
+      if (cpfValue.length !== 11) {
+        newErrors.cpf = 'CPF inválido';
       }
     }
 
-    if (!validatePostalCode(creditCardHolderInfo.postalCode)) {
-      newErrors.postalCode = 'CEP inválido';
+    if (!phone.trim()) {
+      newErrors.phone = 'Telefone é obrigatório';
+    } else {
+      const phoneValue = phone.replace(/\D/g, '');
+      if (phoneValue.length < 10 || phoneValue.length > 11) {
+        newErrors.phone = 'Telefone inválido';
+      }
     }
 
-    if (!creditCardHolderInfo.addressNumber.trim()) {
+    if (!zipCode.trim()) {
+      newErrors.zipCode = 'CEP é obrigatório';
+    } else {
+      const zipCodeValue = zipCode.replace(/\D/g, '');
+      if (zipCodeValue.length !== 8) {
+        newErrors.zipCode = 'CEP inválido';
+      }
+    }
+
+    if (!addressNumber.trim()) {
       newErrors.addressNumber = 'Número é obrigatório';
     }
 
-    if (!creditCardHolderInfo.phone.trim()) {
-      newErrors.phone = 'Telefone é obrigatório';
+    // Validar dados do cartão
+    if (!cardNumber.trim()) {
+      newErrors.cardNumber = 'Número do cartão é obrigatório';
+    } else if (!validateCreditCardNumber(cardNumber)) {
+      newErrors.cardNumber = 'Número do cartão inválido';
+    }
+
+    if (!cardName.trim()) {
+      newErrors.cardName = 'Nome no cartão é obrigatório';
+    }
+
+    if (!cardExpiryDate.trim()) {
+      newErrors.cardExpiryDate = 'Data de expiração é obrigatória';
     } else {
-      const phone = creditCardHolderInfo.phone.replace(/\D/g, '');
-      if (phone.length < 10 || phone.length > 11) {
-        newErrors.phone = 'Telefone inválido';
+      const [expiryMonth, expiryYear] = cardExpiryDate.split('/');
+      if (!validateExpiryDate(expiryMonth, expiryYear)) {
+        newErrors.cardExpiryDate = 'Data de expiração inválida';
       }
+    }
+
+    if (!cardCvv.trim()) {
+      newErrors.cardCvv = 'CCV é obrigatório';
+    } else if (!validateCCV(cardCvv)) {
+      newErrors.cardCvv = 'CCV inválido';
     }
 
     setErrors(newErrors);
@@ -158,17 +157,7 @@ export function PaymentForm({ onSubmit, isLoading }: PaymentFormProps) {
       return;
     }
 
-    // Formatar dados antes de enviar
-    const formattedData = {
-      ...formData,
-      creditCardHolderInfo: {
-        ...formData.creditCardHolderInfo,
-        cpfCnpj: formData.creditCardHolderInfo.cpfCnpj.replace(/\D/g, ''),
-        postalCode: formData.creditCardHolderInfo.postalCode.replace(/\D/g, '')
-      }
-    };
-
-    await onSubmit(formattedData);
+    await onSubmit(formData);
   };
 
   return (
@@ -184,16 +173,16 @@ export function PaymentForm({ onSubmit, isLoading }: PaymentFormProps) {
           <div className="space-y-4">
             {/* Dados do titular */}
             <div className="space-y-2">
-              <Label htmlFor="name">Nome do titular</Label>
+              <Label htmlFor="fullName">Nome completo</Label>
               <Input
-                id="name"
-                value={formData.creditCardHolderInfo.name}
-                onChange={(e) => handleInputChange('creditCardHolderInfo', 'name', e.target.value)}
-                placeholder="Nome do titular"
-                className={errors.name ? 'border-destructive' : ''}
+                id="fullName"
+                value={formData.fullName}
+                onChange={(e) => handleInputChange('fullName', e.target.value)}
+                placeholder="Nome completo"
+                className={errors.fullName ? 'border-destructive' : ''}
               />
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name}</p>
+              {errors.fullName && (
+                <p className="text-sm text-destructive">{errors.fullName}</p>
               )}
             </div>
 
@@ -201,8 +190,8 @@ export function PaymentForm({ onSubmit, isLoading }: PaymentFormProps) {
               <Label htmlFor="email">E-mail</Label>
               <Input
                 id="email"
-                value={formData.creditCardHolderInfo.email}
-                onChange={(e) => handleInputChange('creditCardHolderInfo', 'email', e.target.value)}
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
                 placeholder="E-mail"
                 className={errors.email ? 'border-destructive' : ''}
               />
@@ -212,140 +201,121 @@ export function PaymentForm({ onSubmit, isLoading }: PaymentFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="cpfCnpj">CPF</Label>
+              <Label htmlFor="cpf">CPF</Label>
               <Input
-                id="cpfCnpj"
-                value={formData.creditCardHolderInfo.cpfCnpj}
-                onChange={(e) => handleInputChange('creditCardHolderInfo', 'cpfCnpj', e.target.value)}
+                id="cpf"
+                value={formData.cpf}
+                onChange={(e) => handleInputChange('cpf', e.target.value)}
                 placeholder="000.000.000-00"
-                className={errors.cpfCnpj ? 'border-destructive' : ''}
+                className={errors.cpf ? 'border-destructive' : ''}
                 maxLength={14}
               />
-              {errors.cpfCnpj && (
-                <p className="text-sm text-destructive">{errors.cpfCnpj}</p>
+              {errors.cpf && (
+                <p className="text-sm text-destructive">{errors.cpf}</p>
               )}
-            </div>
-
-            {/* Dados do cartão */}
-            <div className="space-y-2">
-              <Label htmlFor="holderName">Nome no cartão</Label>
-              <Input
-                id="holderName"
-                value={formData.creditCard.holderName}
-                onChange={(e) => handleInputChange('creditCard', 'holderName', e.target.value)}
-                placeholder="Como está escrito no cartão"
-                className={errors.holderName ? 'border-destructive' : ''}
-              />
-              {errors.holderName && (
-                <p className="text-sm text-destructive">{errors.holderName}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="number">Número do cartão</Label>
-              <Input
-                id="number"
-                value={formData.creditCard.number}
-                onChange={(e) => handleInputChange('creditCard', 'number', e.target.value)}
-                placeholder="0000 0000 0000 0000"
-                className={errors.number ? 'border-destructive' : ''}
-                maxLength={19}
-              />
-              {errors.number && (
-                <p className="text-sm text-destructive">{errors.number}</p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="expiryMonth">Mês</Label>
-                <Input
-                  id="expiryMonth"
-                  value={formData.creditCard.expiryMonth}
-                  onChange={(e) => handleInputChange('creditCard', 'expiryMonth', e.target.value)}
-                  placeholder="MM"
-                  className={errors.expiryMonth ? 'border-destructive' : ''}
-                  maxLength={2}
-                />
-                {errors.expiryMonth && (
-                  <p className="text-sm text-destructive">{errors.expiryMonth}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="expiryYear">Ano</Label>
-                <Input
-                  id="expiryYear"
-                  value={formData.creditCard.expiryYear}
-                  onChange={(e) => handleInputChange('creditCard', 'expiryYear', e.target.value)}
-                  placeholder="AA"
-                  className={errors.expiryYear ? 'border-destructive' : ''}
-                  maxLength={2}
-                />
-                {errors.expiryYear && (
-                  <p className="text-sm text-destructive">{errors.expiryYear}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="ccv">CCV</Label>
-                <Input
-                  id="ccv"
-                  value={formData.creditCard.ccv}
-                  onChange={(e) => handleInputChange('creditCard', 'ccv', e.target.value)}
-                  placeholder="000"
-                  className={errors.ccv ? 'border-destructive' : ''}
-                  maxLength={4}
-                />
-                {errors.ccv && (
-                  <p className="text-sm text-destructive">{errors.ccv}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="postalCode">CEP</Label>
-                <Input
-                  id="postalCode"
-                  value={formData.creditCardHolderInfo.postalCode}
-                  onChange={(e) => handleInputChange('creditCardHolderInfo', 'postalCode', e.target.value)}
-                  placeholder="00000-000"
-                  className={errors.postalCode ? 'border-destructive' : ''}
-                  maxLength={9}
-                />
-                {errors.postalCode && (
-                  <p className="text-sm text-destructive">{errors.postalCode}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="addressNumber">Número</Label>
-                <Input
-                  id="addressNumber"
-                  value={formData.creditCardHolderInfo.addressNumber}
-                  onChange={(e) => handleInputChange('creditCardHolderInfo', 'addressNumber', e.target.value)}
-                  placeholder="123"
-                  className={errors.addressNumber ? 'border-destructive' : ''}
-                />
-                {errors.addressNumber && (
-                  <p className="text-sm text-destructive">{errors.addressNumber}</p>
-                )}
-              </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="phone">Telefone</Label>
               <Input
                 id="phone"
-                value={formData.creditCardHolderInfo.phone}
-                onChange={(e) => handleInputChange('creditCardHolderInfo', 'phone', e.target.value)}
+                value={formData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
                 placeholder="(11) 99999-9999"
                 className={errors.phone ? 'border-destructive' : ''}
                 maxLength={15}
               />
               {errors.phone && (
                 <p className="text-sm text-destructive">{errors.phone}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="zipCode">CEP</Label>
+              <Input
+                id="zipCode"
+                value={formData.zipCode}
+                onChange={(e) => handleInputChange('zipCode', e.target.value)}
+                placeholder="00000-000"
+                className={errors.zipCode ? 'border-destructive' : ''}
+                maxLength={9}
+              />
+              {errors.zipCode && (
+                <p className="text-sm text-destructive">{errors.zipCode}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="addressNumber">Número</Label>
+              <Input
+                id="addressNumber"
+                value={formData.addressNumber}
+                onChange={(e) => handleInputChange('addressNumber', e.target.value)}
+                placeholder="123"
+                className={errors.addressNumber ? 'border-destructive' : ''}
+              />
+              {errors.addressNumber && (
+                <p className="text-sm text-destructive">{errors.addressNumber}</p>
+              )}
+            </div>
+
+            {/* Dados do cartão */}
+            <div className="space-y-2">
+              <Label htmlFor="cardNumber">Número do cartão</Label>
+              <Input
+                id="cardNumber"
+                value={formData.cardNumber}
+                onChange={(e) => handleInputChange('cardNumber', e.target.value)}
+                placeholder="0000 0000 0000 0000"
+                className={errors.cardNumber ? 'border-destructive' : ''}
+                maxLength={19}
+              />
+              {errors.cardNumber && (
+                <p className="text-sm text-destructive">{errors.cardNumber}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cardName">Nome no cartão</Label>
+              <Input
+                id="cardName"
+                value={formData.cardName}
+                onChange={(e) => handleInputChange('cardName', e.target.value)}
+                placeholder="Como está escrito no cartão"
+                className={errors.cardName ? 'border-destructive' : ''}
+              />
+              {errors.cardName && (
+                <p className="text-sm text-destructive">{errors.cardName}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cardExpiryDate">Data de expiração</Label>
+              <Input
+                id="cardExpiryDate"
+                value={formData.cardExpiryDate}
+                onChange={(e) => handleInputChange('cardExpiryDate', e.target.value)}
+                placeholder="MM/AA"
+                className={errors.cardExpiryDate ? 'border-destructive' : ''}
+                maxLength={5}
+              />
+              {errors.cardExpiryDate && (
+                <p className="text-sm text-destructive">{errors.cardExpiryDate}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cardCvv">CCV</Label>
+              <Input
+                id="cardCvv"
+                value={formData.cardCvv}
+                onChange={(e) => handleInputChange('cardCvv', e.target.value)}
+                placeholder="000"
+                className={errors.cardCvv ? 'border-destructive' : ''}
+                maxLength={4}
+              />
+              {errors.cardCvv && (
+                <p className="text-sm text-destructive">{errors.cardCvv}</p>
               )}
             </div>
           </div>

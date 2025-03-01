@@ -22,10 +22,11 @@ const removeNonNumeric = (str: string) => {
 const asaasConfig = {
   API_URL: apiBaseUrl,
   API_KEY: formatApiKey(process.env.ASAAS_API_KEY),
-  SUBSCRIPTION_VALUE: 1.00,
-  TRIAL_PERIOD_DAYS: 7,
+  SUBSCRIPTION_VALUE: 10.00,
+  TRIAL_PERIOD_DAYS: parseInt(process.env.ASAAS_TRIAL_PERIOD_DAYS || '7'),
   TRIAL_PERIOD_MONTHS: 0, // Período de teste em meses (0 = sem período de teste em meses)
-  SUBSCRIPTION_PERIOD_MONTHS: 1, // Período padrão para próximo vencimento (1 mês)
+  SUBSCRIPTION_PERIOD_MONTHS: 1, // Período padrão para próximo vencimento (sempre 1 mês)
+  SUBSCRIPTION_CYCLE: 'MONTHLY',
 };
 
 // Validação e retorno da configuração
@@ -136,6 +137,17 @@ function translateAsaasError(error: any): string {
     'invalid_creditCardHolderCpfCnpj': 'CPF/CNPJ do titular do cartão inválido.',
     'invalid_creditCardHolderPostalCode': 'CEP do titular do cartão inválido.',
     'invalid_creditCardHolderAddressNumber': 'Número do endereço do titular do cartão inválido.',
+    'insufficient_funds': 'Cartão sem saldo suficiente para realizar a cobrança.',
+    'card_declined': 'Transação recusada pelo banco emissor do cartão.',
+    'card_blocked': 'Cartão bloqueado pelo banco emissor.',
+    'card_canceled': 'Cartão cancelado pelo banco emissor.',
+    'card_expired': 'Cartão expirado.',
+    'invalid_data': 'Dados inválidos. Verifique as informações fornecidas.',
+    'customer_already_exists': 'Cliente já cadastrado no sistema de pagamentos.',
+    'subscription_already_exists': 'Você já possui uma assinatura ativa.',
+    'invalid_value': 'Valor da assinatura inválido.',
+    'invalid_cycle': 'Ciclo de cobrança inválido.',
+    'invalid_next_due_date': 'Data do próximo vencimento inválida.',
   };
 
   const firstError = error.errors[0];
@@ -169,10 +181,6 @@ export async function createAsaasSubscription(data: {
 }): Promise<AsaasSubscription> {
   const config = validateAsaasConfig();
 
-  // Calcular próxima data de vencimento (1 mês a partir de hoje)
-  const nextDueDate = new Date();
-  nextDueDate.setMonth(nextDueDate.getMonth() + 1);
-
   // Garantir que sempre tenhamos um número de telefone válido
   const phone = data.creditCardHolderInfo.phone 
     ? removeNonNumeric(data.creditCardHolderInfo.phone)
@@ -185,8 +193,8 @@ export async function createAsaasSubscription(data: {
     customer: data.customer,
     billingType: 'CREDIT_CARD',
     value: data.value,
-    nextDueDate: nextDueDate.toISOString().split('T')[0], // Formato YYYY-MM-DD
-    cycle: 'WEEKLY',
+    nextDueDate: data.nextDueDate, // Usar a data fornecida pelo chamador
+    cycle: config.SUBSCRIPTION_CYCLE, // Usar o ciclo de cobrança configurado
     description: 'Assinatura Rural Credit App',
     creditCard: {
       holderName: data.creditCard.holderName,

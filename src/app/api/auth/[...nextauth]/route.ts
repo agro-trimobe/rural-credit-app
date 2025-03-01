@@ -8,6 +8,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { getUserByEmail } from '@/lib/tenant-utils';
 
+// Interface para tipagem da sessão personalizada
 interface CustomSession extends Session {
   user: {
     id: string;
@@ -18,6 +19,40 @@ interface CustomSession extends Session {
   }
 }
 
+// Função auxiliar para extrair detalhes de erro de forma segura
+function extractErrorDetails(error: unknown): Record<string, unknown> {
+  const errorDetails: Record<string, unknown> = {};
+  
+  if (error && typeof error === 'object') {
+    if ('name' in error && error.name) {
+      errorDetails.name = error.name;
+    }
+    
+    if ('message' in error && error.message) {
+      errorDetails.message = error.message;
+    }
+    
+    if ('stack' in error && error.stack) {
+      errorDetails.stack = error.stack;
+    }
+    
+    // Verificar se é um erro específico do AWS SDK
+    if ('$metadata' in error) {
+      const metadata = error.$metadata as Record<string, unknown>;
+      errorDetails.httpStatusCode = metadata.httpStatusCode;
+      errorDetails.requestId = metadata.requestId;
+    }
+    
+    // Verificar se é um erro do Cognito
+    if ('__type' in error && error.__type) {
+      errorDetails.type = error.__type;
+    }
+  }
+  
+  return errorDetails;
+}
+
+// Função para calcular o secret hash necessário para autenticação no Cognito
 function calculateSecretHash(username: string) {
   try {
     console.log('Calculando secret hash para:', username);
@@ -32,16 +67,37 @@ function calculateSecretHash(username: string) {
     
     console.log('Secret hash calculado com sucesso');
     return hash;
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Erro ao calcular secret hash:', error);
+    const errorDetails = extractErrorDetails(error);
+    console.error('Detalhes do erro:', errorDetails);
     
-    // Tratamento seguro para o erro com verificação de tipo
     if (error instanceof Error) {
       throw new Error('Erro ao calcular secret hash: ' + error.message);
     } else {
       throw new Error('Erro desconhecido ao calcular secret hash');
     }
   }
+}
+
+// Função para validar configurações do ambiente
+function validateEnvironmentConfig() {
+  const requiredVars = [
+    'COGNITO_REGION',
+    'COGNITO_CLIENT_ID',
+    'COGNITO_CLIENT_SECRET',
+    'ACCESS_KEY_ID_AWS',
+    'SECRET_ACCESS_KEY_AWS'
+  ];
+  
+  const missingVars = requiredVars.filter(varName => !process.env[varName]);
+  
+  if (missingVars.length > 0) {
+    console.error('Variáveis de ambiente obrigatórias não configuradas:', missingVars.join(', '));
+    return false;
+  }
+  
+  return true;
 }
 
 const handler = NextAuth({
@@ -60,38 +116,24 @@ const handler = NextAuth({
 
         try {
           console.log('Iniciando autenticação com Cognito para:', credentials.email);
-          console.log('Configuração Cognito - Região:', process.env.COGNITO_REGION);
-          console.log('Configuração Cognito - Client ID:', process.env.COGNITO_CLIENT_ID ? 'Configurado' : 'Não configurado');
           
-          // Verificar se as variáveis de ambiente necessárias estão configuradas
-          if (!process.env.COGNITO_REGION || !process.env.COGNITO_CLIENT_ID || !process.env.COGNITO_CLIENT_SECRET) {
-            console.error('Variáveis de ambiente do Cognito não estão configuradas corretamente');
-            console.error('COGNITO_REGION:', process.env.COGNITO_REGION ? 'Configurado' : 'Não configurado');
-            console.error('COGNITO_CLIENT_ID:', process.env.COGNITO_CLIENT_ID ? 'Configurado' : 'Não configurado');
-            console.error('COGNITO_CLIENT_SECRET:', process.env.COGNITO_CLIENT_SECRET ? 'Configurado' : 'Não configurado');
-            throw new Error('Configuração do Cognito incompleta');
+          // Validar configuração do ambiente
+          if (!validateEnvironmentConfig()) {
+            throw new Error('Configuração do ambiente incompleta');
           }
           
           // Inicializar cliente Cognito
           console.log('Inicializando cliente Cognito...');
-          
-          // Verificar se as credenciais AWS estão configuradas
-          if (!process.env.ACCESS_KEY_ID_AWS || !process.env.SECRET_ACCESS_KEY_AWS) {
-            console.error('Credenciais AWS não estão configuradas corretamente');
-            console.error('ACCESS_KEY_ID_AWS:', process.env.ACCESS_KEY_ID_AWS ? 'Configurado' : 'Não configurado');
-            console.error('SECRET_ACCESS_KEY_AWS:', process.env.SECRET_ACCESS_KEY_AWS ? 'Configurado' : 'Não configurado');
-            throw new Error('Credenciais AWS incompletas');
-          }
-          
           const cognitoClient = new CognitoIdentityProviderClient({
-            region: process.env.COGNITO_REGION,
+            region: process.env.COGNITO_REGION!,
             credentials: {
-              accessKeyId: process.env.ACCESS_KEY_ID_AWS,
-              secretAccessKey: process.env.SECRET_ACCESS_KEY_AWS
+              accessKeyId: process.env.ACCESS_KEY_ID_AWS!,
+              secretAccessKey: process.env.SECRET_ACCESS_KEY_AWS!
             }
           });
           console.log('Cliente Cognito inicializado com sucesso');
 
+          // Configurar comando de autenticação
           const command = new InitiateAuthCommand({
             AuthFlow: "USER_PASSWORD_AUTH",
             ClientId: process.env.COGNITO_CLIENT_ID!,
@@ -103,27 +145,22 @@ const handler = NextAuth({
           });
 
           console.log('Comando de autenticação configurado');
-          console.log('Parâmetros de autenticação:', {
-            AuthFlow: "USER_PASSWORD_AUTH",
-            ClientId: process.env.COGNITO_CLIENT_ID ? 'Configurado' : 'Não configurado',
-            USERNAME: credentials.email,
-            SECRET_HASH: 'Calculado'
-          });
-
+          
           try {
+            // Enviar comando de autenticação para o Cognito
             console.log('Enviando comando de autenticação para Cognito...');
             const response = await cognitoClient.send(command);
             console.log('Resposta recebida do Cognito:', response.AuthenticationResult ? 'Autenticação bem-sucedida' : 'Sem resultado de autenticação');
-            const idToken = response.AuthenticationResult?.IdToken;
             
+            const idToken = response.AuthenticationResult?.IdToken;
             if (!idToken) {
               console.error('Token não encontrado na resposta');
               return null;
             }
 
+            // Decodificar token JWT
             console.log('Decodificando token JWT');
             const decoded = jwt.decode(idToken) as { sub: string; email: string; given_name: string };
-            
             if (!decoded) {
               console.error('Erro ao decodificar o token');
               return null;
@@ -132,7 +169,6 @@ const handler = NextAuth({
             // Buscar informações do usuário no DynamoDB
             console.log('Buscando usuário no DynamoDB pelo email:', decoded.email);
             const user = await getUserByEmail(decoded.email);
-            
             if (!user) {
               console.error('Usuário não encontrado no DynamoDB');
               return null;
@@ -141,6 +177,7 @@ const handler = NextAuth({
             console.log('Usuário encontrado no DynamoDB, tenantId:', user.tenantId);
             console.log('Autenticação concluída com sucesso para:', decoded.email);
 
+            // Retornar objeto de usuário para NextAuth
             return {
               id: decoded.sub,
               name: decoded.given_name || credentials.email,
@@ -148,74 +185,34 @@ const handler = NextAuth({
               tenantId: user.tenantId,
               cognitoId: decoded.sub
             };
-          } catch (cognitoError: unknown) {
+          } catch (cognitoError) {
             console.error('Erro Cognito:', cognitoError);
-            
-            // Tratamento seguro para o erro com verificação de tipo
-            const errorDetails: Record<string, unknown> = {};
-            
-            if (cognitoError && typeof cognitoError === 'object') {
-              if ('name' in cognitoError && cognitoError.name) {
-                errorDetails.name = cognitoError.name;
-              }
-              
-              if ('message' in cognitoError && cognitoError.message) {
-                errorDetails.message = cognitoError.message;
-              }
-              
-              // Verificar se é um erro específico do AWS SDK
-              if ('$metadata' in cognitoError) {
-                const metadata = cognitoError.$metadata as Record<string, unknown>;
-                errorDetails.code = metadata.httpStatusCode;
-                errorDetails.requestId = metadata.requestId;
-              }
-              
-              // Verificar se é um erro do Cognito
-              if ('__type' in cognitoError && cognitoError.__type) {
-                errorDetails.type = cognitoError.__type;
-              }
-            }
-            
+            const errorDetails = extractErrorDetails(cognitoError);
             console.error('Detalhes do erro Cognito:', errorDetails);
             
+            // Tratamento específico para erros conhecidos do Cognito
             if (cognitoError && typeof cognitoError === 'object' && 'name' in cognitoError) {
-              if (cognitoError.name === 'NotAuthorizedException') {
-                console.error('Erro de autorização: Email ou senha incorretos');
-                throw new Error('Email ou senha incorretos');
-              }
-              if (cognitoError.name === 'UserNotConfirmedException') {
-                console.error('Erro: Email não confirmado');
-                throw new Error('Email não confirmado. Por favor, verifique seu email e confirme seu cadastro.');
-              }
+              const errorName = cognitoError.name as string;
+              
+              // Mapear erros comuns para mensagens amigáveis
+              const errorMessages: Record<string, string> = {
+                'NotAuthorizedException': 'Email ou senha incorretos',
+                'UserNotConfirmedException': 'Email não confirmado. Por favor, verifique seu email e confirme seu cadastro.',
+                'UserNotFoundException': 'Usuário não encontrado',
+                'InvalidParameterException': 'Parâmetros inválidos',
+                'TooManyRequestsException': 'Muitas tentativas. Tente novamente mais tarde.',
+                'InternalErrorException': 'Erro interno do servidor. Tente novamente mais tarde.'
+              };
+              
+              const errorMessage = errorMessages[errorName] || 'Erro na autenticação';
+              throw new Error(errorMessage);
             }
             
-            if (cognitoError && typeof cognitoError === 'object' && 'message' in cognitoError && cognitoError.message) {
-              console.error('Erro não tratado do Cognito:', cognitoError.message);
-              throw new Error(cognitoError.message as string);
-            } else {
-              throw new Error('Erro na autenticação');
-            }
+            throw new Error('Erro na autenticação');
           }
-        } catch (error: unknown) {
+        } catch (error) {
           console.error('Erro na autenticação:', error);
-          
-          // Tratamento seguro para o erro com verificação de tipo
-          const errorDetails: Record<string, unknown> = {};
-          
-          if (error && typeof error === 'object') {
-            if ('name' in error && error.name) {
-              errorDetails.name = error.name;
-            }
-            
-            if ('message' in error && error.message) {
-              errorDetails.message = error.message;
-            }
-            
-            if ('stack' in error && error.stack) {
-              errorDetails.stack = error.stack;
-            }
-          }
-          
+          const errorDetails = extractErrorDetails(error);
           console.error('Detalhes do erro:', errorDetails);
           
           if (error instanceof Error) {
@@ -249,7 +246,7 @@ const handler = NextAuth({
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: true, // Sempre usar conexão segura em produção
+        secure: process.env.NODE_ENV === 'production', // Secure apenas em produção
       },
     },
     callbackUrl: {
@@ -258,7 +255,7 @@ const handler = NextAuth({
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: true,
+        secure: process.env.NODE_ENV === 'production',
       },
     },
   },
@@ -291,7 +288,7 @@ const handler = NextAuth({
       }
       return token;
     },
-    async session({ session, token, user }) {
+    async session({ session, token }) {
       console.log('Callback Session executado', { hasToken: !!token });
       if (token) {
         (session as CustomSession).user.id = token.id as string;

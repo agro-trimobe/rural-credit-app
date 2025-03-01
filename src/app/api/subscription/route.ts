@@ -60,6 +60,18 @@ function addMonths(date: Date, months: number): Date {
   return result;
 }
 
+/**
+ * Adiciona dias a uma data
+ * @param date Data inicial
+ * @param days Número de dias a adicionar
+ * @returns Nova data com os dias adicionados
+ */
+function addDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
 export async function GET(req: NextRequest) {
   try {
     const config = validateAsaasConfig();
@@ -77,7 +89,7 @@ export async function GET(req: NextRequest) {
     // Se não tiver dados de assinatura, cria com período de teste
     if (!user.subscription) {
       const now = new Date();
-      const trialEndsAt = addMonths(now, config.TRIAL_PERIOD_MONTHS);
+      const trialEndsAt = addDays(now, config.TRIAL_PERIOD_DAYS);
 
       const subscription = {
         createdAt: now.toISOString(),
@@ -231,7 +243,14 @@ export async function POST(req: NextRequest) {
     // Validar data de validade do cartão
     const [expiryMonth, expiryYear] = cardExpiry.split('/');
     const now = new Date();
-    const cardExpiration = new Date(2000 + parseInt(expiryYear), parseInt(expiryMonth) - 1);
+    
+    // Converter ano para formato de 4 dígitos se necessário
+    let fullYear = parseInt(expiryYear);
+    if (fullYear < 100) {
+      fullYear += 2000;
+    }
+    
+    const cardExpiration = new Date(fullYear, parseInt(expiryMonth) - 1);
     
     if (cardExpiration <= now) {
       return NextResponse.json({ 
@@ -293,7 +312,9 @@ export async function POST(req: NextRequest) {
     const subscriptionData = {
       customer: customer.id,
       value: config.SUBSCRIPTION_VALUE,
-      nextDueDate: addMonths(new Date(), config.SUBSCRIPTION_PERIOD_MONTHS).toISOString().split('T')[0],
+      nextDueDate: config.SUBSCRIPTION_CYCLE === 'WEEKLY' 
+        ? addDays(new Date(), 7).toISOString().split('T')[0]  // 7 dias para semanal
+        : addMonths(new Date(), 1).toISOString().split('T')[0], // Sempre 1 mês para mensal
       creditCard: {
         holderName: name,
         number: cardNumber,
@@ -320,9 +341,9 @@ export async function POST(req: NextRequest) {
       status: subscription.status
     });
 
-    // Calcular a data real de término da assinatura (1 mês após o próximo vencimento)
+    // Calcular a data real de término da assinatura (igual à data de próximo vencimento)
     const nextDueDate = new Date(subscription.nextDueDate);
-    const subscriptionEndsAt = addMonths(nextDueDate, 1);
+    const subscriptionEndsAt = nextDueDate;
     
     console.log('Datas da assinatura:', {
       nextDueDate: subscription.nextDueDate,
@@ -362,15 +383,27 @@ export async function POST(req: NextRequest) {
     let statusCode = 500;
     let errorMessage = error instanceof Error ? error.message : 'Erro ao processar assinatura';
     
-    // Se o erro contém a palavra "cartão", provavelmente é um erro de validação do cartão
+    // Categorizar erros por tipo para retornar códigos HTTP apropriados
     if (errorMessage.toLowerCase().includes('cartão') || 
         errorMessage.toLowerCase().includes('cpf') || 
         errorMessage.toLowerCase().includes('cep') || 
-        errorMessage.toLowerCase().includes('endereço')) {
+        errorMessage.toLowerCase().includes('endereço') ||
+        errorMessage.toLowerCase().includes('dados inválidos') ||
+        errorMessage.toLowerCase().includes('inválido')) {
       statusCode = 400; // Bad Request para erros de validação
+    } else if (errorMessage.toLowerCase().includes('recusada') ||
+               errorMessage.toLowerCase().includes('bloqueado') ||
+               errorMessage.toLowerCase().includes('cancelado') ||
+               errorMessage.toLowerCase().includes('expirado') ||
+               errorMessage.toLowerCase().includes('saldo')) {
+      statusCode = 402; // Payment Required para erros de pagamento
+    } else if (errorMessage.toLowerCase().includes('já possui') ||
+               errorMessage.toLowerCase().includes('already exists')) {
+      statusCode = 409; // Conflict para recursos duplicados
     }
     
     return NextResponse.json({ 
+      success: false,
       message: errorMessage
     }, { status: statusCode });
   }

@@ -1,24 +1,28 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { InputHTMLAttributes } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useToast } from '@/hooks/use-toast';
-import { IMaskInput } from 'react-imask';
-import type { MaskedOptions } from 'imask';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
+import { z } from 'zod';
+
+import { PaymentForm } from '@/components/subscription/payment-form';
+import { SimplifiedPaymentForm } from '@/components/subscription/simplified-payment-form';
+import { SubscriptionStatus } from '@/components/subscription/subscription-status';
+import { SubscriptionBenefits } from '@/components/subscription/subscription-benefits';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CreditCard, Info, AlertTriangle, CheckCircle, ArrowRight, X } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 // Interfaces
-interface PaymentFormProps {
-  onSubmit: (data: PaymentFormData) => Promise<void>;
-  isLoading?: boolean;
-}
-
 interface PaymentFormData {
   fullName: string;
   email: string;
@@ -36,407 +40,52 @@ interface SubscriptionData {
   status: string;
   trialEndsAt?: string;
   subscriptionEndsAt?: string;
-  nextBillingDate?: string;
 }
-
-interface SubscriptionStatusProps {
-  subscription: SubscriptionData;
-}
-
-interface StatusInfo {
-  text: string;
-  color: string;
-  bgColor: string;
-  icon: React.ReactNode;
-}
-
-interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label: string;
-  name: string;
-  error?: string;
-  mask?: string | MaskedOptions | any;
-}
-
-const FormInput: React.FC<FormInputProps> = ({ label, name, error, mask, className, ...props }) => {
-  const inputComponent = mask ? (
-    // @ts-ignore - Ignorando problemas de tipagem do IMaskInput com props complexos
-    <IMaskInput
-      id={name}
-      name={name}
-      mask={mask}
-      {...props}
-      className={cn(
-        "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-        error && "border-destructive",
-        className
-      )}
-    />
-  ) : (
-    <Input
-      id={name}
-      name={name}
-      {...props}
-      className={cn(error && "border-destructive", className)}
-    />
-  );
-
-  return (
-    <div className="space-y-2">
-      <Label htmlFor={name} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-        {label}
-      </Label>
-      {inputComponent}
-      {error && (
-        <p className="text-sm font-medium text-destructive">{error}</p>
-      )}
-    </div>
-  );
-};
-
-const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, isLoading }) => {
-  const [formData, setFormData] = useState<PaymentFormData>({
-    fullName: '',
-    email: '',
-    cpf: '',
-    phone: '',
-    zipCode: '',
-    addressNumber: '',
-    cardNumber: '',
-    cardName: '',
-    cardExpiryDate: '',
-    cardCvv: ''
-  });
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await onSubmit(formData);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <FormInput
-            label="Nome Completo"
-            name="fullName"
-            value={formData.fullName}
-            onChange={handleInputChange}
-            required
-            placeholder="Digite seu nome completo"
-          />
-
-          <FormInput
-            label="Email"
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleInputChange}
-            required
-            placeholder="seu@email.com"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <FormInput
-            label="CPF"
-            name="cpf"
-            value={formData.cpf}
-            onChange={handleInputChange}
-            required
-            mask="000.000.000-00"
-            placeholder="000.000.000-00"
-          />
-
-          <FormInput
-            label="Telefone"
-            name="phone"
-            value={formData.phone}
-            onChange={handleInputChange}
-            required
-            mask="(00) 00000-0000"
-            placeholder="(00) 00000-0000"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <FormInput
-            label="CEP"
-            name="zipCode"
-            value={formData.zipCode}
-            onChange={handleInputChange}
-            required
-            mask="00000-000"
-            placeholder="00000-000"
-          />
-
-          <FormInput
-            label="Número do Endereço"
-            name="addressNumber"
-            value={formData.addressNumber}
-            onChange={handleInputChange}
-            required
-            placeholder="Número do endereço"
-          />
-        </div>
-
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium text-foreground">Dados do Cartão</h3>
-          <FormInput
-            label="Número do Cartão"
-            name="cardNumber"
-            value={formData.cardNumber}
-            onChange={handleInputChange}
-            required
-            mask="0000 0000 0000 0000"
-            placeholder="0000 0000 0000 0000"
-          />
-
-          <FormInput
-            label="Nome no Cartão"
-            name="cardName"
-            value={formData.cardName}
-            onChange={handleInputChange}
-            required
-            placeholder="Nome como está no cartão"
-          />
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormInput
-              label="Validade"
-              name="cardExpiryDate"
-              value={formData.cardExpiryDate}
-              onChange={handleInputChange}
-              required
-              // @ts-ignore - Ignorando problemas de tipagem com a máscara complexa
-              mask={{
-                mask: 'MM/YY',
-                blocks: {
-                  MM: {
-                    mask: /^(0[1-9]|1[0-2])$/,
-                    placeholderChar: 'M'
-                  },
-                  YY: {
-                    mask: /^([2-9][0-9])$/,
-                    placeholderChar: 'A'
-                  }
-                }
-              }}
-              placeholder="MM/AA"
-            />
-
-            <FormInput
-              label="CVV"
-              name="cardCvv"
-              value={formData.cardCvv}
-              onChange={handleInputChange}
-              required
-              mask="000"
-              placeholder="123"
-            />
-          </div>
-        </div>
-      </div>
-
-      <Button
-        type="submit"
-        className="w-full"
-        disabled={isLoading}
-        variant="default"
-        size="lg"
-      >
-        {isLoading ? (
-          <>
-            <svg className="mr-2 h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span>Processando...</span>
-          </>
-        ) : (
-          `Assinar por R$ 1,00/semana`
-        )}
-      </Button>
-    </form>
-  );
-};
-
-const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({ subscription }) => {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-  };
-
-  const getStatusInfo = (status: string): StatusInfo => {
-    const statusMap: Record<string, StatusInfo> = {
-      'TRIAL': {
-        text: 'Período de Teste',
-        color: 'text-blue-500 dark:text-blue-400',
-        bgColor: 'bg-blue-50 dark:bg-blue-950',
-        icon: (
-          <svg className="h-5 w-5 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        )
-      },
-      'TRIAL_EXPIRED': {
-        text: 'Período de Teste Expirado',
-        color: 'text-red-500 dark:text-red-400',
-        bgColor: 'bg-red-50 dark:bg-red-950',
-        icon: (
-          <svg className="h-5 w-5 text-red-500 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        )
-      },
-      'ACTIVE': {
-        text: 'Assinatura Ativa',
-        color: 'text-green-500 dark:text-green-400',
-        bgColor: 'bg-green-50 dark:bg-green-950',
-        icon: (
-          <svg className="h-5 w-5 text-green-500 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-        )
-      },
-      'EXPIRED': {
-        text: 'Assinatura Expirada',
-        color: 'text-red-500 dark:text-red-400',
-        bgColor: 'bg-red-50 dark:bg-red-950',
-        icon: (
-          <svg className="h-5 w-5 text-red-500 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        )
-      }
-    };
-
-    return statusMap[status] || {
-      text: status,
-      color: 'text-gray-500 dark:text-gray-400',
-      bgColor: 'bg-gray-50 dark:bg-gray-800',
-      icon: null
-    };
-  };
-
-  const statusInfo = getStatusInfo(subscription.status);
-
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-xl font-bold">Status da Assinatura</CardTitle>
-        <div className={`flex items-center gap-2 rounded-full px-3 py-1 ${statusInfo.bgColor} ${statusInfo.color}`}>
-          {statusInfo.icon}
-          <span className="font-medium">{statusInfo.text}</span>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {subscription.trialEndsAt && (
-            <div className="flex items-center justify-between border-t border-border pt-3">
-              <span className="text-muted-foreground">Período de Teste até:</span>
-              <span className="font-medium">{formatDate(subscription.trialEndsAt)}</span>
-            </div>
-          )}
-
-          {subscription.subscriptionEndsAt && (
-            <div className="flex items-center justify-between border-t border-border pt-3">
-              <span className="text-muted-foreground">Assinatura válida até:</span>
-              <span className="font-medium">{formatDate(subscription.subscriptionEndsAt)}</span>
-            </div>
-          )}
-
-          {subscription.nextBillingDate && (
-            <div className="flex items-center justify-between border-t border-border pt-3">
-              <span className="text-muted-foreground">Próximo Vencimento:</span>
-              <span className="font-medium">{formatDate(subscription.nextBillingDate)}</span>
-            </div>
-          )}
-        </div>
-
-        {subscription.status !== 'ACTIVE' && (
-          <div className="mt-6">
-            <div className={`rounded-md ${statusInfo.bgColor} p-4`}>
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  {statusInfo.icon}
-                </div>
-                <div className="ml-3">
-                  <h3 className={`text-sm font-medium ${statusInfo.color}`}>
-                    Atenção
-                  </h3>
-                  <div className={`mt-2 text-sm ${statusInfo.color}`}>
-                    {subscription.status === 'TRIAL_EXPIRED' && (
-                      <p>Seu período de teste expirou. Assine agora para continuar usando o sistema.</p>
-                    )}
-                    {subscription.status === 'TRIAL' && (
-                      <p>Você está no período de teste. Aproveite para conhecer todas as funcionalidades!</p>
-                    )}
-                    {subscription.status === 'EXPIRED' && (
-                      <p>Sua assinatura expirou. Renove agora para continuar usando o sistema.</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-};
 
 export default function SubscriptionPage() {
-  const router = useRouter();
   const { data: session } = useSession();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
 
-  const [loading, setLoading] = useState(false);
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
+  // Busca os dados de assinatura do usuário
   useEffect(() => {
-    const message = searchParams.get('message');
-    if (message) {
-      toast({
-        title: 'Atenção',
-        description: message,
-        variant: 'destructive',
-      });
-    }
-  }, [searchParams, toast]);
-
-  useEffect(() => {
-    const fetchSubscription = async () => {
+    const fetchSubscriptionStatus = async () => {
       try {
-        const response = await fetch('/api/subscription');
+        const response = await fetch('/api/subscription/status');
+        
+        if (!response.ok) {
+          // Se não for um 401 (Unauthorized), mostra erro
+          if (response.status !== 401) {
+            throw new Error(`Erro ao buscar status da assinatura: ${response.statusText}`);
+          }
+          return;
+        }
+
         const data = await response.json();
         setSubscription(data);
+
+        // Redireciona para o dashboard se a assinatura estiver ativa
+        if (data.status === 'ACTIVE' && !searchParams.get('force')) {
+          router.push('/dashboard');
+        }
       } catch (error) {
-        console.error('Erro ao buscar dados da assinatura:', error);
-        toast({
-          title: 'Erro',
-          description: 'Não foi possível carregar os dados da assinatura.',
-          variant: 'destructive',
-        });
+        console.error('Erro ao buscar status da assinatura:', error);
       }
     };
 
-    fetchSubscription();
-  }, [toast]);
+    if (session?.user) {
+      fetchSubscriptionStatus();
+    }
+  }, [session, router, searchParams]);
 
   const handleSubmit = async (formData: PaymentFormData) => {
     setLoading(true);
+
     try {
       const response = await fetch('/api/subscription', {
         method: 'POST',
@@ -463,19 +112,22 @@ export default function SubscriptionPage() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || error.error || 'Erro ao processar assinatura');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao processar assinatura');
       }
-
+      
+      // Mostrar confirmação
+      setShowConfirmation(true);
+      
       toast({
         title: 'Sucesso!',
         description: 'Assinatura criada com sucesso.',
       });
 
-      // Aguarda 2 segundos antes de redirecionar
+      // Aguarda 3 segundos antes de redirecionar
       setTimeout(() => {
         router.push('/dashboard');
-      }, 2000);
+      }, 3000);
     } catch (error) {
       console.error('Erro ao criar assinatura:', error);
       toast({
@@ -488,26 +140,168 @@ export default function SubscriptionPage() {
     }
   };
 
-  return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-2xl">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold">Assinatura Rural Credit App</CardTitle>
-          <CardDescription>
-            Tenha acesso completo a todas as funcionalidades do sistema por apenas R$ 1,00/semana
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent>
-          {subscription && (
-            <div className="mb-8">
-              <SubscriptionStatus subscription={subscription} />
+  // Determina se deve mostrar alerta de expiração
+  const showExpirationAlert = subscription?.status === 'TRIAL_EXPIRED' || subscription?.status === 'EXPIRED';
+  
+  if (showConfirmation) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 py-16 flex items-center justify-center">
+        <div className="container px-4 mx-auto max-w-md text-center">
+          <div className="mb-6 flex justify-center">
+            <div className="h-24 w-24 rounded-full bg-green-100 flex items-center justify-center">
+              <CheckCircle className="h-12 w-12 text-green-500" />
             </div>
-          )}
+          </div>
+          
+          <h1 className="text-3xl font-bold mb-4">Pagamento Confirmado!</h1>
+          <p className="text-lg text-muted-foreground mb-4">
+            Sua assinatura foi ativada com sucesso. Você já tem acesso completo a todas as funcionalidades.
+          </p>
+          
+          <Card className="mb-8 border-green-200 bg-green-50/30">
+            <CardContent className="pt-6 pb-6">
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium">Plano:</span>
+                  <span className="text-sm">Assinatura Mensal</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium">Valor:</span>
+                  <span className="text-sm">R$ 10,00/mês</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium">Status:</span>
+                  <span className="text-sm text-green-600 font-medium">Ativo</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium">Próxima cobrança:</span>
+                  <span className="text-sm">Em 30 dias</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Button 
+            size="lg" 
+            className="w-full" 
+            onClick={() => router.push('/dashboard')}
+          >
+            Ir para o Dashboard <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
-          <PaymentForm onSubmit={handleSubmit} isLoading={loading} />
-        </CardContent>
-      </Card>
+  // Página principal de assinatura
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 py-10">
+      <div className="container px-4 mx-auto max-w-6xl">
+        {/* Cabeçalho da página */}
+        <div className="text-center mb-10">
+          <h1 className="text-4xl font-bold tracking-tighter mb-3">Período de Teste Expirado</h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Assine agora para continuar usando o Rural Credit App
+          </p>
+          <p className="text-lg text-muted-foreground max-w-md mx-auto mt-2">
+            Não perca acesso aos seus projetos e dados
+          </p>
+        </div>
+
+        {/* Status da assinatura */}
+        {subscription && (
+          <div className="mb-12">
+            <SubscriptionStatus 
+              status={subscription.status} 
+              trialEndsAt={subscription.trialEndsAt} 
+              subscriptionEndsAt={subscription.subscriptionEndsAt} 
+            />
+          </div>
+        )}
+
+        <div className="flex justify-center">
+          <div className="max-w-xl w-full">
+            <div className="space-y-6">
+              <SubscriptionBenefits />
+              
+              {/* Formulário de pagamento integrado na página */}
+              <div className="mt-8 bg-white rounded-lg border border-muted p-6 shadow-sm">
+                <div className="mb-6">
+                  <h3 className="text-xl font-semibold mb-2">Informações de Pagamento</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Preencha os dados abaixo para assinar o Rural Credit App
+                  </p>
+                </div>
+                
+                <SimplifiedPaymentForm onSubmit={handleSubmit} isLoading={loading} />
+                
+                <div className="mt-6 pt-4 border-t border-muted-foreground/20 text-center">
+                  <div className="flex items-center justify-center mb-2 text-muted-foreground">
+                    <Info className="h-4 w-4 mr-2" />
+                    <span className="text-sm font-medium">Pagamento Seguro</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Seus dados são protegidos com criptografia de ponta a ponta. 
+                    Utilizamos a Asaas, empresa certificada pelo Banco Central, para processar pagamentos com segurança.
+                  </p>
+                </div>
+              </div>
+              
+              <Card className="border border-primary/20">
+                <CardHeader>
+                  <CardTitle className="text-xl">Perguntas Frequentes</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-1">
+                      <AccordionTrigger>Como funciona a cobrança?</AccordionTrigger>
+                      <AccordionContent>
+                        A cobrança é mensal no valor de R$ 10,00, realizada automaticamente no cartão cadastrado. Você terá 7 dias de teste gratuito antes da primeira cobrança.
+                      </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-2">
+                      <AccordionTrigger>Posso cancelar quando quiser?</AccordionTrigger>
+                      <AccordionContent>
+                        Sim, você pode cancelar sua assinatura a qualquer momento pela área do usuário, sem taxas adicionais. Se cancelar durante o período de teste de 7 dias, não será cobrado.
+                      </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-3">
+                      <AccordionTrigger>O que acontece após o período de teste?</AccordionTrigger>
+                      <AccordionContent>
+                        Após o período de teste de 7 dias, será cobrado o valor da assinatura automaticamente no cartão cadastrado. Você receberá um e-mail de confirmação quando a cobrança for realizada.
+                      </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-4">
+                      <AccordionTrigger>Os dados do meu cartão estão seguros?</AccordionTrigger>
+                      <AccordionContent>
+                        Sim, utilizamos a Asaas, empresa certificada e regulamentada pelo Banco Central para processamento dos pagamentos, garantindo total segurança dos seus dados. Todas as transações são criptografadas e seguem os padrões PCI-DSS.
+                      </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-5">
+                      <AccordionTrigger>Preciso fornecer dados do cartão durante o teste gratuito?</AccordionTrigger>
+                      <AccordionContent>
+                        Sim, para iniciar o período de teste gratuito é necessário cadastrar os dados do cartão de crédito. Isso garante uma transição suave para a assinatura paga após o período de teste, mas você não será cobrado durante os 7 dias de teste.
+                      </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-6">
+                      <AccordionTrigger>Quais métodos de pagamento são aceitos?</AccordionTrigger>
+                      <AccordionContent>
+                        Atualmente aceitamos apenas cartão de crédito para pagamento das assinaturas. Trabalhamos com as principais bandeiras: Visa, Mastercard, American Express, Elo e Hipercard.
+                      </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-7">
+                      <AccordionTrigger>Como recebo suporte técnico?</AccordionTrigger>
+                      <AccordionContent>
+                        Assinantes têm acesso ao suporte técnico prioritário através do e-mail suporte@ruralcreditapp.com.br ou pelo chat disponível dentro da plataforma. Nosso horário de atendimento é de segunda a sexta, das 8h às 18h.
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

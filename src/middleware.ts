@@ -11,27 +11,41 @@ const PUBLIC_PATHS = [
   '/auth/login',
   '/auth/register',
   '/auth/confirm',
+  '/auth/reset-password',
   '/_next',
   '/favicon.ico',
   // Adicionar rota de criação de projetos como pública para evitar deslogamento
   '/projects/new',
 ];
 
+// Função auxiliar para verificar se uma rota é pública
+function isPublicPath(pathname: string): boolean {
+  return PUBLIC_PATHS.some(path => pathname.startsWith(path));
+}
+
+// Função auxiliar para adicionar headers de cache consistentes
+function addNoCacheHeaders(response: NextResponse): NextResponse {
+  response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  response.headers.set('Pragma', 'no-cache');
+  response.headers.set('Expires', '0');
+  return response;
+}
+
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  
   // Adicionar logs para depuração em produção
-  console.log('Middleware executando para URL:', request.nextUrl.pathname);
+  console.log('Middleware executando para URL:', pathname);
 
   // Verificar se é uma página pública
-  if (PUBLIC_PATHS.some(path => request.nextUrl.pathname.startsWith(path))) {
+  if (isPublicPath(pathname)) {
     console.log('Rota pública detectada, permitindo acesso');
     return NextResponse.next();
   }
 
-  // Verificar autenticação
   try {
-    const token = await getToken({ 
-      req: request,
-    });
+    // Verificar autenticação
+    const token = await getToken({ req: request });
     console.log('Token do usuário:', token ? 'Presente' : 'Ausente');
     
     if (token) {
@@ -43,22 +57,24 @@ export async function middleware(request: NextRequest) {
       });
     }
 
+    // Se não tiver token válido, redirecionar para login
     if (!token?.tenantId || !token?.cognitoId) {
       console.log('Token inválido ou ausente, redirecionando para login');
-      return NextResponse.redirect(new URL('/auth/login', request.url));
+      const response = NextResponse.redirect(new URL('/auth/login', request.url));
+      return addNoCacheHeaders(response);
     }
 
-  // Verificar status da assinatura
-  try {
+    // Verificar status da assinatura
     console.log('Verificando status da assinatura para tenantId:', token.tenantId, 'cognitoId:', token.cognitoId);
     const { hasAccess, message } = await checkSubscriptionAccess(token.tenantId, token.cognitoId);
     console.log('Status da assinatura:', { hasAccess, message });
 
     if (!hasAccess) {
-      console.log('Acesso negado, retornando status 403');
+      console.log('Acesso negado, verificando tipo de requisição');
       
       // Para requisições de API, retornar 403 para que o interceptor do cliente redirecione
-      if (request.nextUrl.pathname.startsWith('/api/') && !request.nextUrl.pathname.startsWith('/api/auth')) {
+      if (pathname.startsWith('/api/') && !pathname.startsWith('/api/auth')) {
+        console.log('Requisição de API detectada, retornando status 403');
         const response = new NextResponse(
           JSON.stringify({ 
             error: 'Acesso negado', 
@@ -67,50 +83,22 @@ export async function middleware(request: NextRequest) {
           { 
             status: 403,
             headers: {
-              'Content-Type': 'application/json',
-              'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-              'Pragma': 'no-cache',
-              'Expires': '0'
+              'Content-Type': 'application/json'
             }
           }
         );
-        return response;
+        return addNoCacheHeaders(response);
       }
       
       // Para páginas normais, redirecionar para a página de assinatura
+      console.log('Página normal detectada, redirecionando para página de assinatura');
       const response = NextResponse.redirect(new URL('/subscription', request.url));
-      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-      response.headers.set('Pragma', 'no-cache');
-      response.headers.set('Expires', '0');
-      return response;
+      return addNoCacheHeaders(response);
     }
 
     console.log('Acesso permitido para usuário autenticado');
     return NextResponse.next();
-  } catch (error: unknown) {
-    console.error('Erro ao verificar status da assinatura:', error);
-    
-    // Tratamento seguro para o erro com verificação de tipo
-    const errorDetails: Record<string, unknown> = {};
-    
-    if (error && typeof error === 'object') {
-      if ('name' in error && error.name) {
-        errorDetails.name = error.name;
-      }
-      
-      if ('message' in error && error.message) {
-        errorDetails.message = error.message;
-      }
-      
-      if ('stack' in error && error.stack) {
-        errorDetails.stack = error.stack;
-      }
-    }
-    
-    console.error('Detalhes do erro:', errorDetails);
-    return NextResponse.redirect(new URL('/auth/login', request.url));
-  }
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Erro no middleware:', error);
     
     // Tratamento seguro para o erro com verificação de tipo
@@ -131,12 +119,16 @@ export async function middleware(request: NextRequest) {
     }
     
     console.error('Detalhes do erro:', errorDetails);
-    return NextResponse.redirect(new URL('/auth/login', request.url));
+    
+    // Em caso de erro, redirecionar para login por segurança
+    const response = NextResponse.redirect(new URL('/auth/login', request.url));
+    return addNoCacheHeaders(response);
   }
 }
 
+// Atualizar o matcher para corresponder exatamente aos PUBLIC_PATHS
 export const config = {
   matcher: [
-    "/((?!api/auth|api/subscription|subscription|auth/login|auth/register|auth/confirm|_next|favicon.ico|projects/new).*)",
+    "/((?!api/auth|api/subscription|subscription|auth/login|auth/register|auth/confirm|auth/reset-password|_next|favicon.ico|projects/new).*)",
   ],
 };

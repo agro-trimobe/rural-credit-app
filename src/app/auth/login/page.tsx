@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, AlertCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   Form,
@@ -19,14 +19,39 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export default function LoginPage() {
+// Componente de carregamento para o Suspense
+function LoginPageLoading() {
+  return (
+    <div className="container flex h-screen w-full flex-col items-center justify-center">
+      <div className="mx-auto w-full max-w-[350px] space-y-6">
+        <Card className="w-full">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl text-center">Carregando...</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 flex justify-center p-6">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// Componente principal de login que usa hooks de cliente
+function LoginPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(
+    searchParams.get("error") || null
+  );
 
+  // Esquema de validação com Zod
   const formSchema = z.object({
     name: isLogin ? z.string().optional() : z.string().min(1, "Nome é obrigatório"),
     email: z.string().email("Email inválido"),
@@ -54,8 +79,25 @@ export default function LoginPage() {
     },
   });
 
+  // Mapeamento de erros para mensagens amigáveis
+  const errorMessages: Record<string, string> = {
+    "CredentialsSignin": "Email ou senha incorretos",
+    "UserNotConfirmedException": "Email não confirmado. Por favor, verifique seu email e confirme seu cadastro.",
+    "NotAuthorizedException": "Email ou senha incorretos",
+    "UserNotFoundException": "Usuário não encontrado",
+    "TooManyRequestsException": "Muitas tentativas. Tente novamente mais tarde.",
+    "InvalidParameterException": "Dados inválidos. Verifique as informações fornecidas.",
+    "default": "Ocorreu um erro na autenticação. Tente novamente."
+  };
+
+  // Função para traduzir códigos de erro em mensagens amigáveis
+  const getErrorMessage = (errorCode: string): string => {
+    return errorMessages[errorCode] || errorMessages.default;
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
+    setErrorMessage(null);
     
     try {
       if (isForgotPassword) {
@@ -78,6 +120,7 @@ export default function LoginPage() {
           });
           router.push(`/auth/reset-password?email=${encodeURIComponent(values.email)}`);
         } else {
+          setErrorMessage(data.message || "Erro ao solicitar redefinição de senha");
           toast({
             title: "Erro",
             description: data.message || "Erro ao solicitar redefinição de senha",
@@ -93,13 +136,24 @@ export default function LoginPage() {
         });
 
         if (result?.error) {
+          console.error("Erro na autenticação:", result.error);
+          const friendlyErrorMessage = getErrorMessage(result.error);
+          setErrorMessage(friendlyErrorMessage);
+          
           toast({
             title: "Erro na autenticação",
-            description: "Email ou senha incorretos",
+            description: friendlyErrorMessage,
             variant: "destructive",
           });
+          
+          // Se o erro for de email não confirmado, redirecionar para a página de confirmação
+          if (result.error === "UserNotConfirmedException") {
+            router.push(`/auth/confirm?email=${encodeURIComponent(values.email)}`);
+          }
         } else if (result?.ok) {
           console.log("Login bem-sucedido, redirecionando para dashboard...");
+          // Limpar qualquer erro anterior
+          setErrorMessage(null);
           // Forçar redirecionamento com replace para evitar problemas de histórico
           window.location.href = "/dashboard";
         }
@@ -136,15 +190,20 @@ export default function LoginPage() {
             console.log('Registro não requer confirmação');
           }
         } else {
+          const errorMsg = data.error || "Erro ao criar conta";
+          setErrorMessage(errorMsg);
+          
           toast({
             title: "Erro no cadastro",
-            description: data.error || "Erro ao criar conta",
+            description: errorMsg,
             variant: "destructive",
           });
         }
       }
     } catch (error) {
-      console.error(error);
+      console.error("Erro inesperado:", error);
+      setErrorMessage("Ocorreu um erro inesperado. Tente novamente mais tarde.");
+      
       toast({
         title: "Erro",
         description: "Ocorreu um erro inesperado",
@@ -174,6 +233,13 @@ export default function LoginPage() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <CardContent className="space-y-4">
+                {errorMessage && (
+                  <Alert variant="destructive" className="mb-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{errorMessage}</AlertDescription>
+                  </Alert>
+                )}
+                
                 {!isLogin && !isForgotPassword && (
                   <FormField
                     control={form.control}
@@ -281,6 +347,7 @@ export default function LoginPage() {
                       className="text-sm text-primary hover:text-primary/90"
                       onClick={() => {
                         setIsForgotPassword(true);
+                        setErrorMessage(null);
                         form.reset({ email: form.getValues("email") });
                       }}
                     >
@@ -295,6 +362,7 @@ export default function LoginPage() {
                       className="text-sm text-primary hover:text-primary/90"
                       onClick={() => {
                         setIsForgotPassword(false);
+                        setErrorMessage(null);
                         form.reset({ email: form.getValues("email") });
                       }}
                     >
@@ -309,6 +377,7 @@ export default function LoginPage() {
                       className="text-sm text-primary hover:text-primary/90"
                       onClick={() => {
                         setIsLogin(!isLogin);
+                        setErrorMessage(null);
                         form.reset();
                       }}
                     >
@@ -322,5 +391,14 @@ export default function LoginPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+// Componente principal que envolve o conteúdo em um Suspense boundary
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginPageLoading />}>
+      <LoginPageContent />
+    </Suspense>
   );
 }
