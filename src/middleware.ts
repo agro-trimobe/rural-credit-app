@@ -1,134 +1,72 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
-import { checkSubscriptionAccess } from './lib/subscription-service';
 
-// Páginas que não precisam de verificação de assinatura
+// Páginas que não precisam de verificação de autenticação
 const PUBLIC_PATHS = [
   '/api/auth',
-  '/api/subscription',
-  '/subscription',
   '/auth/login',
   '/auth/register',
   '/auth/confirm',
   '/auth/reset-password',
   '/_next',
   '/favicon.ico',
-  // Adicionar rota de criação de projetos como pública para evitar deslogamento
-  '/projects/new',
 ];
 
-// Função auxiliar para verificar se uma rota é pública
-function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.some(path => pathname.startsWith(path));
-}
-
-// Função auxiliar para adicionar headers de cache consistentes
-function addNoCacheHeaders(response: NextResponse): NextResponse {
-  response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+// Adiciona cabeçalhos para evitar cache
+function addNoCacheHeaders(response: NextResponse) {
+  response.headers.set('Cache-Control', 'no-store, max-age=0');
   response.headers.set('Pragma', 'no-cache');
   response.headers.set('Expires', '0');
   return response;
 }
 
+// Middleware para verificar autenticação
 export async function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
-  
-  // Adicionar logs para depuração em produção
-  console.log('Middleware executando para URL:', pathname);
+  const { pathname } = request.nextUrl;
+  console.log(`Middleware executando para: ${pathname}`);
 
-  // Verificar se é uma página pública
-  if (isPublicPath(pathname)) {
+  // Verificar se a rota é pública
+  if (PUBLIC_PATHS.some(path => pathname.startsWith(path))) {
     console.log('Rota pública detectada, permitindo acesso');
     return NextResponse.next();
   }
 
-  try {
-    // Verificar autenticação
-    const token = await getToken({ req: request });
-    console.log('Token do usuário:', token ? 'Presente' : 'Ausente');
-    
-    if (token) {
-      console.log('Detalhes do token:', {
-        id: token.id,
-        email: token.email,
-        tenantId: token.tenantId,
-        cognitoId: token.cognitoId
-      });
-    }
-
-    // Se não tiver token válido, redirecionar para login
-    if (!token?.tenantId || !token?.cognitoId) {
-      console.log('Token inválido ou ausente, redirecionando para login');
-      const response = NextResponse.redirect(new URL('/auth/login', request.url));
-      return addNoCacheHeaders(response);
-    }
-
-    // Verificar status da assinatura
-    console.log('Verificando status da assinatura para tenantId:', token.tenantId, 'cognitoId:', token.cognitoId);
-    const { hasAccess, message } = await checkSubscriptionAccess(token.tenantId, token.cognitoId);
-    console.log('Status da assinatura:', { hasAccess, message });
-
-    if (!hasAccess) {
-      console.log('Acesso negado, verificando tipo de requisição');
-      
-      // Para requisições de API, retornar 403 para que o interceptor do cliente redirecione
-      if (pathname.startsWith('/api/') && !pathname.startsWith('/api/auth')) {
-        console.log('Requisição de API detectada, retornando status 403');
-        const response = new NextResponse(
-          JSON.stringify({ 
-            error: 'Acesso negado', 
-            message: message || 'Sua assinatura expirou. Por favor, renove para continuar.' 
-          }),
-          { 
-            status: 403,
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-        return addNoCacheHeaders(response);
-      }
-      
-      // Para páginas normais, redirecionar para a página de assinatura
-      console.log('Página normal detectada, redirecionando para página de assinatura');
-      const response = NextResponse.redirect(new URL('/subscription', request.url));
-      return addNoCacheHeaders(response);
-    }
-
-    console.log('Acesso permitido para usuário autenticado');
+  // Verificar se é a página inicial
+  if (pathname === '/') {
+    console.log('Página inicial detectada, permitindo acesso');
     return NextResponse.next();
-  } catch (error) {
-    console.error('Erro no middleware:', error);
-    
-    // Tratamento seguro para o erro com verificação de tipo
-    const errorDetails: Record<string, unknown> = {};
-    
-    if (error && typeof error === 'object') {
-      if ('name' in error && error.name) {
-        errorDetails.name = error.name;
-      }
-      
-      if ('message' in error && error.message) {
-        errorDetails.message = error.message;
-      }
-      
-      if ('stack' in error && error.stack) {
-        errorDetails.stack = error.stack;
-      }
-    }
-    
-    console.error('Detalhes do erro:', errorDetails);
-    
-    // Em caso de erro, redirecionar para login por segurança
+  }
+
+  // Verificar token de autenticação
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
+
+  console.log('Token de autenticação:', token ? 'Presente' : 'Ausente');
+
+  // Se não estiver autenticado, redirecionar para login
+  if (!token) {
+    console.log('Usuário não autenticado, redirecionando para login');
     const response = NextResponse.redirect(new URL('/auth/login', request.url));
     return addNoCacheHeaders(response);
   }
+
+  // Se estiver autenticado, verificar se está acessando a página de login
+  if (pathname.startsWith('/auth/login')) {
+    console.log('Usuário autenticado tentando acessar login, redirecionando para home');
+    const response = NextResponse.redirect(new URL('/home', request.url));
+    return addNoCacheHeaders(response);
+  }
+
+  // Usuário autenticado acessando uma página protegida, permitir acesso
+  console.log('Usuário autenticado acessando página protegida, permitindo acesso');
+  return NextResponse.next();
 }
 
 // Atualizar o matcher para corresponder exatamente aos PUBLIC_PATHS
 export const config = {
   matcher: [
-    "/((?!api/auth|api/subscription|subscription|auth/login|auth/register|auth/confirm|auth/reset-password|_next|favicon.ico|projects/new).*)",
+    "/((?!api/auth|auth/login|auth/register|auth/confirm|auth/reset-password|_next|favicon.ico).*)",
   ],
 };

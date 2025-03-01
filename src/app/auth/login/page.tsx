@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, AlertCircle, Leaf } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   Form,
@@ -20,18 +20,22 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import Link from "next/link";
 
 // Componente de carregamento para o Suspense
 function LoginPageLoading() {
   return (
-    <div className="container flex h-screen w-full flex-col items-center justify-center">
-      <div className="mx-auto w-full max-w-[350px] space-y-6">
-        <Card className="w-full">
+    <div className="container flex h-screen w-full flex-col items-center justify-center bg-gradient-to-b from-green-50 to-green-100">
+      <div className="mx-auto w-full max-w-[400px] space-y-6">
+        <div className="flex justify-center mb-6">
+          <Leaf className="h-10 w-10 text-green-600" />
+        </div>
+        <Card className="w-full shadow-lg">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">Carregando...</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 flex justify-center p-6">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
           </CardContent>
         </Card>
       </div>
@@ -132,7 +136,7 @@ function LoginPageContent() {
           email: values.email,
           password: values.password,
           redirect: false,
-          callbackUrl: "/dashboard"
+          callbackUrl: "/home"
         });
 
         if (result?.error) {
@@ -152,10 +156,16 @@ function LoginPageContent() {
           }
         } else if (result?.ok) {
           console.log("Login bem-sucedido, redirecionando para dashboard...");
+          
+          toast({
+            title: "Login bem-sucedido",
+            description: "Redirecionando para o dashboard...",
+          });
+          
           // Limpar qualquer erro anterior
           setErrorMessage(null);
           // Forçar redirecionamento com replace para evitar problemas de histórico
-          window.location.href = "/dashboard";
+          window.location.href = "/home";
         }
       } else {
         const response = await fetch("/api/auth/register", {
@@ -215,9 +225,17 @@ function LoginPageContent() {
   };
 
   return (
-    <div className="container flex h-screen w-full flex-col items-center justify-center">
-      <div className="mx-auto w-full max-w-[350px] space-y-6">
-        <Card className="w-full">
+    <div className="container flex h-screen w-full flex-col items-center justify-center bg-gradient-to-b from-green-50 to-green-100">
+      <div className="mx-auto w-full max-w-[400px] space-y-6">
+        <div className="flex flex-col items-center mb-6">
+          <Link href="/" className="flex items-center mb-2">
+            <Leaf className="h-10 w-10 text-green-600 mr-2" />
+            <span className="text-2xl font-bold text-green-800">Rural Credit</span>
+          </Link>
+          <p className="text-sm text-gray-600">Sistema de Crédito Rural</p>
+        </div>
+        
+        <Card className="w-full shadow-lg border-green-200">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">
               {isForgotPassword ? "Recuperar Senha" : isLogin ? "Login" : "Criar Conta"}
@@ -333,7 +351,7 @@ function LoginPageContent() {
               <CardFooter className="flex flex-col">
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-full bg-green-600 hover:bg-green-700"
                   disabled={isLoading}
                 >
                   {isLoading ? "Carregando..." : isForgotPassword ? "Enviar Email" : isLogin ? "Entrar" : "Cadastrar"}
@@ -344,7 +362,7 @@ function LoginPageContent() {
                     <Button
                       type="button"
                       variant="link"
-                      className="text-sm text-primary hover:text-primary/90"
+                      className="text-sm text-green-600 hover:text-green-700"
                       onClick={() => {
                         setIsForgotPassword(true);
                         setErrorMessage(null);
@@ -359,7 +377,7 @@ function LoginPageContent() {
                     <Button
                       type="button"
                       variant="link"
-                      className="text-sm text-primary hover:text-primary/90"
+                      className="text-sm text-green-600 hover:text-green-700"
                       onClick={() => {
                         setIsForgotPassword(false);
                         setErrorMessage(null);
@@ -374,7 +392,7 @@ function LoginPageContent() {
                     <Button
                       type="button"
                       variant="link"
-                      className="text-sm text-primary hover:text-primary/90"
+                      className="text-sm text-green-600 hover:text-green-700"
                       onClick={() => {
                         setIsLogin(!isLogin);
                         setErrorMessage(null);
@@ -389,6 +407,12 @@ function LoginPageContent() {
             </form>
           </Form>
         </Card>
+        
+        <div className="text-center">
+          <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
+            Voltar para a página inicial
+          </Link>
+        </div>
       </div>
     </div>
   );

@@ -1,8 +1,5 @@
 'use client'
 
-import { Header } from '@/components/ui/header'
-import { Sidebar } from '@/components/ui/sidebar'
-
 export default function AuthenticatedLayout({
   children,
 }: {
@@ -10,11 +7,7 @@ export default function AuthenticatedLayout({
 }) {
   return (
     <div className="min-h-screen">
-      <Header />
-      <Sidebar />
-      <main className="ml-64 pt-14">
-        <div className="container mx-auto p-6">{children}</div>
-      </main>
+      {children}
     </div>
   )
 }

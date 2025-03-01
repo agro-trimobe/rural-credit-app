@@ -46,12 +46,3 @@ export const RuralCreditTableSchema: CreateTableCommandInput = {
     WriteCapacityUnits: 5
   }
 };
-
-export interface UserSubscription {
-  createdAt: string;
-  trialEndsAt: string;
-  status: 'TRIAL' | 'ACTIVE' | 'INACTIVE' | 'OVERDUE';
-  asaasCustomerId?: string;
-  asaasSubscriptionId?: string;
-  subscriptionEndsAt?: string;
-}

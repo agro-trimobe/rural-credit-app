@@ -23,16 +23,6 @@ api.interceptors.response.use(
       }
     }
     
-    // Se o erro for 403 (acesso negado), redirecionar para a página de assinatura
-    if (error.response && error.response.status === 403) {
-      console.error('Erro de assinatura detectado:', error.response.data);
-      
-      // Em ambiente de navegador, redirecionar para página de assinatura
-      if (typeof window !== 'undefined') {
-        window.location.href = '/subscription';
-      }
-    }
-    
     return Promise.reject(error);
   }
 );
@@ -40,21 +30,16 @@ api.interceptors.response.use(
 export { api };
 
 export const apiClient = {
-  projects: {
-    list: () => api.get('/projects').then(res => res.data),
-    get: (id: string) => api.get(`/projects/${id}`).then(res => res.data),
-    create: (data: any) => api.post('/projects', data).then(res => res.data),
-    update: (id: string, data: any) => api.put(`/projects/${id}`, data).then(res => res.data),
-    delete: (id: string) => api.delete(`/projects/${id}`).then(res => res.data),
-  },
-  documents: {
-    list: (id: string) => 
-      api.get(`/projects/${id}/documents`).then(res => res.data),
-    upload: (formData: FormData) => 
-      api.post('/documents/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      }).then(res => res.data),
-    delete: (projectId: string, docId: string) =>
-      api.delete(`/projects/${projectId}/documents/${docId}`).then(res => res.data),
+  auth: {
+    login: (credentials: { email: string; password: string }) => 
+      api.post('/auth/login', credentials).then(res => res.data),
+    register: (userData: any) => 
+      api.post('/auth/register', userData).then(res => res.data),
+    confirmRegistration: (confirmData: { email: string; code: string }) => 
+      api.post('/auth/confirm', confirmData).then(res => res.data),
+    forgotPassword: (email: string) => 
+      api.post('/auth/forgot-password', { email }).then(res => res.data),
+    resetPassword: (resetData: { email: string; code: string; newPassword: string }) => 
+      api.post('/auth/reset-password', resetData).then(res => res.data),
   }
 };
