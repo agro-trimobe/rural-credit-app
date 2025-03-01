@@ -25,17 +25,17 @@ import Link from "next/link";
 // Componente de carregamento para o Suspense
 function LoginPageLoading() {
   return (
-    <div className="container flex h-screen w-full flex-col items-center justify-center bg-gradient-to-b from-green-50 to-green-100">
+    <div className="container flex h-screen w-full flex-col items-center justify-center bg-background">
       <div className="mx-auto w-full max-w-[400px] space-y-6">
         <div className="flex justify-center mb-6">
-          <Leaf className="h-10 w-10 text-green-600" />
+          <Leaf className="h-10 w-10 text-primary" />
         </div>
         <Card className="w-full shadow-lg">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">Carregando...</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 flex justify-center p-6">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
           </CardContent>
         </Card>
       </div>
@@ -225,17 +225,17 @@ function LoginPageContent() {
   };
 
   return (
-    <div className="container flex h-screen w-full flex-col items-center justify-center bg-gradient-to-b from-green-50 to-green-100">
+    <div className="container flex h-screen w-full flex-col items-center justify-center bg-background">
       <div className="mx-auto w-full max-w-[400px] space-y-6">
         <div className="flex flex-col items-center mb-6">
           <Link href="/" className="flex items-center mb-2">
-            <Leaf className="h-10 w-10 text-green-600 mr-2" />
-            <span className="text-2xl font-bold text-green-800">Rural Credit</span>
+            <Leaf className="h-10 w-10 text-primary mr-2" />
+            <span className="text-2xl font-bold">Rural Credit</span>
           </Link>
-          <p className="text-sm text-gray-600">Sistema de Crédito Rural</p>
+          <p className="text-sm text-muted-foreground">Sistema de Crédito Rural</p>
         </div>
         
-        <Card className="w-full shadow-lg border-green-200">
+        <Card className="w-full shadow-lg">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">
               {isForgotPassword ? "Recuperar Senha" : isLogin ? "Login" : "Criar Conta"}
@@ -351,7 +351,7 @@ function LoginPageContent() {
               <CardFooter className="flex flex-col">
                 <Button
                   type="submit"
-                  className="w-full bg-green-600 hover:bg-green-700"
+                  className="w-full bg-primary hover:bg-primary-dark"
                   disabled={isLoading}
                 >
                   {isLoading ? "Carregando..." : isForgotPassword ? "Enviar Email" : isLogin ? "Entrar" : "Cadastrar"}
@@ -362,7 +362,7 @@ function LoginPageContent() {
                     <Button
                       type="button"
                       variant="link"
-                      className="text-sm text-green-600 hover:text-green-700"
+                      className="text-sm"
                       onClick={() => {
                         setIsForgotPassword(true);
                         setErrorMessage(null);
@@ -377,7 +377,7 @@ function LoginPageContent() {
                     <Button
                       type="button"
                       variant="link"
-                      className="text-sm text-green-600 hover:text-green-700"
+                      className="text-sm"
                       onClick={() => {
                         setIsForgotPassword(false);
                         setErrorMessage(null);
@@ -392,7 +392,7 @@ function LoginPageContent() {
                     <Button
                       type="button"
                       variant="link"
-                      className="text-sm text-green-600 hover:text-green-700"
+                      className="text-sm"
                       onClick={() => {
                         setIsLogin(!isLogin);
                         setErrorMessage(null);
@@ -409,7 +409,7 @@ function LoginPageContent() {
         </Card>
         
         <div className="text-center">
-          <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
+          <Link href="/" className="text-sm text-muted-foreground hover:text-muted-foreground-dark">
             Voltar para a página inicial
           </Link>
         </div>
