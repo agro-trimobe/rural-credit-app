@@ -1,4 +1,5 @@
 import { Projeto, Documento, gerarIdAleatorio } from '../crm-utils'
+import { v4 as uuidv4 } from 'uuid'
 
 // Dados mockados para projetos
 const projetosMock: Projeto[] = [
@@ -284,8 +285,8 @@ const documentosMock: Documento[] = [
   }
 ]
 
-// Associar documentos aos projetos
-const documentosPorProjeto = {
+// Relacionamento entre projetos e documentos
+const documentosPorProjeto: Record<string, string[]> = {
   '1': ['1', '2', '3', '4'],
   '2': ['5', '6'],
   '3': ['7', '8', '9'],
@@ -297,10 +298,7 @@ const documentosPorProjeto = {
 Object.entries(documentosPorProjeto).forEach(([projetoId, docsIds]) => {
   const projeto = projetosMock.find(p => p.id === projetoId)
   if (projeto) {
-    projeto.documentos = docsIds.map(docId => {
-      const doc = documentosMock.find(d => d.id === docId)
-      return doc ? { ...doc } : null
-    }).filter(Boolean) as Documento[]
+    projeto.documentos = docsIds
   }
 })
 
@@ -308,162 +306,143 @@ Object.entries(documentosPorProjeto).forEach(([projetoId, docsIds]) => {
 export const projetosApi = {
   // Listar todos os projetos
   listarProjetos: async (): Promise<Projeto[]> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve([...projetosMock])
-      }, 500)
-    })
+    // Simular delay de rede
+    await new Promise(resolve => setTimeout(resolve, 500))
+    return [...projetosMock]
   },
 
   // Buscar projeto por ID
   buscarProjetoPorId: async (id: string): Promise<Projeto | null> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const projeto = projetosMock.find(p => p.id === id) || null
-        resolve(projeto ? { ...projeto } : null)
-      }, 300)
-    })
-  },
-
-  // Listar projetos por cliente
-  listarProjetosPorCliente: async (clienteId: string): Promise<Projeto[]> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const projetos = projetosMock.filter(p => p.clienteId === clienteId)
-        resolve([...projetos])
-      }, 400)
-    })
-  },
-
-  // Listar projetos por propriedade
-  listarProjetosPorPropriedade: async (propriedadeId: string): Promise<Projeto[]> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const projetos = projetosMock.filter(p => p.propriedadeId === propriedadeId)
-        resolve([...projetos])
-      }, 400)
-    })
+    // Simular delay de rede
+    await new Promise(resolve => setTimeout(resolve, 300))
+    const projeto = projetosMock.find(p => p.id === id)
+    return projeto || null
   },
 
   // Criar novo projeto
   criarProjeto: async (projeto: Omit<Projeto, 'id' | 'dataCriacao' | 'dataAtualizacao' | 'documentos'>): Promise<Projeto> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const novoProjeto: Projeto = {
-          ...projeto,
-          id: gerarIdAleatorio(),
-          documentos: [],
-          dataCriacao: new Date().toISOString(),
-          dataAtualizacao: new Date().toISOString()
-        }
-        
-        projetosMock.push(novoProjeto)
-        resolve({ ...novoProjeto })
-      }, 700)
-    })
+    // Simular delay de rede
+    await new Promise(resolve => setTimeout(resolve, 700))
+    
+    const novoProjeto: Projeto = {
+      ...projeto,
+      id: uuidv4(),
+      documentos: [],
+      dataCriacao: new Date().toISOString(),
+      dataAtualizacao: new Date().toISOString()
+    }
+    
+    projetosMock.push(novoProjeto)
+    return novoProjeto
   },
 
   // Atualizar projeto
   atualizarProjeto: async (id: string, dadosAtualizados: Partial<Omit<Projeto, 'id' | 'dataCriacao' | 'dataAtualizacao'>>): Promise<Projeto | null> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const index = projetosMock.findIndex(p => p.id === id)
-        if (index === -1) {
-          resolve(null)
-          return
-        }
-        
-        const projetoAtualizado: Projeto = {
-          ...projetosMock[index],
-          ...dadosAtualizados,
-          dataAtualizacao: new Date().toISOString()
-        }
-        
-        projetosMock[index] = projetoAtualizado
-        resolve({ ...projetoAtualizado })
-      }, 600)
-    })
+    // Simular delay de rede
+    await new Promise(resolve => setTimeout(resolve, 600))
+    
+    const index = projetosMock.findIndex(p => p.id === id)
+    if (index === -1) {
+      return null
+    }
+    
+    const projetoAtualizado: Projeto = {
+      ...projetosMock[index],
+      ...dadosAtualizados,
+      dataAtualizacao: new Date().toISOString()
+    }
+    
+    projetosMock[index] = projetoAtualizado
+    return projetoAtualizado
   },
 
   // Excluir projeto
   excluirProjeto: async (id: string): Promise<boolean> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const index = projetosMock.findIndex(p => p.id === id)
-        if (index === -1) {
-          resolve(false)
-          return
-        }
-        
-        projetosMock.splice(index, 1)
-        resolve(true)
-      }, 400)
-    })
+    // Simular delay de rede
+    await new Promise(resolve => setTimeout(resolve, 400))
+    
+    const index = projetosMock.findIndex(p => p.id === id)
+    if (index === -1) {
+      return false
+    }
+    
+    projetosMock.splice(index, 1)
+    return true
+  },
+
+  // Listar projetos por cliente
+  listarProjetosPorCliente: async (clienteId: string): Promise<Projeto[]> => {
+    // Simular delay de rede
+    await new Promise(resolve => setTimeout(resolve, 400))
+    return projetosMock.filter(p => p.clienteId === clienteId)
+  },
+
+  // Listar projetos por propriedade
+  listarProjetosPorPropriedade: async (propriedadeId: string): Promise<Projeto[]> => {
+    // Simular delay de rede
+    await new Promise(resolve => setTimeout(resolve, 400))
+    return projetosMock.filter(p => p.propriedadeId === propriedadeId)
   },
 
   // Listar documentos de um projeto
   listarDocumentos: async (projetoId: string): Promise<Documento[]> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const projeto = projetosMock.find(p => p.id === projetoId)
-        if (!projeto) {
-          resolve([])
-          return
-        }
-        
-        resolve([...projeto.documentos])
-      }, 300)
-    })
+    // Simular delay de rede
+    await new Promise(resolve => setTimeout(resolve, 300))
+    const projeto = projetosMock.find(p => p.id === projetoId)
+    if (!projeto) {
+      return []
+    }
+    
+    return projeto.documentos.map(docId => {
+      const doc = documentosMock.find(d => d.id === docId)
+      return doc ? { ...doc } : null
+    }).filter(Boolean) as Documento[]
   },
 
   // Adicionar documento
   adicionarDocumento: async (projetoId: string, documento: Omit<Documento, 'id' | 'dataCriacao' | 'dataAtualizacao'>): Promise<Documento | null> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const projeto = projetosMock.find(p => p.id === projetoId)
-        if (!projeto) {
-          resolve(null)
-          return
-        }
-        
-        const novoDocumento: Documento = {
-          ...documento,
-          id: gerarIdAleatorio(),
-          dataCriacao: new Date().toISOString(),
-          dataAtualizacao: new Date().toISOString()
-        }
-        
-        documentosMock.push(novoDocumento)
-        projeto.documentos.push(novoDocumento)
-        
-        resolve({ ...novoDocumento })
-      }, 500)
-    })
+    // Simular delay de rede
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    const projeto = projetosMock.find(p => p.id === projetoId)
+    if (!projeto) {
+      return null
+    }
+    
+    const novoDocumento: Documento = {
+      ...documento,
+      id: uuidv4(),
+      dataCriacao: new Date().toISOString(),
+      dataAtualizacao: new Date().toISOString()
+    }
+    
+    documentosMock.push(novoDocumento)
+    projeto.documentos.push(novoDocumento.id)
+    
+    return novoDocumento
   },
 
   // Atualizar status do documento
   atualizarStatusDocumento: async (documentoId: string, status: string): Promise<Documento | null> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const documento = documentosMock.find(d => d.id === documentoId)
-        if (!documento) {
-          resolve(null)
-          return
-        }
-        
-        documento.status = status
-        documento.dataAtualizacao = new Date().toISOString()
-        
-        // Atualizar o documento no projeto
-        projetosMock.forEach(projeto => {
-          const docIndex = projeto.documentos.findIndex(d => d.id === documentoId)
-          if (docIndex !== -1) {
-            projeto.documentos[docIndex] = { ...documento }
-          }
-        })
-        
-        resolve({ ...documento })
-      }, 400)
+    // Simular delay de rede
+    await new Promise(resolve => setTimeout(resolve, 400))
+    
+    const documento = documentosMock.find(d => d.id === documentoId)
+    if (!documento) {
+      return null
+    }
+    
+    documento.status = status
+    documento.dataAtualizacao = new Date().toISOString()
+    
+    // Atualizar o documento no projeto
+    projetosMock.forEach(projeto => {
+      const docIndex = projeto.documentos.findIndex(d => d === documentoId)
+      if (docIndex !== -1) {
+        projeto.documentos[docIndex] = documentoId
+      }
     })
+    
+    return documento
   }
 }

@@ -41,9 +41,8 @@ import {
   File,
   CheckCircle2
 } from 'lucide-react'
-import { Documento, formatarData, coresStatus } from '@/lib/crm-utils'
-import { documentosApi } from '@/lib/mock-api/documentos'
-import { clientesApi } from '@/lib/mock-api/clientes'
+import { Documento, formatarData, coresStatus, formatarTamanhoArquivo } from '@/lib/crm-utils'
+import { documentosApi, clientesApi } from '@/lib/mock-api'
 import { useState, useEffect } from 'react'
 
 export default function DocumentosPage() {
@@ -106,13 +105,6 @@ export default function DocumentosPage() {
     return correspondeAoBusca && correspondeAoFiltro && correspondeATag && correspondeAoStatus
   })
 
-  // Formatar tamanho do arquivo
-  const formatarTamanho = (bytes: number): string => {
-    if (bytes < 1024) return bytes + ' B'
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
-  }
-
   // Obter ícone para o tipo de arquivo
   const getIconePorFormato = (formato: string) => {
     switch (formato.toLowerCase()) {
@@ -157,16 +149,12 @@ export default function DocumentosPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Documentos</h1>
-          <p className="text-muted-foreground">
-            Gerencie todos os documentos relacionados a clientes e projetos
-          </p>
-        </div>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold tracking-tight">Documentos</h1>
         <Button asChild>
           <Link href="/crm/documentos/novo">
-            <Plus className="mr-2 h-4 w-4" /> Novo Documento
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Documento
           </Link>
         </Button>
       </div>
@@ -284,7 +272,7 @@ export default function DocumentosPage() {
                             {clientesMap[documento.clienteId] || 'Cliente não encontrado'}
                           </Link>
                         </TableCell>
-                        <TableCell>{formatarTamanho(documento.tamanho)}</TableCell>
+                        <TableCell>{formatarTamanhoArquivo(documento.tamanho)}</TableCell>
                         <TableCell>
                           {documento.status && (
                             <Badge className={coresStatus.documento[documento.status as 'Pendente' | 'Enviado' | 'Aprovado' | 'Rejeitado']}>
@@ -294,11 +282,13 @@ export default function DocumentosPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
-                            {documento.tags && documento.tags.map((tag, index) => (
+                            {documento.tags && documento.tags.length > 0 ? documento.tags.map((tag, index) => (
                               <Badge key={index} variant="outline" className="bg-gray-100">
                                 {tag}
                               </Badge>
-                            ))}
+                            )) : (
+                              <span className="text-muted-foreground text-xs">Sem tags</span>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>{formatarData(documento.dataCriacao)}</TableCell>

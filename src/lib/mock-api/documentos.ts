@@ -233,6 +233,20 @@ export const documentosApi = {
     })
   },
 
+  // Obter documento por ID (lança erro se não encontrar)
+  obterDocumentoPorId: async (id: string): Promise<Documento> => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const documento = documentosMock.find(d => d.id === id)
+        if (documento) {
+          resolve({ ...documento })
+        } else {
+          reject(new Error(`Documento com ID ${id} não encontrado`))
+        }
+      }, 300)
+    })
+  },
+
   // Listar documentos por cliente
   listarDocumentosPorCliente: async (clienteId: string): Promise<Documento[]> => {
     return new Promise((resolve) => {

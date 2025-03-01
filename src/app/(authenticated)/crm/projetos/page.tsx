@@ -37,8 +37,7 @@ import {
   FileText
 } from 'lucide-react'
 import { Projeto, formatarMoeda, formatarData, coresStatus } from '@/lib/crm-utils'
-import { projetosApi } from '@/lib/mock-api/projetos'
-import { clientesApi } from '@/lib/mock-api/clientes'
+import { projetosApi, clientesApi } from '@/lib/mock-api'
 
 export default function ProjetosPage() {
   const [projetos, setProjetos] = useState<Projeto[]>([])
@@ -96,16 +95,17 @@ export default function ProjetosPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Projetos</h1>
           <p className="text-muted-foreground">
-            Gerencie seus projetos de crédito rural
+            Gerencie todos os projetos de crédito rural
           </p>
         </div>
         <Button asChild>
           <Link href="/crm/projetos/novo">
-            <Plus className="mr-2 h-4 w-4" /> Novo Projeto
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Projeto
           </Link>
         </Button>
       </div>

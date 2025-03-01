@@ -36,7 +36,7 @@ import {
   Eye 
 } from 'lucide-react'
 import { Cliente, formatarCpfCnpj, formatarTelefone, formatarData } from '@/lib/crm-utils'
-import { clientesApi } from '@/lib/mock-api/clientes'
+import { clientesApi } from '@/lib/mock-api'
 
 export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([])
@@ -95,16 +95,12 @@ export default function ClientesPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Clientes</h1>
-          <p className="text-muted-foreground">
-            Gerencie seus clientes e suas propriedades
-          </p>
-        </div>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold tracking-tight">Clientes</h1>
         <Button asChild>
           <Link href="/crm/clientes/novo">
-            <Plus className="mr-2 h-4 w-4" /> Novo Cliente
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Cliente
           </Link>
         </Button>
       </div>
