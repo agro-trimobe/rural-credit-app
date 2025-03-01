@@ -5,7 +5,7 @@ import { signOut } from 'next-auth/react';
 import { toast } from '@/hooks/use-toast';
 import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { LogOut, User, Home as HomeIcon, Leaf } from 'lucide-react';
+import { LogOut, User, Home as HomeIcon, Leaf, LayoutDashboard, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
 export default function HomePage() {
@@ -67,6 +67,21 @@ export default function HomePage() {
                 <p><span className="font-medium">Versão:</span> 1.0.0</p>
               </div>
             </div>
+
+            <Link href="/crm" className="block">
+              <div className="bg-primary/10 hover:bg-primary/20 transition-colors p-4 rounded-lg border border-primary/20 cursor-pointer">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <LayoutDashboard className="h-5 w-5 text-primary" />
+                    <h3 className="font-medium text-primary">CRM Rural Credit</h3>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-primary" />
+                </div>
+                <p className="pl-8 mt-2 text-sm text-muted-foreground">
+                  Acesse o sistema completo de gerenciamento de clientes, projetos, visitas e oportunidades.
+                </p>
+              </div>
+            </Link>
           </CardContent>
           <CardFooter>
             <Button 
