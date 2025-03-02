@@ -135,21 +135,21 @@ export default function CRMDashboard() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-col space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+    <div className="space-y-4">
+      <div className="flex flex-col space-y-1">
+        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground">
           Visão geral das suas atividades e desempenho
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2">
             <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="py-2">
             <div className="text-2xl font-bold">{estatisticas.totalClientes}</div>
             <p className="text-xs text-muted-foreground">
               <Link href="/clientes" className="text-primary hover:underline">
@@ -160,11 +160,11 @@ export default function CRMDashboard() {
         </Card>
         
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2">
             <CardTitle className="text-sm font-medium">Projetos Ativos</CardTitle>
             <ClipboardList className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="py-2">
             <div className="text-2xl font-bold">{estatisticas.totalProjetos}</div>
             <p className="text-xs text-muted-foreground">
               <Link href="/projetos" className="text-primary hover:underline">
@@ -175,11 +175,11 @@ export default function CRMDashboard() {
         </Card>
         
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2">
             <CardTitle className="text-sm font-medium">Valor em Projetos</CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="py-2">
             <div className="text-2xl font-bold">{formatarMoeda(estatisticas.valorProjetos)}</div>
             <p className="text-xs text-muted-foreground">
               Valor total em projetos ativos
@@ -188,11 +188,11 @@ export default function CRMDashboard() {
         </Card>
         
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2">
             <CardTitle className="text-sm font-medium">Próximas Visitas</CardTitle>
             <CalendarIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="py-2">
             <div className="text-2xl font-bold">{estatisticas.visitasStatus['Agendada'] || 0}</div>
             <p className="text-xs text-muted-foreground">
               <Link href="/visitas" className="text-primary hover:underline">
@@ -203,50 +203,50 @@ export default function CRMDashboard() {
         </Card>
       </div>
 
-      <Tabs defaultValue="projetos" className="space-y-4">
+      <Tabs defaultValue="projetos" className="space-y-3">
         <TabsList>
           <TabsTrigger value="projetos">Projetos</TabsTrigger>
           <TabsTrigger value="oportunidades">Oportunidades</TabsTrigger>
           <TabsTrigger value="visitas">Visitas</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="projetos" className="space-y-4">
+        <TabsContent value="projetos" className="space-y-3">
           <Card>
-            <CardHeader>
+            <CardHeader className="py-3">
               <CardTitle>Projetos por Status</CardTitle>
               <CardDescription>
                 Distribuição dos projetos por status atual
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex justify-center items-center h-80">
+            <CardContent className="flex justify-center items-center h-72">
               <DoughnutChart data={dadosGraficoProjetos} />
             </CardContent>
           </Card>
         </TabsContent>
         
-        <TabsContent value="oportunidades" className="space-y-4">
+        <TabsContent value="oportunidades" className="space-y-3">
           <Card>
-            <CardHeader>
+            <CardHeader className="py-3">
               <CardTitle>Funil de Oportunidades</CardTitle>
               <CardDescription>
                 Valor e quantidade de oportunidades por estágio
               </CardDescription>
             </CardHeader>
-            <CardContent className="h-80">
+            <CardContent className="h-72">
               <BarChart data={dadosGraficoOportunidades} />
             </CardContent>
           </Card>
         </TabsContent>
         
-        <TabsContent value="visitas" className="space-y-4">
+        <TabsContent value="visitas" className="space-y-3">
           <Card>
-            <CardHeader>
+            <CardHeader className="py-3">
               <CardTitle>Visitas por Status</CardTitle>
               <CardDescription>
                 Distribuição das visitas técnicas por status
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex justify-center items-center h-80">
+            <CardContent className="flex justify-center items-center h-72">
               <PieChart data={dadosGraficoVisitas} />
             </CardContent>
           </Card>

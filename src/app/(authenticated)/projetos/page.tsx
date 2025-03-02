@@ -94,10 +94,10 @@ export default function ProjetosPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Projetos</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Projetos</h1>
           <p className="text-muted-foreground">
             Gerencie todos os projetos de crédito rural
           </p>
@@ -111,28 +111,29 @@ export default function ProjetosPage() {
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="py-3">
           <CardTitle>Lista de Projetos</CardTitle>
           <CardDescription>
             Total de {projetosFiltrados.length} projetos encontrados
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between mb-4">
-            <div className="relative w-full max-w-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
+            <div className="relative w-full md:w-72">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Buscar por título, cliente ou linha de crédito..."
-                className="pl-8"
+                placeholder="Buscar projetos..."
+                className="pl-8 w-full"
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
               />
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  Status: {filtro} <ChevronDown className="ml-2 h-4 w-4" />
+                <Button variant="outline" className="w-full md:w-auto">
+                  Status: {filtro}
+                  <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -158,17 +159,17 @@ export default function ProjetosPage() {
             </DropdownMenu>
           </div>
 
-          <div className="rounded-md border">
+          <div className="overflow-x-auto rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Título</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Linha de Crédito</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Data de Criação</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead className="w-[25%]">Título</TableHead>
+                  <TableHead className="w-[15%]">Cliente</TableHead>
+                  <TableHead className="w-[15%]">Linha de Crédito</TableHead>
+                  <TableHead className="w-[10%]">Valor</TableHead>
+                  <TableHead className="w-[10%]">Status</TableHead>
+                  <TableHead className="w-[15%]">Data de Criação</TableHead>
+                  <TableHead className="text-right w-[10%]">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

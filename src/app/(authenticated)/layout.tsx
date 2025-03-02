@@ -22,11 +22,11 @@ export default function CRMLayout({
         }}
       >
         <header className="sticky top-0 z-10 w-full border-b border-border bg-background/95 backdrop-blur">
-          <div className="flex h-14 items-center justify-end px-4">
+          <div className="flex h-10 items-center justify-end px-4">
             <ThemeToggle />
           </div>
         </header>
-        <main className="p-4 md:p-6 pb-24 w-full">
+        <main className="p-3 md:p-4 pb-16 w-full">
           {children}
         </main>
       </div>

@@ -153,7 +153,7 @@ export default async function ClienteDetalhesPage({ params }: { params: Promise<
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="icon" asChild>
@@ -178,10 +178,10 @@ export default async function ClienteDetalhesPage({ params }: { params: Promise<
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="py-4">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-2xl">{cliente.nome}</CardTitle>
+              <CardTitle className="text-xl">{cliente.nome}</CardTitle>
               <CardDescription>
                 Cliente desde {cliente.dataCadastro ? formatarData(cliente.dataCadastro) : 'N/A'}
               </CardDescription>
@@ -191,12 +191,12 @@ export default async function ClienteDetalhesPage({ params }: { params: Promise<
             </Badge>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-3">
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Informações Pessoais</h3>
-                <div className="space-y-2">
+                <h3 className="text-sm font-medium text-muted-foreground mb-1">Informações Pessoais</h3>
+                <div className="space-y-1.5">
                   <div className="flex items-center">
                     <User className="h-4 w-4 mr-2 text-muted-foreground" />
                     <span className="text-sm">{formatarCpfCnpj(cliente.cpfCnpj)}</span>
@@ -217,13 +217,13 @@ export default async function ClienteDetalhesPage({ params }: { params: Promise<
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Propriedades</h3>
+                <h3 className="text-sm font-medium text-muted-foreground mb-1">Propriedades</h3>
                 {propriedades.length === 0 ? (
                   <p className="text-sm text-muted-foreground">Nenhuma propriedade cadastrada</p>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     {propriedades.map((propriedade) => (
                       <div key={propriedade.id} className="flex items-start">
                         <MapPin className="h-4 w-4 mr-2 text-muted-foreground mt-0.5" />
@@ -243,31 +243,31 @@ export default async function ClienteDetalhesPage({ params }: { params: Promise<
           <Separator />
 
           <Tabs>
-            <TabsList>
+            <TabsList className="mb-2">
               <TabsTrigger value="propriedades">Propriedades</TabsTrigger>
               <TabsTrigger value="projetos">Projetos</TabsTrigger>
               <TabsTrigger value="interacoes">Interações</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="propriedades" className="space-y-4">
+            <TabsContent value="propriedades" className="space-y-3">
               {propriedades.length === 0 ? (
-                <div className="text-center py-4">
+                <div className="text-center py-3">
                   <p className="text-muted-foreground">Este cliente não possui propriedades cadastradas.</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {propriedades.map((propriedade) => (
                     <Card key={propriedade.id}>
-                      <CardHeader>
-                        <CardTitle>{propriedade.nome}</CardTitle>
+                      <CardHeader className="py-3">
+                        <CardTitle className="text-base">{propriedade.nome}</CardTitle>
                         <CardDescription>
                           {propriedade.municipio}, {propriedade.estado}
                         </CardDescription>
                       </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <CardContent className="py-0">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div>
-                            <h4 className="font-medium mb-2">Endereço</h4>
+                            <h4 className="font-medium mb-1 text-sm">Endereço</h4>
                             <p className="text-sm text-muted-foreground">
                               {propriedade.endereco}
                               <br />
@@ -275,14 +275,14 @@ export default async function ClienteDetalhesPage({ params }: { params: Promise<
                             </p>
                           </div>
                           <div>
-                            <h4 className="font-medium mb-2">Área</h4>
+                            <h4 className="font-medium mb-1 text-sm">Área</h4>
                             <p className="text-sm text-muted-foreground">
                               {propriedade.area} hectares
                             </p>
                           </div>
                         </div>
                       </CardContent>
-                      <CardFooter>
+                      <CardFooter className="py-3">
                         <Button variant="outline" size="sm" asChild>
                           <Link href={`/propriedades/${propriedade.id}`}>
                             Ver Detalhes

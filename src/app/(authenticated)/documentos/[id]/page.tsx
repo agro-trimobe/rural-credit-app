@@ -172,7 +172,7 @@ export default async function DocumentoDetalhesPage({ params }: { params: Promis
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="icon" asChild>
@@ -203,12 +203,12 @@ export default async function DocumentoDetalhesPage({ params }: { params: Promis
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               {getIconePorFormato(documento.formato)}
               <div>
-                <CardTitle className="text-2xl">{documento.nome}</CardTitle>
+                <CardTitle className="text-xl">{documento.nome}</CardTitle>
                 <CardDescription>
                   {documento.tipo} • {formatarTamanhoArquivo(documento.tamanho)}
                 </CardDescription>
@@ -221,12 +221,12 @@ export default async function DocumentoDetalhesPage({ params }: { params: Promis
             )}
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-3">
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Informações do Documento</h3>
-                <div className="space-y-2">
+                <h3 className="text-sm font-medium text-muted-foreground mb-1">Informações do Documento</h3>
+                <div className="space-y-1.5">
                   <div className="flex items-center">
                     <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
                     <span className="text-sm">Criado em {formatarData(documento.dataCriacao)}</span>
@@ -261,11 +261,11 @@ export default async function DocumentoDetalhesPage({ params }: { params: Promis
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Status</h3>
-                <div className="space-y-3">
-                  <div className="flex flex-col space-y-2">
+                <h3 className="text-sm font-medium text-muted-foreground mb-1">Status</h3>
+                <div className="space-y-2">
+                  <div className="flex flex-col space-y-1.5">
                     <span className="text-sm">Status atual: {documento.status}</span>
                     <div className="flex flex-wrap gap-2">
                       <Button 
