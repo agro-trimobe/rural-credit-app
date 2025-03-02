@@ -22,6 +22,7 @@ import {
   Home as HomeIcon,
   User,
   FolderOpen,
+  MessageSquare,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -60,6 +61,11 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
       icon: Users,
     },
     {
+      title: 'Propriedades',
+      href: '/propriedades',
+      icon: HomeIcon,
+    },
+    {
       title: 'Projetos',
       href: '/projetos',
       icon: FileText,
@@ -73,6 +79,11 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
       title: 'Oportunidades',
       href: '/oportunidades',
       icon: LineChart,
+    },
+    {
+      title: 'Interações',
+      href: '/interacoes',
+      icon: MessageSquare,
     },
     {
       title: 'Documentos',

@@ -65,7 +65,7 @@ export function formatarDataHora(dataISO?: string): string {
 /**
  * Formata o tamanho de um arquivo para exibição amigável (KB, MB, etc)
  */
-export function formatarTamanhoArquivo(bytes: number): string {
+export function formatarTamanho(bytes: number): string {
   if (bytes === 0) return '0 Bytes';
   
   const k = 1024;
@@ -73,6 +73,14 @@ export function formatarTamanhoArquivo(bytes: number): string {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+/**
+ * Formata o tamanho de um arquivo para exibição amigável (KB, MB, etc)
+ * @deprecated Use formatarTamanho em vez disso
+ */
+export function formatarTamanhoArquivo(bytes: number): string {
+  return formatarTamanho(bytes);
 }
 
 /**
