@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Cell, Legend, Pie, PieChart as RechartsPieChart, Tooltip } from 'recharts'
+import { Cell, Label, Legend, Pie, PieChart as RechartsPieChart, ResponsiveContainer, Tooltip } from 'recharts'
 
 import { ChartConfig, ChartContainer, ChartLegendContent, ChartTooltipContent } from '@/components/ui/chart'
 
@@ -52,56 +52,69 @@ export function PieChart({ data, className }: PieChartProps) {
 
   return (
     <ChartContainer config={chartConfig} className={className || "h-full w-full"}>
-      <RechartsPieChart>
-        {/* Texto no centro do gráfico */}
-        <text
-          x="50%"
-          y="50%"
-          textAnchor="middle"
-          dominantBaseline="middle"
-          style={{ fontSize: '24px', fontWeight: 'bold' }}
-        >
-          {totalValue}
-        </text>
-        <text
-          x="50%"
-          y="58%"
-          textAnchor="middle"
-          dominantBaseline="middle"
-          style={{ fontSize: '14px', fill: 'var(--muted-foreground)' }}
-        >
-          {data.datasets[0].label || 'Total'}
-        </text>
-        
-        {/* Gráfico de pizza */}
-        <Pie
-          data={chartData}
-          cx="50%"
-          cy="50%"
-          innerRadius={60}
-          outerRadius={80}
-          paddingAngle={2}
-          dataKey="value"
-          nameKey="name"
-          label={false}
-          labelLine={false}
-        >
-          {chartData.map((entry, index) => (
-            <Cell 
-              key={`cell-${index}`} 
-              fill={`hsl(var(--chart-${(index % 5) + 1}))`}
+      <ResponsiveContainer width="100%" height="100%">
+        <RechartsPieChart>
+          <Pie
+            data={chartData}
+            cx="50%"
+            cy="50%"
+            innerRadius={60}
+            outerRadius={80}
+            paddingAngle={2}
+            dataKey="value"
+            nameKey="name"
+            label={false}
+            labelLine={false}
+          >
+            {chartData.map((entry, index) => (
+              <Cell 
+                key={`cell-${index}`} 
+                fill={`hsl(var(--chart-${(index % 5) + 1}))`}
+              />
+            ))}
+            <Label
+              content={({ viewBox }) => {
+                if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                  return (
+                    <text
+                      x={viewBox.cx}
+                      y={viewBox.cy}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                    >
+                      <tspan
+                        x={viewBox.cx}
+                        y={viewBox.cy}
+                        className="fill-foreground text-3xl font-bold"
+                        style={{ fill: 'hsl(var(--foreground))', fontSize: '24px', fontWeight: 'bold' }}
+                      >
+                        {totalValue}
+                      </tspan>
+                      <tspan
+                        x={viewBox.cx}
+                        y={(viewBox.cy || 0) + 24}
+                        className="fill-muted-foreground"
+                        style={{ fill: 'hsl(var(--muted-foreground))', fontSize: '14px' }}
+                      >
+                        {data.datasets[0].label || 'Visitas'}
+                      </tspan>
+                    </text>
+                  )
+                }
+                return null
+              }}
             />
-          ))}
-        </Pie>
-        
-        {/* Tooltip e legenda */}
-        <Tooltip content={<ChartTooltipContent />} />
-        <Legend 
-          content={<ChartLegendContent />} 
-          verticalAlign="middle" 
-          align="right"
-        />
-      </RechartsPieChart>
+          </Pie>
+          
+          {/* Tooltip e legenda */}
+          <Tooltip content={<ChartTooltipContent />} />
+          <Legend 
+            content={<ChartLegendContent />} 
+            verticalAlign="middle" 
+            align="right"
+          />
+        </RechartsPieChart>
+      </ResponsiveContainer>
     </ChartContainer>
   )
 }
