@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Cell, Legend, Pie, PieChart as RechartsPieChart, ResponsiveContainer, Tooltip } from 'recharts'
+import { Cell, Legend, Pie, PieChart as RechartsPieChart, Tooltip } from 'recharts'
 
 import { ChartConfig, ChartContainer, ChartLegendContent, ChartTooltipContent } from '@/components/ui/chart'
 
@@ -33,17 +33,25 @@ export function PieChart({ data, className }: PieChartProps) {
   // Configuração do gráfico
   const chartConfig = React.useMemo(() => {
     return data.labels.reduce((config, label, index) => {
+      const colors = [
+        'hsl(var(--chart-1))',
+        'hsl(var(--chart-2))',
+        'hsl(var(--chart-3))',
+        'hsl(var(--chart-4))',
+        'hsl(var(--chart-5))'
+      ]
       return {
         ...config,
         [label]: {
           label,
+          color: colors[index % colors.length]
         },
       }
     }, {} as ChartConfig)
   }, [data.labels])
 
   return (
-    <ChartContainer config={chartConfig} className={className}>
+    <ChartContainer config={chartConfig} className={className || "h-full w-full"}>
       <RechartsPieChart>
         {/* Texto no centro do gráfico */}
         <text

@@ -5,12 +5,9 @@ import {
   Bar,
   BarChart as RechartsBarChart,
   CartesianGrid,
-  Cell,
   Legend,
   Line,
   LineChart as RechartsLineChart,
-  Pie,
-  PieChart as RechartsPieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -169,128 +166,6 @@ export function LineChart({ data, options = {} }: { data: any; options?: any }) 
           />
         ))}
       </RechartsLineChart>
-    </ChartContainer>
-  )
-}
-
-// Componente de PieChart
-export function PieChart({ data, options = {} }: { data: any; options?: any }) {
-  const config = React.useMemo(() => {
-    const keys = data.labels
-    return keys.reduce((acc: ChartConfig, key: string, index: number) => {
-      const colors = [
-        'hsl(var(--chart-1))',
-        'hsl(var(--chart-2))',
-        'hsl(var(--chart-3))',
-        'hsl(var(--chart-4))',
-        'hsl(var(--chart-5))'
-      ]
-      acc[key] = {
-        label: key,
-        color: colors[index % colors.length]
-      }
-      return acc
-    }, {})
-  }, [data])
-
-  const chartData = React.useMemo(() => {
-    return data.labels.map((label: string, index: number) => ({
-      name: label,
-      value: data.datasets[0].data[index]
-    }))
-  }, [data])
-
-  const COLORS = [
-    'hsl(var(--chart-1))',
-    'hsl(var(--chart-2))',
-    'hsl(var(--chart-3))',
-    'hsl(var(--chart-4))',
-    'hsl(var(--chart-5))'
-  ]
-
-  return (
-    <ChartContainer config={config} className="h-80">
-      <RechartsPieChart>
-        <Pie
-          data={chartData}
-          cx="50%"
-          cy="50%"
-          innerRadius={0}
-          outerRadius={80}
-          fill="#8884d8"
-          dataKey="value"
-          nameKey="name"
-        >
-          {chartData.map((entry: any, index: number) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-          ))}
-        </Pie>
-        <Tooltip formatter={(value: number, name: string, props: any) => {
-          return [value, props.payload.name]
-        }} />
-        <Legend />
-      </RechartsPieChart>
-    </ChartContainer>
-  )
-}
-
-// Componente de DoughnutChart
-export function DoughnutChart({ data, options = {} }: { data: any; options?: any }) {
-  const config = React.useMemo(() => {
-    const keys = data.labels
-    return keys.reduce((acc: ChartConfig, key: string, index: number) => {
-      const colors = [
-        'hsl(var(--chart-1))',
-        'hsl(var(--chart-2))',
-        'hsl(var(--chart-3))',
-        'hsl(var(--chart-4))',
-        'hsl(var(--chart-5))'
-      ]
-      acc[key] = {
-        label: key,
-        color: colors[index % colors.length]
-      }
-      return acc
-    }, {})
-  }, [data])
-
-  const chartData = React.useMemo(() => {
-    return data.labels.map((label: string, index: number) => ({
-      name: label,
-      value: data.datasets[0].data[index]
-    }))
-  }, [data])
-
-  const COLORS = [
-    'hsl(var(--chart-1))',
-    'hsl(var(--chart-2))',
-    'hsl(var(--chart-3))',
-    'hsl(var(--chart-4))',
-    'hsl(var(--chart-5))'
-  ]
-
-  return (
-    <ChartContainer config={config} className="h-80">
-      <RechartsPieChart>
-        <Pie
-          data={chartData}
-          cx="50%"
-          cy="50%"
-          innerRadius={40}
-          outerRadius={80}
-          fill="#8884d8"
-          dataKey="value"
-          nameKey="name"
-        >
-          {chartData.map((entry: any, index: number) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-          ))}
-        </Pie>
-        <Tooltip formatter={(value: number, name: string, props: any) => {
-          return [value, props.payload.name]
-        }} />
-        <Legend />
-      </RechartsPieChart>
     </ChartContainer>
   )
 }
