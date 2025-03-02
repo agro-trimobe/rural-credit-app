@@ -103,7 +103,7 @@ export default function ProjetosPage() {
           </p>
         </div>
         <Button asChild>
-          <Link href="/crm/projetos/novo">
+          <Link href="/projetos/novo">
             <Plus className="mr-2 h-4 w-4" />
             Novo Projeto
           </Link>
@@ -201,19 +201,19 @@ export default function ProjetosPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                              <Link href={`/crm/projetos/${projeto.id}`}>
+                              <Link href={`/projetos/${projeto.id}`}>
                                 <Eye className="mr-2 h-4 w-4" />
                                 Visualizar
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                              <Link href={`/crm/projetos/${projeto.id}/editar`}>
+                              <Link href={`/projetos/${projeto.id}/editar`}>
                                 <FileEdit className="mr-2 h-4 w-4" />
                                 Editar
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                              <Link href={`/crm/projetos/${projeto.id}/documentos`}>
+                              <Link href={`/projetos/${projeto.id}/documentos`}>
                                 <FileText className="mr-2 h-4 w-4" />
                                 Documentos
                               </Link>

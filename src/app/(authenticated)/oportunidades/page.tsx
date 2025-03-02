@@ -137,7 +137,7 @@ export default function OportunidadesPage() {
           </p>
         </div>
         <Button asChild>
-          <Link href="/crm/oportunidades/nova">
+          <Link href="/oportunidades/nova">
             <Plus className="mr-2 h-4 w-4" /> Nova Oportunidade
           </Link>
         </Button>
@@ -250,20 +250,20 @@ export default function OportunidadesPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                              <Link href={`/crm/oportunidades/${oportunidade.id}`}>
+                              <Link href={`/oportunidades/${oportunidade.id}`}>
                                 <Eye className="mr-2 h-4 w-4" />
                                 Visualizar
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                              <Link href={`/crm/oportunidades/${oportunidade.id}/editar`}>
+                              <Link href={`/oportunidades/${oportunidade.id}/editar`}>
                                 <FileEdit className="mr-2 h-4 w-4" />
                                 Editar
                               </Link>
                             </DropdownMenuItem>
                             {oportunidade.status !== 'Ganho' && oportunidade.status !== 'Perdido' && (
                               <DropdownMenuItem asChild>
-                                <Link href={`/crm/oportunidades/${oportunidade.id}/avancar`}>
+                                <Link href={`/oportunidades/${oportunidade.id}/avancar`}>
                                   <ArrowUpRight className="mr-2 h-4 w-4" />
                                   Avançar Status
                                 </Link>

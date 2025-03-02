@@ -56,7 +56,7 @@ export default async function ProjetoEditarPage({ params }: { params: Promise<{ 
             description: 'Projeto não encontrado',
             variant: 'destructive',
           })
-          router.push('/crm/projetos')
+          router.push('/projetos')
           return
         }
 
@@ -141,7 +141,7 @@ export default async function ProjetoEditarPage({ params }: { params: Promise<{ 
         title: 'Projeto atualizado',
         description: 'Os dados do projeto foram atualizados com sucesso',
       })
-      router.push(`/crm/projetos/${id}`)
+      router.push(`/projetos/${id}`)
     } catch (error) {
       console.error('Erro ao atualizar projeto:', error)
       toast({
@@ -167,7 +167,7 @@ export default async function ProjetoEditarPage({ params }: { params: Promise<{ 
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="icon" asChild>
-            <Link href={`/crm/projetos/${id}`}>
+            <Link href={`/projetos/${id}`}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -312,7 +312,7 @@ export default async function ProjetoEditarPage({ params }: { params: Promise<{ 
           </CardContent>
           <CardFooter className="border-t bg-muted/50 flex justify-between">
             <Button variant="outline" asChild>
-              <Link href={`/crm/projetos/${id}`}>
+              <Link href={`/projetos/${id}`}>
                 Cancelar
               </Link>
             </Button>

@@ -39,7 +39,7 @@ export default async function InteracoesClientePage({ params }: { params: Promis
             description: 'Cliente não encontrado',
             variant: 'destructive',
           })
-          router.push('/crm/clientes')
+          router.push('/clientes')
           return
         }
         
@@ -79,7 +79,7 @@ export default async function InteracoesClientePage({ params }: { params: Promis
           <div className="text-center">
             <p className="text-lg text-muted-foreground">Cliente não encontrado</p>
             <Button asChild className="mt-4">
-              <Link href="/crm/clientes">Voltar para lista</Link>
+              <Link href="/clientes">Voltar para lista</Link>
             </Button>
           </div>
         </CardContent>
@@ -92,14 +92,14 @@ export default async function InteracoesClientePage({ params }: { params: Promis
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="icon" asChild>
-            <Link href={`/crm/clientes/${cliente.id}`}>
+            <Link href={`/clientes/${cliente.id}`}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
           <h1 className="text-2xl font-bold tracking-tight">Interações - {cliente.nome}</h1>
         </div>
         <Button asChild>
-          <Link href={`/crm/clientes/${cliente.id}/interacoes/nova`}>
+          <Link href={`/clientes/${cliente.id}/interacoes/nova`}>
             <Plus className="mr-2 h-4 w-4" />
             Nova Interação
           </Link>
@@ -122,7 +122,7 @@ export default async function InteracoesClientePage({ params }: { params: Promis
                 Registre a primeira interação com este cliente.
               </p>
               <Button className="mt-4" asChild>
-                <Link href={`/crm/clientes/${cliente.id}/interacoes/nova`}>
+                <Link href={`/clientes/${cliente.id}/interacoes/nova`}>
                   Nova Interação
                 </Link>
               </Button>
@@ -157,12 +157,12 @@ export default async function InteracoesClientePage({ params }: { params: Promis
         </CardContent>
         <CardFooter className="border-t bg-muted/50 flex justify-between">
           <Button variant="outline" asChild>
-            <Link href={`/crm/clientes/${cliente.id}`}>
+            <Link href={`/clientes/${cliente.id}`}>
               Voltar para Detalhes
             </Link>
           </Button>
           <Button asChild>
-            <Link href={`/crm/clientes/${cliente.id}/interacoes/nova`}>
+            <Link href={`/clientes/${cliente.id}/interacoes/nova`}>
               Nova Interação
             </Link>
           </Button>

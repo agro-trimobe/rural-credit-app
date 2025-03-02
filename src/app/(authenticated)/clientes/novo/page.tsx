@@ -113,7 +113,7 @@ export default function NovoClientePage() {
         title: 'Sucesso',
         description: 'Cliente cadastrado com sucesso',
       })
-      router.push('/crm/clientes')
+      router.push('/clientes')
     } catch (error) {
       console.error('Erro ao adicionar cliente:', error)
       toast({
@@ -131,7 +131,7 @@ export default function NovoClientePage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="icon" asChild>
-            <Link href="/crm/clientes">
+            <Link href="/clientes">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -281,7 +281,7 @@ export default function NovoClientePage() {
           </CardContent>
           <CardFooter className="border-t bg-muted/50 flex justify-between">
             <Button variant="outline" asChild>
-              <Link href="/crm/clientes">
+              <Link href="/clientes">
                 Cancelar
               </Link>
             </Button>

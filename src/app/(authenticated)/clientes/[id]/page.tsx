@@ -61,7 +61,7 @@ export default async function ClienteDetalhesPage({ params }: { params: Promise<
             description: 'Cliente não encontrado',
             variant: 'destructive',
           })
-          router.push('/crm/clientes')
+          router.push('/clientes')
           return
         }
         
@@ -104,7 +104,7 @@ export default async function ClienteDetalhesPage({ params }: { params: Promise<
           title: 'Cliente excluído',
           description: 'O cliente foi excluído com sucesso.',
         })
-        router.push('/crm/clientes')
+        router.push('/clientes')
       } catch (error) {
         console.error('Erro ao excluir cliente:', error)
         toast({
@@ -131,7 +131,7 @@ export default async function ClienteDetalhesPage({ params }: { params: Promise<
           <div className="text-center">
             <p className="text-lg text-muted-foreground">Cliente não encontrado</p>
             <Button asChild className="mt-4">
-              <Link href="/crm/clientes">Voltar para lista</Link>
+              <Link href="/clientes">Voltar para lista</Link>
             </Button>
           </div>
         </CardContent>
@@ -157,7 +157,7 @@ export default async function ClienteDetalhesPage({ params }: { params: Promise<
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="icon" asChild>
-            <Link href="/crm/clientes">
+            <Link href="/clientes">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -165,7 +165,7 @@ export default async function ClienteDetalhesPage({ params }: { params: Promise<
         </div>
         <div className="flex space-x-2">
           <Button variant="outline" asChild>
-            <Link href={`/crm/clientes/${id}/editar`}>
+            <Link href={`/clientes/${id}/editar`}>
               <Edit className="mr-2 h-4 w-4" />
               Editar
             </Link>
@@ -284,7 +284,7 @@ export default async function ClienteDetalhesPage({ params }: { params: Promise<
                       </CardContent>
                       <CardFooter>
                         <Button variant="outline" size="sm" asChild>
-                          <Link href={`/crm/propriedades/${propriedade.id}`}>
+                          <Link href={`/propriedades/${propriedade.id}`}>
                             Ver Detalhes
                           </Link>
                         </Button>
@@ -324,7 +324,7 @@ export default async function ClienteDetalhesPage({ params }: { params: Promise<
                       </CardContent>
                       <CardFooter>
                         <Button variant="outline" size="sm" asChild>
-                          <Link href={`/crm/projetos/${projeto.id}`}>
+                          <Link href={`/projetos/${projeto.id}`}>
                             Ver Detalhes
                           </Link>
                         </Button>
@@ -339,7 +339,7 @@ export default async function ClienteDetalhesPage({ params }: { params: Promise<
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-medium">Histórico de Interações</h3>
                 <Button size="sm" asChild>
-                  <Link href={`/crm/clientes/${id}/interacoes/nova`}>
+                  <Link href={`/clientes/${id}/interacoes/nova`}>
                     Nova Interação
                   </Link>
                 </Button>
@@ -380,12 +380,12 @@ export default async function ClienteDetalhesPage({ params }: { params: Promise<
         </CardContent>
         <CardFooter className="border-t bg-muted/50 flex justify-between">
           <Button variant="outline" asChild>
-            <Link href="/crm/clientes">
+            <Link href="/clientes">
               Voltar
             </Link>
           </Button>
           <Button asChild>
-            <Link href={`/crm/projetos/novo?clienteId=${id}`}>
+            <Link href={`/projetos/novo?clienteId=${id}`}>
               Criar Novo Projeto
             </Link>
           </Button>

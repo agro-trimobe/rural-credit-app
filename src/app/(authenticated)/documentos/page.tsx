@@ -152,7 +152,7 @@ export default function DocumentosPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Documentos</h1>
         <Button asChild>
-          <Link href="/crm/documentos/novo">
+          <Link href="/documentos/novo">
             <Plus className="mr-2 h-4 w-4" />
             Novo Documento
           </Link>
@@ -268,7 +268,7 @@ export default function DocumentosPage() {
                         </TableCell>
                         <TableCell>{documento.tipo}</TableCell>
                         <TableCell>
-                          <Link href={`/crm/clientes/${documento.clienteId}`} className="text-primary hover:underline">
+                          <Link href={`/clientes/${documento.clienteId}`} className="text-primary hover:underline">
                             {clientesMap[documento.clienteId] || 'Cliente não encontrado'}
                           </Link>
                         </TableCell>
@@ -308,13 +308,13 @@ export default function DocumentosPage() {
                                 </a>
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
-                                <Link href={`/crm/documentos/${documento.id}/editar`}>
+                                <Link href={`/documentos/${documento.id}/editar`}>
                                   <FileEdit className="mr-2 h-4 w-4" />
                                   Editar
                                 </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
-                                <Link href={`/crm/documentos/${documento.id}/tags`}>
+                                <Link href={`/documentos/${documento.id}/tags`}>
                                   <Tag className="mr-2 h-4 w-4" />
                                   Gerenciar Tags
                                 </Link>

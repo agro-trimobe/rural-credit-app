@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Rural Credit App",
+  title: "Trimobe",
   description: "Aplicação de Crédito Rural",
 };
 

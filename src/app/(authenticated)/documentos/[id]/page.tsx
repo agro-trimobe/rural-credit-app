@@ -50,7 +50,7 @@ export default async function DocumentoDetalhesPage({ params }: { params: Promis
             description: 'Documento não encontrado',
             variant: 'destructive',
           })
-          router.push('/crm/documentos')
+          router.push('/documentos')
           return
         }
         
@@ -93,7 +93,7 @@ export default async function DocumentoDetalhesPage({ params }: { params: Promis
           title: 'Documento excluído',
           description: 'O documento foi excluído com sucesso.',
         })
-        router.push('/crm/documentos')
+        router.push('/documentos')
       } catch (error) {
         console.error('Erro ao excluir documento:', error)
         toast({
@@ -163,7 +163,7 @@ export default async function DocumentoDetalhesPage({ params }: { params: Promis
           <div className="text-center">
             <p className="text-lg text-muted-foreground">Documento não encontrado</p>
             <Button asChild className="mt-4">
-              <Link href="/crm/documentos">Voltar para lista</Link>
+              <Link href="/documentos">Voltar para lista</Link>
             </Button>
           </div>
         </CardContent>
@@ -176,7 +176,7 @@ export default async function DocumentoDetalhesPage({ params }: { params: Promis
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="icon" asChild>
-            <Link href="/crm/documentos">
+            <Link href="/documentos">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -190,7 +190,7 @@ export default async function DocumentoDetalhesPage({ params }: { params: Promis
             </a>
           </Button>
           <Button variant="outline" asChild>
-            <Link href={`/crm/documentos/${documento.id}/editar`}>
+            <Link href={`/documentos/${documento.id}/editar`}>
               <FileEdit className="mr-2 h-4 w-4" />
               Editar
             </Link>
@@ -239,7 +239,7 @@ export default async function DocumentoDetalhesPage({ params }: { params: Promis
                     <User className="h-4 w-4 mr-2 text-muted-foreground" />
                     <span className="text-sm">
                       Cliente: {' '}
-                      <Link href={`/crm/clientes/${documento.clienteId}`} className="text-primary hover:underline">
+                      <Link href={`/clientes/${documento.clienteId}`} className="text-primary hover:underline">
                         {cliente?.nome || 'Cliente não encontrado'}
                       </Link>
                     </span>
@@ -249,7 +249,7 @@ export default async function DocumentoDetalhesPage({ params }: { params: Promis
                     <span className="text-sm">
                       Projeto: {' '}
                       {documento.projetoId ? (
-                        <Link href={`/crm/projetos/${documento.projetoId}`} className="text-primary hover:underline">
+                        <Link href={`/projetos/${documento.projetoId}`} className="text-primary hover:underline">
                           {projeto?.titulo || 'Projeto não encontrado'}
                         </Link>
                       ) : (
@@ -322,12 +322,12 @@ export default async function DocumentoDetalhesPage({ params }: { params: Promis
         </CardContent>
         <CardFooter className="border-t bg-muted/50 flex justify-between">
           <Button variant="outline" asChild>
-            <Link href="/crm/documentos">
+            <Link href="/documentos">
               Voltar
             </Link>
           </Button>
           <Button asChild>
-            <Link href={`/crm/documentos/${documento.id}/tags`}>
+            <Link href={`/documentos/${documento.id}/tags`}>
               <Tag className="mr-2 h-4 w-4" />
               Gerenciar Tags
             </Link>

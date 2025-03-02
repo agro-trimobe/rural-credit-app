@@ -111,7 +111,7 @@ export default function ProjetoNovoPage() {
         title: 'Projeto criado',
         description: 'O novo projeto foi criado com sucesso',
       })
-      router.push(`/crm/projetos/${novoProjeto.id}`)
+      router.push(`/projetos/${novoProjeto.id}`)
     } catch (error) {
       console.error('Erro ao criar projeto:', error)
       toast({
@@ -137,7 +137,7 @@ export default function ProjetoNovoPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="icon" asChild>
-            <Link href="/crm/projetos">
+            <Link href="/projetos">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -282,7 +282,7 @@ export default function ProjetoNovoPage() {
           </CardContent>
           <CardFooter className="border-t bg-muted/50 flex justify-between">
             <Button variant="outline" asChild>
-              <Link href="/crm/projetos">
+              <Link href="/projetos">
                 Cancelar
               </Link>
             </Button>

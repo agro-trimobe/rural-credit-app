@@ -101,7 +101,7 @@ export default function ClientesPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Clientes</h1>
         <Button asChild>
-          <Link href="/crm/clientes/novo">
+          <Link href="/clientes/novo">
             <Plus className="mr-2 h-4 w-4" />
             Novo Cliente
           </Link>
@@ -195,13 +195,13 @@ export default function ClientesPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem asChild>
-                                <Link href={`/crm/clientes/${cliente.id}`}>
+                                <Link href={`/clientes/${cliente.id}`}>
                                   <Eye className="mr-2 h-4 w-4" />
                                   Visualizar
                                 </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
-                                <Link href={`/crm/clientes/${cliente.id}/editar`}>
+                                <Link href={`/clientes/${cliente.id}/editar`}>
                                   <FileEdit className="mr-2 h-4 w-4" />
                                   Editar
                                 </Link>

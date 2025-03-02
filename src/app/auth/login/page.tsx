@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, EyeOff, AlertCircle, Leaf } from "lucide-react";
+import { Eye, EyeOff, AlertCircle, Orbit } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   Form,
@@ -28,7 +28,7 @@ function LoginPageLoading() {
     <div className="container flex h-screen w-full flex-col items-center justify-center bg-background">
       <div className="mx-auto w-full max-w-[400px] space-y-6">
         <div className="flex justify-center mb-6">
-          <Leaf className="h-10 w-10 text-primary" />
+          <Orbit className="h-10 w-10 text-primary" />
         </div>
         <Card className="w-full shadow-lg">
           <CardHeader className="space-y-1">
@@ -229,8 +229,8 @@ function LoginPageContent() {
       <div className="mx-auto w-full max-w-[400px] space-y-6">
         <div className="flex flex-col items-center mb-6">
           <Link href="/" className="flex items-center mb-2">
-            <Leaf className="h-10 w-10 text-primary mr-2" />
-            <span className="text-2xl font-bold">Rural Credit</span>
+            <Orbit className="h-10 w-10 text-primary mr-2" />
+            <span className="text-2xl font-bold">Trimobe</span>
           </Link>
           <p className="text-sm text-muted-foreground">Sistema de Crédito Rural</p>
         </div>

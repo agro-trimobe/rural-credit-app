@@ -52,7 +52,7 @@ export default async function DocumentoEditarPage({ params }: { params: Promise<
             description: 'Documento não encontrado',
             variant: 'destructive',
           })
-          router.push('/crm/documentos')
+          router.push('/documentos')
           return
         }
         
@@ -71,7 +71,7 @@ export default async function DocumentoEditarPage({ params }: { params: Promise<
           description: 'Não foi possível carregar os dados do documento',
           variant: 'destructive',
         })
-        router.push('/crm/documentos')
+        router.push('/documentos')
       } finally {
         setCarregando(false)
       }
@@ -103,7 +103,7 @@ export default async function DocumentoEditarPage({ params }: { params: Promise<
         description: 'Documento atualizado com sucesso',
       })
       
-      router.push(`/crm/documentos/${id}`)
+      router.push(`/documentos/${id}`)
     } catch (error) {
       console.error('Erro ao salvar documento:', error)
       toast({
@@ -129,7 +129,7 @@ export default async function DocumentoEditarPage({ params }: { params: Promise<
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="icon" asChild>
-            <Link href={`/crm/documentos/${id}`}>
+            <Link href={`/documentos/${id}`}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -232,7 +232,7 @@ export default async function DocumentoEditarPage({ params }: { params: Promise<
           </CardContent>
           <CardFooter className="border-t bg-muted/50 flex justify-between">
             <Button variant="outline" asChild>
-              <Link href={`/crm/documentos/${id}`}>
+              <Link href={`/documentos/${id}`}>
                 Cancelar
               </Link>
             </Button>

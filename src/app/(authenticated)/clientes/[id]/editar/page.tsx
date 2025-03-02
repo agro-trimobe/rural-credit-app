@@ -58,7 +58,7 @@ export default async function ClienteEditarPage({ params }: { params: Promise<{ 
             description: 'Cliente não encontrado',
             variant: 'destructive',
           })
-          router.push('/crm/clientes')
+          router.push('/clientes')
           return
         }
         
@@ -84,7 +84,7 @@ export default async function ClienteEditarPage({ params }: { params: Promise<{ 
           description: 'Não foi possível carregar os dados do cliente',
           variant: 'destructive',
         })
-        router.push('/crm/clientes')
+        router.push('/clientes')
       } finally {
         setCarregando(false)
       }
@@ -123,7 +123,7 @@ export default async function ClienteEditarPage({ params }: { params: Promise<{ 
         description: 'Cliente atualizado com sucesso',
       })
       
-      router.push(`/crm/clientes/${id}`)
+      router.push(`/clientes/${id}`)
     } catch (error) {
       console.error('Erro ao salvar cliente:', error)
       toast({
@@ -149,7 +149,7 @@ export default async function ClienteEditarPage({ params }: { params: Promise<{ 
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="icon" asChild>
-            <Link href={`/crm/clientes/${id}`}>
+            <Link href={`/clientes/${id}`}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -293,7 +293,7 @@ export default async function ClienteEditarPage({ params }: { params: Promise<{ 
           </CardContent>
           <CardFooter className="flex justify-end space-x-2">
             <Button variant="outline" asChild>
-              <Link href={`/crm/clientes/${id}`}>Cancelar</Link>
+              <Link href={`/clientes/${id}`}>Cancelar</Link>
             </Button>
             <Button type="submit" disabled={salvando}>
               {salvando ? (

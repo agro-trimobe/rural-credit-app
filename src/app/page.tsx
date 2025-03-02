@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Leaf, Shield, Clock } from "lucide-react";
+import { ArrowRight, Orbit, Shield, Clock } from "lucide-react";
 
 export default function Home() {
   return (
@@ -9,8 +9,8 @@ export default function Home() {
       <header className="w-full py-6 px-4 flex justify-center border-b bg-background/80 backdrop-blur-sm">
         <div className="container max-w-6xl flex justify-between items-center">
           <div className="flex items-center">
-            <Leaf className="h-6 w-6 text-primary mr-2" />
-            <h2 className="text-xl font-bold">Rural Credit</h2>
+            <Orbit className="h-6 w-6 text-primary mr-2" />
+            <h2 className="text-xl font-bold">Trimobe</h2>
           </div>
           <Link href="/auth/login">
             <Button variant="ghost" size="sm">
@@ -70,7 +70,7 @@ export default function Home() {
       {/* Rodapé */}
       <footer className="w-full py-6 bg-card border-t">
         <div className="container max-w-6xl mx-auto px-4 text-center text-muted-foreground text-sm">
-          &copy; {new Date().getFullYear()} Rural Credit App. Todos os direitos reservados.
+          &copy; {new Date().getFullYear()} Trimobe. Todos os direitos reservados.
         </div>
       </footer>
     </div>

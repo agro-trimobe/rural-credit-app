@@ -41,7 +41,7 @@ export default async function InteracaoDetalhesPage({ params }: { params: Promis
             description: 'Interação não encontrada',
             variant: 'destructive',
           })
-          router.push('/crm/clientes')
+          router.push('/clientes')
           return
         }
         
@@ -81,7 +81,7 @@ export default async function InteracaoDetalhesPage({ params }: { params: Promis
           description: 'A interação foi excluída com sucesso.',
         })
         
-        router.push(`/crm/clientes/${cliente.id}/interacoes`)
+        router.push(`/clientes/${cliente.id}/interacoes`)
       } catch (error) {
         console.error('Erro ao excluir interação:', error)
         toast({
@@ -108,7 +108,7 @@ export default async function InteracaoDetalhesPage({ params }: { params: Promis
           <div className="text-center">
             <p className="text-lg text-muted-foreground">Interação não encontrada</p>
             <Button asChild className="mt-4">
-              <Link href="/crm/clientes">Voltar para lista de clientes</Link>
+              <Link href="/clientes">Voltar para lista de clientes</Link>
             </Button>
           </div>
         </CardContent>
@@ -121,7 +121,7 @@ export default async function InteracaoDetalhesPage({ params }: { params: Promis
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="icon" asChild>
-            <Link href={`/crm/clientes/${cliente.id}/interacoes`}>
+            <Link href={`/clientes/${cliente.id}/interacoes`}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -129,7 +129,7 @@ export default async function InteracaoDetalhesPage({ params }: { params: Promis
         </div>
         <div className="flex space-x-2">
           <Button variant="outline" asChild>
-            <Link href={`/crm/interacoes/${interacao.id}/editar`}>
+            <Link href={`/interacoes/${interacao.id}/editar`}>
               <Edit className="mr-2 h-4 w-4" />
               Editar
             </Link>
@@ -183,7 +183,7 @@ export default async function InteracaoDetalhesPage({ params }: { params: Promis
                 <div className="space-y-2">
                   <div className="flex items-center">
                     <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <Link href={`/crm/clientes/${cliente.id}`} className="text-sm text-primary hover:underline">
+                    <Link href={`/clientes/${cliente.id}`} className="text-sm text-primary hover:underline">
                       {cliente.nome}
                     </Link>
                   </div>
@@ -216,12 +216,12 @@ export default async function InteracaoDetalhesPage({ params }: { params: Promis
         </CardContent>
         <CardFooter className="border-t bg-muted/50 flex justify-between">
           <Button variant="outline" asChild>
-            <Link href={`/crm/clientes/${cliente.id}/interacoes`}>
+            <Link href={`/clientes/${cliente.id}/interacoes`}>
               Voltar para Lista
             </Link>
           </Button>
           <Button asChild>
-            <Link href={`/crm/clientes/${cliente.id}/interacoes/nova`}>
+            <Link href={`/clientes/${cliente.id}/interacoes/nova`}>
               Nova Interação
             </Link>
           </Button>

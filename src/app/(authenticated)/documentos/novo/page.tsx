@@ -126,7 +126,7 @@ export default function NovoDocumentoPage() {
         title: 'Documento adicionado',
         description: 'O documento foi adicionado com sucesso.',
       })
-      router.push('/crm/documentos')
+      router.push('/documentos')
     } catch (error) {
       console.error('Erro ao adicionar documento:', error)
       toast({
@@ -152,7 +152,7 @@ export default function NovoDocumentoPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="icon" asChild>
-            <Link href="/crm/documentos">
+            <Link href="/documentos">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -256,7 +256,7 @@ export default function NovoDocumentoPage() {
           </CardContent>
           <CardFooter className="border-t bg-muted/50 flex justify-between">
             <Button variant="outline" asChild>
-              <Link href="/crm/documentos">
+              <Link href="/documentos">
                 Cancelar
               </Link>
             </Button>

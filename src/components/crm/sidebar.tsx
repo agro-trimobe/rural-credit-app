@@ -18,7 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
-  Leaf,
+  Orbit,
   Home as HomeIcon,
   User,
   FolderOpen,
@@ -97,8 +97,8 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
       >
         <div className="flex items-center justify-between p-4">
           <div className={cn('flex items-center', !open && 'justify-center w-full')}>
-            <Leaf className="h-8 w-8 text-primary" />
-            {open && <span className="ml-2 text-xl font-bold text-primary truncate">Rural Credit</span>}
+            <Orbit className="h-8 w-8 text-primary" />
+            {open && <span className="ml-2 text-xl font-bold text-primary truncate">Trimobe</span>}
           </div>
           <Button
             variant="ghost"

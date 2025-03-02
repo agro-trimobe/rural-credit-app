@@ -54,7 +54,7 @@ export default async function InteracaoEditarPage({ params }: { params: Promise<
             description: 'Interação não encontrada',
             variant: 'destructive',
           })
-          router.push('/crm/clientes')
+          router.push('/clientes')
           return
         }
         
@@ -113,7 +113,7 @@ export default async function InteracaoEditarPage({ params }: { params: Promise<
         description: 'Interação atualizada com sucesso',
       })
       
-      router.push(`/crm/interacoes/${interacao.id}`)
+      router.push(`/interacoes/${interacao.id}`)
     } catch (error) {
       console.error('Erro ao atualizar interação:', error)
       toast({
@@ -139,7 +139,7 @@ export default async function InteracaoEditarPage({ params }: { params: Promise<
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="icon" asChild>
-            <Link href={`/crm/interacoes/${interacao.id}`}>
+            <Link href={`/interacoes/${interacao.id}`}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -225,7 +225,7 @@ export default async function InteracaoEditarPage({ params }: { params: Promise<
           </CardContent>
           <CardFooter className="border-t bg-muted/50 flex justify-between">
             <Button variant="outline" asChild>
-              <Link href={`/crm/interacoes/${interacao.id}`}>
+              <Link href={`/interacoes/${interacao.id}`}>
                 Cancelar
               </Link>
             </Button>
