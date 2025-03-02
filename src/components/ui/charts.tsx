@@ -175,6 +175,24 @@ export function LineChart({ data, options = {} }: { data: any; options?: any }) 
 
 // Componente de PieChart
 export function PieChart({ data, options = {} }: { data: any; options?: any }) {
+  const config = React.useMemo(() => {
+    const keys = data.labels
+    return keys.reduce((acc: ChartConfig, key: string, index: number) => {
+      const colors = [
+        'hsl(var(--chart-1))',
+        'hsl(var(--chart-2))',
+        'hsl(var(--chart-3))',
+        'hsl(var(--chart-4))',
+        'hsl(var(--chart-5))'
+      ]
+      acc[key] = {
+        label: key,
+        color: colors[index % colors.length]
+      }
+      return acc
+    }, {})
+  }, [data])
+
   const chartData = React.useMemo(() => {
     return data.labels.map((label: string, index: number) => ({
       name: label,
@@ -191,17 +209,17 @@ export function PieChart({ data, options = {} }: { data: any; options?: any }) {
   ]
 
   return (
-    <ChartContainer className="h-80">
+    <ChartContainer config={config} className="h-80">
       <RechartsPieChart>
         <Pie
           data={chartData}
           cx="50%"
           cy="50%"
-          labelLine={false}
+          innerRadius={0}
           outerRadius={80}
           fill="#8884d8"
           dataKey="value"
-          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+          nameKey="name"
         >
           {chartData.map((entry: any, index: number) => (
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -218,6 +236,24 @@ export function PieChart({ data, options = {} }: { data: any; options?: any }) {
 
 // Componente de DoughnutChart
 export function DoughnutChart({ data, options = {} }: { data: any; options?: any }) {
+  const config = React.useMemo(() => {
+    const keys = data.labels
+    return keys.reduce((acc: ChartConfig, key: string, index: number) => {
+      const colors = [
+        'hsl(var(--chart-1))',
+        'hsl(var(--chart-2))',
+        'hsl(var(--chart-3))',
+        'hsl(var(--chart-4))',
+        'hsl(var(--chart-5))'
+      ]
+      acc[key] = {
+        label: key,
+        color: colors[index % colors.length]
+      }
+      return acc
+    }, {})
+  }, [data])
+
   const chartData = React.useMemo(() => {
     return data.labels.map((label: string, index: number) => ({
       name: label,
@@ -234,18 +270,17 @@ export function DoughnutChart({ data, options = {} }: { data: any; options?: any
   ]
 
   return (
-    <ChartContainer className="h-80">
+    <ChartContainer config={config} className="h-80">
       <RechartsPieChart>
         <Pie
           data={chartData}
           cx="50%"
           cy="50%"
-          labelLine={false}
-          outerRadius={80}
           innerRadius={40}
+          outerRadius={80}
           fill="#8884d8"
           dataKey="value"
-          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+          nameKey="name"
         >
           {chartData.map((entry: any, index: number) => (
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

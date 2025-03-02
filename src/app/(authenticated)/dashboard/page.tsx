@@ -8,7 +8,9 @@ import { clientesApi } from '@/lib/mock-api/clientes'
 import { projetosApi } from '@/lib/mock-api/projetos'
 import { visitasApi } from '@/lib/mock-api/visitas'
 import { oportunidadesApi } from '@/lib/mock-api/oportunidades'
-import { BarChart, LineChart, PieChart } from '@/components/ui/charts'
+import { BarChart, LineChart } from '@/components/ui/charts'
+import { PieChart } from '@/components/ui/pie-chart'
+import { DoughnutChart } from '@/components/ui/doughnut-chart'
 import { CalendarIcon, ClipboardList, CreditCard, Users } from 'lucide-react'
 import Link from 'next/link'
 
@@ -88,23 +90,8 @@ export default function CRMDashboard() {
     labels: Object.keys(estatisticas.projetosStatus),
     datasets: [
       {
-        label: 'Projetos por Status',
+        label: 'Projetos',
         data: Object.values(estatisticas.projetosStatus),
-        backgroundColor: [
-          'rgba(255, 159, 64, 0.7)',
-          'rgba(54, 162, 235, 0.7)',
-          'rgba(75, 192, 192, 0.7)',
-          'rgba(153, 102, 255, 0.7)',
-          'rgba(255, 99, 132, 0.7)',
-        ],
-        borderColor: [
-          'rgb(255, 159, 64)',
-          'rgb(54, 162, 235)',
-          'rgb(75, 192, 192)',
-          'rgb(153, 102, 255)',
-          'rgb(255, 99, 132)',
-        ],
-        borderWidth: 1,
       },
     ],
   }
@@ -133,19 +120,8 @@ export default function CRMDashboard() {
     labels: Object.keys(estatisticas.visitasStatus),
     datasets: [
       {
-        label: 'Visitas por Status',
+        label: 'Visitas',
         data: Object.values(estatisticas.visitasStatus),
-        backgroundColor: [
-          'rgba(54, 162, 235, 0.7)',
-          'rgba(75, 192, 192, 0.7)',
-          'rgba(255, 99, 132, 0.7)',
-        ],
-        borderColor: [
-          'rgb(54, 162, 235)',
-          'rgb(75, 192, 192)',
-          'rgb(255, 99, 132)',
-        ],
-        borderWidth: 1,
       },
     ],
   }
@@ -161,7 +137,7 @@ export default function CRMDashboard() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard CRM</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground">
           Visão geral das suas atividades e desempenho
         </p>
@@ -242,8 +218,8 @@ export default function CRMDashboard() {
                 Distribuição dos projetos por status atual
               </CardDescription>
             </CardHeader>
-            <CardContent className="h-80">
-              <PieChart data={dadosGraficoProjetos} />
+            <CardContent className="flex justify-center items-center h-80">
+              <DoughnutChart data={dadosGraficoProjetos} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -270,7 +246,7 @@ export default function CRMDashboard() {
                 Distribuição das visitas técnicas por status
               </CardDescription>
             </CardHeader>
-            <CardContent className="h-80">
+            <CardContent className="flex justify-center items-center h-80">
               <PieChart data={dadosGraficoVisitas} />
             </CardContent>
           </Card>
