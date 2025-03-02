@@ -41,7 +41,8 @@ import {
   File,
   CheckCircle2
 } from 'lucide-react'
-import { Documento, formatarData, coresStatus, formatarTamanhoArquivo } from '@/lib/crm-utils'
+import { Documento } from '@/lib/crm-utils'
+import { formatarData, coresStatus, formatarTamanhoArquivo } from '@/lib/formatters'
 import { documentosApi, clientesApi } from '@/lib/mock-api'
 import { useState, useEffect } from 'react'
 
@@ -275,7 +276,13 @@ export default function DocumentosPage() {
                         <TableCell>{formatarTamanhoArquivo(documento.tamanho)}</TableCell>
                         <TableCell>
                           {documento.status && (
-                            <Badge className={coresStatus.documento[documento.status as 'Pendente' | 'Enviado' | 'Aprovado' | 'Rejeitado']}>
+                            <Badge className={
+                              documento.status === 'Pendente' ? coresStatus.documento['Pendente'] :
+                              documento.status === 'Aprovado' ? coresStatus.documento['Aprovado'] :
+                              documento.status === 'Rejeitado' ? coresStatus.documento['Rejeitado'] :
+                              documento.status === 'Em análise' ? coresStatus.documento['Em análise'] :
+                              'bg-gray-100 text-gray-800'
+                            }>
                               {documento.status}
                             </Badge>
                           )}

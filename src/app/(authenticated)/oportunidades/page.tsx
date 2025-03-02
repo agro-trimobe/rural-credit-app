@@ -36,7 +36,8 @@ import {
   Eye,
   ArrowUpRight
 } from 'lucide-react'
-import { Oportunidade, formatarMoeda, formatarData, formatarDataHora, coresStatus } from '@/lib/crm-utils'
+import { Oportunidade } from '@/lib/crm-utils'
+import { formatarMoeda, formatarData, formatarDataHora, coresStatus } from '@/lib/formatters'
 import { oportunidadesApi } from '@/lib/mock-api/oportunidades'
 import { clientesApi } from '@/lib/mock-api/clientes'
 

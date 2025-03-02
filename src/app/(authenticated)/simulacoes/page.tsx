@@ -33,7 +33,8 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { toast } from '@/hooks/use-toast'
-import { formatarMoeda, formatarData, Simulacao } from '@/lib/crm-utils'
+import { Simulacao } from '@/lib/crm-utils'
+import { formatarMoeda, formatarData } from '@/lib/formatters'
 import { simulacoesApi, linhasCredito } from '@/lib/mock-api/simulacoes'
 
 export default function SimulacoesPage() {

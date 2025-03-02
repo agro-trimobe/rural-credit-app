@@ -75,6 +75,8 @@ export interface Interacao {
   assunto: string
   descricao: string
   responsavel: string
+  status?: string
+  observacoes?: string
   dataCriacao: string
   dataAtualizacao?: string
 }
@@ -117,111 +119,31 @@ export interface Visita {
   dataAtualizacao?: string
 }
 
-// Funções utilitárias para formatação
-export function formatarCpfCnpj(valor: string): string {
-  if (!valor) return ''
-  
-  // Remove caracteres não numéricos
-  const apenasNumeros = valor.replace(/\D/g, '')
-  
-  if (apenasNumeros.length === 11) {
-    // CPF: 000.000.000-00
-    return apenasNumeros.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
-  } else if (apenasNumeros.length === 14) {
-    // CNPJ: 00.000.000/0000-00
-    return apenasNumeros.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')
-  }
-  
-  return valor
-}
-
-export function formatarValor(valor: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(valor)
-}
-
-export function formatarTelefone(valor: string): string {
-  valor = valor.replace(/\D/g, '')
-  
-  if (valor.length === 11) {
-    // Celular: (00) 00000-0000
-    return valor.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')
-  } else {
-    // Fixo: (00) 0000-0000
-    return valor.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3')
-  }
-}
-
-export function formatarMoeda(valor: number): string {
-  return valor.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  })
-}
-
-export const formatarData = (data?: string): string => {
-  if (!data) return 'N/A'
-  return new Date(data).toLocaleDateString('pt-BR')
-}
-
-export const formatarDataHora = (data: string | undefined): string => {
-  if (!data) return 'N/A'
-  return new Date(data).toLocaleString('pt-BR')
-}
-
-export const formatarTamanhoArquivo = (bytes: number): string => {
-  if (!bytes && bytes !== 0) return 'N/A'
-  if (bytes < 1024) return bytes + ' B'
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
-  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
-}
-
-export const coresStatus = {
-  projeto: {
-    'Em Elaboração': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    'Em Análise': 'bg-blue-100 text-blue-800 border-blue-200',
-    'Aprovado': 'bg-green-100 text-green-800 border-green-200',
-    'Contratado': 'bg-purple-100 text-purple-800 border-purple-200',
-    'Cancelado': 'bg-red-100 text-red-800 border-red-200',
-  },
-  
-  visita: {
-    'Agendada': 'bg-blue-100 text-blue-800 border-blue-200',
-    'Realizada': 'bg-green-100 text-green-800 border-green-200',
-    'Cancelada': 'bg-red-100 text-red-800 border-red-200',
-  },
-  
-  oportunidade: {
-    'Contato Inicial': 'bg-blue-100 text-blue-800 border-blue-200',
-    'Proposta Enviada': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    'Negociação': 'bg-purple-100 text-purple-800 border-purple-200',
-    'Ganho': 'bg-green-100 text-green-800 border-green-200',
-    'Perdido': 'bg-red-100 text-red-800 border-red-200',
-  },
-  
-  documento: {
-    'Pendente': 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200',
-    'Enviado': 'bg-blue-100 text-blue-800 hover:bg-blue-200',
-    'Aprovado': 'bg-green-100 text-green-800 hover:bg-green-200',
-    'Rejeitado': 'bg-red-100 text-red-800 hover:bg-red-200'
-  }
-}
+// Re-exportar funções de formatação do arquivo formatters.ts
+export {
+  formatarMoeda,
+  formatarValor,
+  formatarData,
+  formatarDataHora,
+  formatarTamanhoArquivo,
+  formatarCpfCnpj,
+  formatarTelefone,
+  coresStatus
+} from './formatters';
 
 // Funções para gerar dados mockados
 export function gerarIdAleatorio(): string {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
 export function gerarDataAleatoria(minDias = -365, maxDias = 0): string {
-  const hoje = new Date()
-  const diasAleatorios = Math.floor(Math.random() * (maxDias - minDias + 1)) + minDias
-  const dataAleatoria = new Date(hoje)
-  dataAleatoria.setDate(hoje.getDate() + diasAleatorios)
-  return dataAleatoria.toISOString()
+  const hoje = new Date();
+  const diasAleatorios = Math.floor(Math.random() * (maxDias - minDias + 1)) + minDias;
+  const dataAleatoria = new Date(hoje);
+  dataAleatoria.setDate(hoje.getDate() + diasAleatorios);
+  return dataAleatoria.toISOString();
 }
 
 export function gerarValorAleatorio(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }

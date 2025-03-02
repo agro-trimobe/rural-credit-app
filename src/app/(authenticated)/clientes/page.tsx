@@ -35,7 +35,8 @@ import {
   Trash2, 
   Eye 
 } from 'lucide-react'
-import { Cliente, formatarCpfCnpj, formatarTelefone, formatarData } from '@/lib/crm-utils'
+import { Cliente } from '@/lib/crm-utils'
+import { formatarCpfCnpj, formatarTelefone, formatarData } from '@/lib/formatters'
 import { clientesApi } from '@/lib/mock-api'
 
 export default function ClientesPage() {

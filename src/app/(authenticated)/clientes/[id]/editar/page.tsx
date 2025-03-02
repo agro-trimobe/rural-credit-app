@@ -23,7 +23,8 @@ import {
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { ArrowLeft } from 'lucide-react'
-import { Cliente, formatarCpfCnpj } from '@/lib/crm-utils'
+import { Cliente } from '@/lib/crm-utils'
+import { formatarCpfCnpj } from '@/lib/formatters'
 import { clientesApi } from '@/lib/mock-api'
 import { toast } from '@/hooks/use-toast'
 

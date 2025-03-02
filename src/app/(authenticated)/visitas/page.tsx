@@ -37,7 +37,8 @@ import {
   FileText,
   Calendar
 } from 'lucide-react'
-import { Visita, formatarData, coresStatus } from '@/lib/crm-utils'
+import { Visita } from '@/lib/crm-utils'
+import { formatarData, coresStatus } from '@/lib/formatters'
 import { visitasApi } from '@/lib/mock-api/visitas'
 import { clientesApi } from '@/lib/mock-api/clientes'
 

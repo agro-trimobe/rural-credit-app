@@ -36,7 +36,8 @@ import {
   Eye,
   FileText
 } from 'lucide-react'
-import { Projeto, formatarMoeda, formatarData, coresStatus } from '@/lib/crm-utils'
+import { Projeto } from '@/lib/crm-utils'
+import { formatarMoeda, formatarData, coresStatus } from '@/lib/formatters'
 import { projetosApi, clientesApi } from '@/lib/mock-api'
 
 export default function ProjetosPage() {
