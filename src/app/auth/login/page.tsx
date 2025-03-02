@@ -136,7 +136,7 @@ function LoginPageContent() {
           email: values.email,
           password: values.password,
           redirect: false,
-          callbackUrl: "/home"
+          callbackUrl: "/dashboard"
         });
 
         if (result?.error) {
@@ -165,7 +165,7 @@ function LoginPageContent() {
           // Limpar qualquer erro anterior
           setErrorMessage(null);
           // Forçar redirecionamento com replace para evitar problemas de histórico
-          window.location.href = "/home";
+          window.location.href = "/dashboard";
         }
       } else {
         const response = await fetch("/api/auth/register", {

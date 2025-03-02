@@ -93,7 +93,7 @@ export default function SimulacoesPage() {
             Gerencie simulações de financiamento para diferentes linhas de crédito rural
           </p>
         </div>
-        <Button onClick={() => router.push('/crm/simulacoes/nova')}>
+        <Button onClick={() => router.push('/simulacoes/nova')}>
           <Plus className="mr-2 h-4 w-4" />
           Nova Simulação
         </Button>
@@ -168,7 +168,7 @@ export default function SimulacoesPage() {
                     : 'Comece criando sua primeira simulação de crédito rural.'}
                 </p>
               </div>
-              <Button onClick={() => router.push('/crm/simulacoes/nova')}>
+              <Button onClick={() => router.push('/simulacoes/nova')}>
                 <Plus className="mr-2 h-4 w-4" />
                 Nova Simulação
               </Button>
@@ -212,7 +212,7 @@ export default function SimulacoesPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Ações</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => router.push(`/crm/simulacoes/${simulacao.id}`)}>
+                          <DropdownMenuItem onClick={() => router.push(`/simulacoes/${simulacao.id}`)}>
                             <FileText className="mr-2 h-4 w-4" />
                             Ver detalhes
                           </DropdownMenuItem>
@@ -253,7 +253,7 @@ export default function SimulacoesPage() {
                   variant="outline" 
                   size="sm" 
                   className="w-full"
-                  onClick={() => router.push(`/crm/simulacoes/nova?linha=${linha.id}`)}
+                  onClick={() => router.push(`/simulacoes/nova?linha=${linha.id}`)}
                 >
                   <Calculator className="mr-2 h-4 w-4" />
                   Simular

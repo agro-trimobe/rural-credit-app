@@ -125,7 +125,7 @@ export default function VisitasPage() {
           </p>
         </div>
         <Button asChild>
-          <Link href="/crm/visitas/nova">
+          <Link href="/visitas/nova">
             <Plus className="mr-2 h-4 w-4" /> Nova Visita
           </Link>
         </Button>
@@ -214,7 +214,7 @@ export default function VisitasPage() {
                       </TableCell>
                       <TableCell>
                         {visita.projetoId ? (
-                          <Link href={`/crm/projetos/${visita.projetoId}`} className="text-primary hover:underline">
+                          <Link href={`/projetos/${visita.projetoId}`} className="text-primary hover:underline">
                             Ver projeto
                           </Link>
                         ) : (
@@ -245,27 +245,27 @@ export default function VisitasPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                              <Link href={`/crm/visitas/${visita.id}`}>
+                              <Link href={`/visitas/${visita.id}`}>
                                 <Eye className="mr-2 h-4 w-4" />
                                 Visualizar
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                              <Link href={`/crm/visitas/${visita.id}/editar`}>
+                              <Link href={`/visitas/${visita.id}/editar`}>
                                 <FileEdit className="mr-2 h-4 w-4" />
                                 Editar
                               </Link>
                             </DropdownMenuItem>
                             {visita.status === 'Agendada' && (
                               <DropdownMenuItem asChild>
-                                <Link href={`/crm/visitas/${visita.id}/registrar`}>
+                                <Link href={`/visitas/${visita.id}/registrar`}>
                                   <Calendar className="mr-2 h-4 w-4" />
                                   Registrar Visita
                                 </Link>
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuItem asChild>
-                              <Link href={`/crm/visitas/${visita.id}/documentos`}>
+                              <Link href={`/visitas/${visita.id}/documentos`}>
                                 <FileText className="mr-2 h-4 w-4" />
                                 Documentos
                               </Link>

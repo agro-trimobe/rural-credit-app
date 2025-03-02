@@ -53,7 +53,7 @@ export default async function ProjetoDetalhesPage({ params }: { params: Promise<
             description: 'Projeto não encontrado',
             variant: 'destructive',
           })
-          router.push('/crm/projetos')
+          router.push('/projetos')
           return
         }
         
@@ -100,7 +100,7 @@ export default async function ProjetoDetalhesPage({ params }: { params: Promise<
           title: 'Projeto excluído',
           description: 'O projeto foi excluído com sucesso',
         })
-        router.push('/crm/projetos')
+        router.push('/projetos')
       } catch (error) {
         console.error('Erro ao excluir projeto:', error)
         toast({
@@ -149,7 +149,7 @@ export default async function ProjetoDetalhesPage({ params }: { params: Promise<
           <div className="text-center">
             <p className="text-lg text-muted-foreground">Projeto não encontrado</p>
             <Button asChild className="mt-4">
-              <Link href="/crm/projetos">Voltar para lista</Link>
+              <Link href="/projetos">Voltar para lista</Link>
             </Button>
           </div>
         </CardContent>
@@ -162,14 +162,14 @@ export default async function ProjetoDetalhesPage({ params }: { params: Promise<
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="icon" asChild>
-            <Link href="/crm/projetos">
+            <Link href="/projetos">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
           <h1 className="text-2xl font-bold tracking-tight">{projeto.titulo}</h1>
         </div>
         <Button asChild>
-          <Link href={`/crm/projetos/${id}/editar`}>
+          <Link href={`/projetos/${id}/editar`}>
             <Edit className="mr-2 h-4 w-4" />
             Editar Projeto
           </Link>
@@ -200,7 +200,7 @@ export default async function ProjetoDetalhesPage({ params }: { params: Promise<
                     <User className="h-4 w-4 mr-2 text-muted-foreground" />
                     <span className="text-sm">
                       Cliente: {' '}
-                      <Link href={`/crm/clientes/${projeto.clienteId}`} className="text-primary hover:underline">
+                      <Link href={`/clientes/${projeto.clienteId}`} className="text-primary hover:underline">
                         {cliente?.nome}
                       </Link>
                     </span>
@@ -209,7 +209,7 @@ export default async function ProjetoDetalhesPage({ params }: { params: Promise<
                     <Home className="h-4 w-4 mr-2 text-muted-foreground" />
                     <span className="text-sm">
                       Propriedade: {' '}
-                      <Link href={`/crm/propriedades/${projeto.propriedadeId}`} className="text-primary hover:underline">
+                      <Link href={`/propriedades/${projeto.propriedadeId}`} className="text-primary hover:underline">
                         {propriedade?.nome}
                       </Link>
                     </span>
@@ -309,7 +309,7 @@ export default async function ProjetoDetalhesPage({ params }: { params: Promise<
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-medium text-muted-foreground">Documentos</h3>
               <Button variant="outline" size="sm" asChild>
-                <Link href={`/crm/projetos/${id}/documentos`}>
+                <Link href={`/projetos/${id}/documentos`}>
                   <FileText className="mr-2 h-4 w-4" />
                   Ver Todos
                 </Link>
@@ -330,7 +330,7 @@ export default async function ProjetoDetalhesPage({ params }: { params: Promise<
                           </div>
                         </div>
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/crm/documentos/${doc.id}`}>
+                          <Link href={`/documentos/${doc.id}`}>
                             Ver
                           </Link>
                         </Button>
@@ -346,12 +346,12 @@ export default async function ProjetoDetalhesPage({ params }: { params: Promise<
         </CardContent>
         <CardFooter className="border-t bg-muted/50 flex justify-between">
           <Button variant="outline" asChild>
-            <Link href="/crm/projetos">
+            <Link href="/projetos">
               Voltar
             </Link>
           </Button>
           <Button asChild>
-            <Link href={`/crm/projetos/${id}/documentos/novo`}>
+            <Link href={`/projetos/${id}/documentos/novo`}>
               <FileText className="mr-2 h-4 w-4" />
               Adicionar Documento
             </Link>

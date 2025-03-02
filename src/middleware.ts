@@ -54,8 +54,8 @@ export async function middleware(request: NextRequest) {
 
   // Se estiver autenticado, verificar se está acessando a página de login
   if (pathname.startsWith('/auth/login')) {
-    console.log('Usuário autenticado tentando acessar login, redirecionando para home');
-    const response = NextResponse.redirect(new URL('/home', request.url));
+    console.log('Usuário autenticado tentando acessar login, redirecionando para dashboard');
+    const response = NextResponse.redirect(new URL('/dashboard', request.url));
     return addNoCacheHeaders(response);
   }
 

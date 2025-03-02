@@ -51,37 +51,37 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
   const navItems = [
     {
       title: 'Dashboard',
-      href: '/crm',
+      href: '/dashboard',
       icon: LayoutDashboard,
     },
     {
       title: 'Clientes',
-      href: '/crm/clientes',
+      href: '/clientes',
       icon: Users,
     },
     {
       title: 'Projetos',
-      href: '/crm/projetos',
+      href: '/projetos',
       icon: FileText,
     },
     {
       title: 'Visitas',
-      href: '/crm/visitas',
+      href: '/visitas',
       icon: Calendar,
     },
     {
       title: 'Oportunidades',
-      href: '/crm/oportunidades',
+      href: '/oportunidades',
       icon: LineChart,
     },
     {
       title: 'Documentos',
-      href: '/crm/documentos',
+      href: '/documentos',
       icon: FolderOpen,
     },
     {
       title: 'Simulações',
-      href: '/crm/simulacoes',
+      href: '/simulacoes',
       icon: Calculator,
     },
   ]

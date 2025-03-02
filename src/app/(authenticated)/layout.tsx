@@ -1,34 +1,29 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
+import { useState } from 'react'
+import { Sidebar } from '@/components/crm/sidebar'
 
-export default function AuthenticatedLayout({
+export default function CRMLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-
-  // Redirecionar para login se não estiver autenticado
-  if (status === 'loading') {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
-  }
-
-  if (status === 'unauthenticated') {
-    router.push('/auth/login')
-    return null
-  }
+  const [sidebarOpen, setSidebarOpen] = useState(true)
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {children}
+    <div className="flex min-h-screen bg-background">
+      <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+      <div 
+        className="flex-1 transition-all duration-300 overflow-auto"
+        style={{ 
+          marginLeft: sidebarOpen ? '16rem' : '5rem',
+          width: 'auto'
+        }}
+      >
+        <main className="p-4 md:p-6 pb-24 w-full">
+          {children}
+        </main>
+      </div>
     </div>
   )
 }

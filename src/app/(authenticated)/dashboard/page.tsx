@@ -176,7 +176,7 @@ export default function CRMDashboard() {
           <CardContent>
             <div className="text-2xl font-bold">{estatisticas.totalClientes}</div>
             <p className="text-xs text-muted-foreground">
-              <Link href="/crm/clientes" className="text-primary hover:underline">
+              <Link href="/clientes" className="text-primary hover:underline">
                 Ver todos os clientes
               </Link>
             </p>
@@ -191,7 +191,7 @@ export default function CRMDashboard() {
           <CardContent>
             <div className="text-2xl font-bold">{estatisticas.totalProjetos}</div>
             <p className="text-xs text-muted-foreground">
-              <Link href="/crm/projetos" className="text-primary hover:underline">
+              <Link href="/projetos" className="text-primary hover:underline">
                 Gerenciar projetos
               </Link>
             </p>
@@ -219,7 +219,7 @@ export default function CRMDashboard() {
           <CardContent>
             <div className="text-2xl font-bold">{estatisticas.visitasStatus['Agendada'] || 0}</div>
             <p className="text-xs text-muted-foreground">
-              <Link href="/crm/visitas" className="text-primary hover:underline">
+              <Link href="/visitas" className="text-primary hover:underline">
                 Ver agenda de visitas
               </Link>
             </p>
