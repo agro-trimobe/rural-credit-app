@@ -22,7 +22,6 @@ import {
   Home as HomeIcon,
   User,
   FolderOpen,
-  FileQuestion
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -84,11 +83,6 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
       title: 'Simulações',
       href: '/crm/simulacoes',
       icon: Calculator,
-    },
-    {
-      title: 'Base de Conhecimento',
-      href: '/crm/conhecimento',
-      icon: FileQuestion,
     },
   ]
 
