@@ -39,7 +39,8 @@ import { Cliente, Interacao, Propriedade, Projeto, formatarCpfCnpj, formatarTele
 import { clientesApi, propriedadesApi, projetosApi } from '@/lib/mock-api'
 import { toast } from '@/hooks/use-toast'
 
-export default function ClienteDetalhesPage({ params }: { params: { id: string } }) {
+export default async function ClienteDetalhesPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const router = useRouter()
   const [cliente, setCliente] = useState<Cliente | null>(null)
   const [carregando, setCarregando] = useState(true)
@@ -53,7 +54,7 @@ export default function ClienteDetalhesPage({ params }: { params: { id: string }
         setCarregando(true)
         
         // Carregar cliente
-        const dadosCliente = await clientesApi.buscarClientePorId(params.id)
+        const dadosCliente = await clientesApi.buscarClientePorId(id)
         if (!dadosCliente) {
           toast({
             title: 'Erro',
@@ -67,15 +68,15 @@ export default function ClienteDetalhesPage({ params }: { params: { id: string }
         setCliente(dadosCliente)
         
         // Carregar propriedades do cliente
-        const propriedadesDoCliente = await propriedadesApi.listarPropriedadesPorCliente(params.id)
+        const propriedadesDoCliente = await propriedadesApi.listarPropriedadesPorCliente(id)
         setPropriedades(propriedadesDoCliente)
         
         // Carregar projetos do cliente
-        const projetosDoCliente = await projetosApi.listarProjetosPorCliente(params.id)
+        const projetosDoCliente = await projetosApi.listarProjetosPorCliente(id)
         setProjetos(projetosDoCliente)
         
         // Carregar interações do cliente
-        const interacoesDoCliente = await clientesApi.listarInteracoes(params.id)
+        const interacoesDoCliente = await clientesApi.listarInteracoes(id)
         setInteracoes(interacoesDoCliente)
         
       } catch (error) {
@@ -91,7 +92,7 @@ export default function ClienteDetalhesPage({ params }: { params: { id: string }
     }
     
     carregarDados()
-  }, [params.id, router])
+  }, [id, router])
 
   const handleExcluir = async () => {
     if (!cliente) return
@@ -164,7 +165,7 @@ export default function ClienteDetalhesPage({ params }: { params: { id: string }
         </div>
         <div className="flex space-x-2">
           <Button variant="outline" asChild>
-            <Link href={`/crm/clientes/${cliente.id}/editar`}>
+            <Link href={`/crm/clientes/${id}/editar`}>
               <Edit className="mr-2 h-4 w-4" />
               Editar
             </Link>
@@ -338,7 +339,7 @@ export default function ClienteDetalhesPage({ params }: { params: { id: string }
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-medium">Histórico de Interações</h3>
                 <Button size="sm" asChild>
-                  <Link href={`/crm/clientes/${cliente.id}/interacoes/nova`}>
+                  <Link href={`/crm/clientes/${id}/interacoes/nova`}>
                     Nova Interação
                   </Link>
                 </Button>
@@ -384,7 +385,7 @@ export default function ClienteDetalhesPage({ params }: { params: { id: string }
             </Link>
           </Button>
           <Button asChild>
-            <Link href={`/crm/projetos/novo?clienteId=${cliente.id}`}>
+            <Link href={`/crm/projetos/novo?clienteId=${id}`}>
               Criar Novo Projeto
             </Link>
           </Button>

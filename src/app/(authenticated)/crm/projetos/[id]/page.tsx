@@ -31,7 +31,8 @@ import { Projeto, Cliente, Propriedade, Documento, formatarMoeda, formatarData, 
 import { projetosApi, clientesApi, propriedadesApi } from '@/lib/mock-api'
 import { toast } from '@/hooks/use-toast'
 
-export default function ProjetoDetalhesPage({ params }: { params: { id: string } }) {
+export default async function ProjetoDetalhesPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const router = useRouter()
   const [projeto, setProjeto] = useState<Projeto | null>(null)
   const [cliente, setCliente] = useState<Cliente | null>(null)
@@ -45,7 +46,7 @@ export default function ProjetoDetalhesPage({ params }: { params: { id: string }
         setCarregando(true)
         
         // Carregar projeto
-        const dadosProjeto = await projetosApi.buscarProjetoPorId(params.id)
+        const dadosProjeto = await projetosApi.buscarProjetoPorId(id)
         if (!dadosProjeto) {
           toast({
             title: 'Erro',
@@ -71,7 +72,7 @@ export default function ProjetoDetalhesPage({ params }: { params: { id: string }
         }
         
         // Carregar documentos
-        const listaDocumentos = await projetosApi.listarDocumentos(params.id)
+        const listaDocumentos = await projetosApi.listarDocumentos(id)
         setDocumentos(listaDocumentos)
         
       } catch (error) {
@@ -87,7 +88,7 @@ export default function ProjetoDetalhesPage({ params }: { params: { id: string }
     }
     
     carregarDados()
-  }, [params.id, router])
+  }, [id, router])
 
   const handleExcluir = async () => {
     if (!projeto) return
@@ -111,7 +112,7 @@ export default function ProjetoDetalhesPage({ params }: { params: { id: string }
     }
   }
 
-  const handleChangeStatus = async (status: string) => {
+  const handleChangeStatus = async (status: 'Em Elaboração' | 'Em Análise' | 'Aprovado' | 'Contratado' | 'Cancelado') => {
     if (!projeto) return
 
     try {
@@ -168,7 +169,7 @@ export default function ProjetoDetalhesPage({ params }: { params: { id: string }
           <h1 className="text-2xl font-bold tracking-tight">{projeto.titulo}</h1>
         </div>
         <Button asChild>
-          <Link href={`/crm/projetos/${params.id}/editar`}>
+          <Link href={`/crm/projetos/${id}/editar`}>
             <Edit className="mr-2 h-4 w-4" />
             Editar Projeto
           </Link>
@@ -308,7 +309,7 @@ export default function ProjetoDetalhesPage({ params }: { params: { id: string }
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-medium text-muted-foreground">Documentos</h3>
               <Button variant="outline" size="sm" asChild>
-                <Link href={`/crm/projetos/${projeto.id}/documentos`}>
+                <Link href={`/crm/projetos/${id}/documentos`}>
                   <FileText className="mr-2 h-4 w-4" />
                   Ver Todos
                 </Link>
@@ -350,7 +351,7 @@ export default function ProjetoDetalhesPage({ params }: { params: { id: string }
             </Link>
           </Button>
           <Button asChild>
-            <Link href={`/crm/projetos/${projeto.id}/documentos/novo`}>
+            <Link href={`/crm/projetos/${id}/documentos/novo`}>
               <FileText className="mr-2 h-4 w-4" />
               Adicionar Documento
             </Link>

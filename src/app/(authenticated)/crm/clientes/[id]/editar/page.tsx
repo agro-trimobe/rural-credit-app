@@ -26,7 +26,8 @@ import { Cliente } from '@/lib/crm-utils'
 import { clientesApi } from '@/lib/mock-api'
 import { toast } from '@/hooks/use-toast'
 
-export default function ClienteEditarPage({ params }: { params: { id: string } }) {
+export default async function ClienteEditarPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const router = useRouter()
   const [cliente, setCliente] = useState<Cliente | null>(null)
   const [carregando, setCarregando] = useState(true)
@@ -49,7 +50,7 @@ export default function ClienteEditarPage({ params }: { params: { id: string } }
     const carregarCliente = async () => {
       try {
         setCarregando(true)
-        const dados = await clientesApi.buscarClientePorId(params.id)
+        const dados = await clientesApi.buscarClientePorId(id)
         
         if (!dados) {
           toast({
@@ -90,7 +91,7 @@ export default function ClienteEditarPage({ params }: { params: { id: string } }
     }
     
     carregarCliente()
-  }, [params.id, router])
+  }, [id, router])
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -115,14 +116,14 @@ export default function ClienteEditarPage({ params }: { params: { id: string } }
         cep,
       }
       
-      await clientesApi.atualizarCliente(params.id, clienteAtualizado)
+      await clientesApi.atualizarCliente(id, clienteAtualizado)
       
       toast({
         title: 'Sucesso',
         description: 'Cliente atualizado com sucesso',
       })
       
-      router.push(`/crm/clientes/${params.id}`)
+      router.push(`/crm/clientes/${id}`)
     } catch (error) {
       console.error('Erro ao salvar cliente:', error)
       toast({
@@ -148,7 +149,7 @@ export default function ClienteEditarPage({ params }: { params: { id: string } }
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="icon" asChild>
-            <Link href={`/crm/clientes/${params.id}`}>
+            <Link href={`/crm/clientes/${id}`}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -213,12 +214,9 @@ export default function ClienteEditarPage({ params }: { params: { id: string } }
 
               <div className="space-y-2">
                 <Label htmlFor="tipoCliente">Tipo de Cliente</Label>
-                <Select
-                  value={tipoCliente}
-                  onValueChange={(value) => setTipoCliente(value as 'PF' | 'PJ')}
-                >
-                  <SelectTrigger id="tipoCliente">
-                    <SelectValue placeholder="Selecione o tipo de cliente" />
+                <Select value={tipoCliente} onValueChange={(value: 'PF' | 'PJ') => setTipoCliente(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="PF">Pessoa Física</SelectItem>
@@ -229,17 +227,14 @@ export default function ClienteEditarPage({ params }: { params: { id: string } }
 
               <div className="space-y-2">
                 <Label htmlFor="perfil">Perfil</Label>
-                <Select
-                  value={perfil}
-                  onValueChange={(value) => setPerfil(value as 'pequeno' | 'medio' | 'grande')}
-                >
-                  <SelectTrigger id="perfil">
+                <Select value={perfil} onValueChange={(value: 'pequeno' | 'medio' | 'grande') => setPerfil(value)}>
+                  <SelectTrigger>
                     <SelectValue placeholder="Selecione o perfil" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pequeno">Pequeno</SelectItem>
-                    <SelectItem value="medio">Médio</SelectItem>
-                    <SelectItem value="grande">Grande</SelectItem>
+                    <SelectItem value="pequeno">Pequeno Produtor</SelectItem>
+                    <SelectItem value="medio">Médio Produtor</SelectItem>
+                    <SelectItem value="grande">Grande Produtor</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -296,22 +291,20 @@ export default function ClienteEditarPage({ params }: { params: { id: string } }
               </div>
             </div>
           </CardContent>
-          <CardFooter className="border-t bg-muted/50 flex justify-between">
+          <CardFooter className="flex justify-end space-x-2">
             <Button variant="outline" asChild>
-              <Link href={`/crm/clientes/${params.id}`}>
-                Cancelar
-              </Link>
+              <Link href={`/crm/clientes/${id}`}>Cancelar</Link>
             </Button>
             <Button type="submit" disabled={salvando}>
               {salvando ? (
                 <>
-                  <div className="animate-spin mr-2 h-4 w-4 border-2 border-background border-t-transparent rounded-full" />
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-foreground"></div>
                   Salvando...
                 </>
               ) : (
                 <>
                   <Save className="mr-2 h-4 w-4" />
-                  Salvar Alterações
+                  Salvar
                 </>
               )}
             </Button>

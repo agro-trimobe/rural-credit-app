@@ -107,14 +107,21 @@ export default function NovoDocumentoPage() {
     try {
       const agora = new Date().toISOString()
       const novoDocumento = {
-        ...formData,
+        nome: formData.nome,
+        tipo: formData.tipo,
+        formato: formData.formato,
+        tamanho: Number(formData.tamanho),
+        url: formData.url,
+        clienteId: formData.clienteId,
+        projetoId: formData.projetoId || undefined,
+        status: formData.status,
         id: `${Date.now()}`, // Gerar ID único
         dataCriacao: agora,
         dataAtualizacao: agora,
         tags: []
       } as Documento
       
-      await documentosApi.adicionarDocumento(novoDocumento)
+      await documentosApi.criarDocumento(novoDocumento)
       toast({
         title: 'Documento adicionado',
         description: 'O documento foi adicionado com sucesso.',

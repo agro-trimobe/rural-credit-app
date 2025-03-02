@@ -37,7 +37,7 @@ export default function ProjetoNovoPage() {
     descricao: '',
     clienteId: '',
     propriedadeId: '',
-    status: 'Em Elaboração',
+    status: 'Em Elaboração' as 'Em Elaboração' | 'Em Análise' | 'Aprovado' | 'Contratado' | 'Cancelado',
     valorTotal: 0,
     linhaCredito: '',
     dataPrevisaoTermino: ''

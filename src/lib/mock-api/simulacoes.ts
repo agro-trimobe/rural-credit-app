@@ -48,6 +48,7 @@ const simulacoesMock: Simulacao[] = [
   },
   {
     id: 'sim005',
+    clienteId: 'cli005',
     linhaCredito: 'ABC Ambiental',
     valorFinanciamento: 200000,
     taxaJuros: 5.5,

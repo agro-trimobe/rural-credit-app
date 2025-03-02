@@ -26,7 +26,8 @@ import { Documento } from '@/lib/crm-utils'
 import { documentosApi, clientesApi } from '@/lib/mock-api'
 import { toast } from '@/hooks/use-toast'
 
-export default function DocumentoEditarPage({ params }: { params: { id: string } }) {
+export default async function DocumentoEditarPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const router = useRouter()
   const [documento, setDocumento] = useState<Documento | null>(null)
   const [carregando, setCarregando] = useState(true)
@@ -43,7 +44,7 @@ export default function DocumentoEditarPage({ params }: { params: { id: string }
     const carregarDocumento = async () => {
       try {
         setCarregando(true)
-        const dados = await documentosApi.buscarDocumentoPorId(params.id)
+        const dados = await documentosApi.buscarDocumentoPorId(id)
         
         if (!dados) {
           toast({
@@ -77,7 +78,7 @@ export default function DocumentoEditarPage({ params }: { params: { id: string }
     }
     
     carregarDocumento()
-  }, [params.id, router])
+  }, [id, router])
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -95,14 +96,14 @@ export default function DocumentoEditarPage({ params }: { params: { id: string }
         tags,
       }
       
-      await documentosApi.atualizarDocumento(params.id, documentoAtualizado)
+      await documentosApi.atualizarDocumento(id, documentoAtualizado)
       
       toast({
         title: 'Sucesso',
         description: 'Documento atualizado com sucesso',
       })
       
-      router.push(`/crm/documentos/${params.id}`)
+      router.push(`/crm/documentos/${id}`)
     } catch (error) {
       console.error('Erro ao salvar documento:', error)
       toast({
@@ -128,7 +129,7 @@ export default function DocumentoEditarPage({ params }: { params: { id: string }
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="icon" asChild>
-            <Link href={`/crm/documentos/${params.id}`}>
+            <Link href={`/crm/documentos/${id}`}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -231,7 +232,7 @@ export default function DocumentoEditarPage({ params }: { params: { id: string }
           </CardContent>
           <CardFooter className="border-t bg-muted/50 flex justify-between">
             <Button variant="outline" asChild>
-              <Link href={`/crm/documentos/${params.id}`}>
+              <Link href={`/crm/documentos/${id}`}>
                 Cancelar
               </Link>
             </Button>

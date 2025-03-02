@@ -114,7 +114,9 @@ export default function OportunidadesPage() {
     if (!a.proximoContato && b.proximoContato) return 1
     
     // Por fim, ordenar por data de atualização (mais recente primeiro)
-    return new Date(b.dataAtualizacao).getTime() - new Date(a.dataAtualizacao).getTime()
+    const dataA = a.dataAtualizacao || a.dataCriacao
+    const dataB = b.dataAtualizacao || b.dataCriacao
+    return new Date(dataB).getTime() - new Date(dataA).getTime()
   })
 
   if (carregando) {
@@ -259,7 +261,7 @@ export default function OportunidadesPage() {
                                 Editar
                               </Link>
                             </DropdownMenuItem>
-                            {oportunidade.status !== 'Fechado' && oportunidade.status !== 'Perdido' && (
+                            {oportunidade.status !== 'Ganho' && oportunidade.status !== 'Perdido' && (
                               <DropdownMenuItem asChild>
                                 <Link href={`/crm/oportunidades/${oportunidade.id}/avancar`}>
                                   <ArrowUpRight className="mr-2 h-4 w-4" />

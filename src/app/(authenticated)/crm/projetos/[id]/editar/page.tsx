@@ -27,7 +27,8 @@ import { Projeto } from '@/lib/crm-utils'
 import { projetosApi, clientesApi, propriedadesApi } from '@/lib/mock-api'
 import { toast } from '@/hooks/use-toast'
 
-export default function ProjetoEditarPage({ params }: { params: { id: string } }) {
+export default async function ProjetoEditarPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const router = useRouter()
   const [carregando, setCarregando] = useState(true)
   const [salvando, setSalvando] = useState(false)
@@ -48,7 +49,7 @@ export default function ProjetoEditarPage({ params }: { params: { id: string } }
     const carregarDados = async () => {
       try {
         // Carregar projeto
-        const projeto = await projetosApi.buscarProjetoPorId(params.id)
+        const projeto = await projetosApi.buscarProjetoPorId(id)
         if (!projeto) {
           toast({
             title: 'Erro',
@@ -90,7 +91,7 @@ export default function ProjetoEditarPage({ params }: { params: { id: string } }
     }
 
     carregarDados()
-  }, [params.id, router])
+  }, [id, router])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -135,12 +136,12 @@ export default function ProjetoEditarPage({ params }: { params: { id: string } }
           : undefined
       }
       
-      await projetosApi.atualizarProjeto(params.id, dadosAtualizados)
+      await projetosApi.atualizarProjeto(id, dadosAtualizados)
       toast({
         title: 'Projeto atualizado',
         description: 'Os dados do projeto foram atualizados com sucesso',
       })
-      router.push(`/crm/projetos/${params.id}`)
+      router.push(`/crm/projetos/${id}`)
     } catch (error) {
       console.error('Erro ao atualizar projeto:', error)
       toast({
@@ -166,7 +167,7 @@ export default function ProjetoEditarPage({ params }: { params: { id: string } }
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="icon" asChild>
-            <Link href={`/crm/projetos/${params.id}`}>
+            <Link href={`/crm/projetos/${id}`}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -311,7 +312,7 @@ export default function ProjetoEditarPage({ params }: { params: { id: string } }
           </CardContent>
           <CardFooter className="border-t bg-muted/50 flex justify-between">
             <Button variant="outline" asChild>
-              <Link href={`/crm/projetos/${params.id}`}>
+              <Link href={`/crm/projetos/${id}`}>
                 Cancelar
               </Link>
             </Button>

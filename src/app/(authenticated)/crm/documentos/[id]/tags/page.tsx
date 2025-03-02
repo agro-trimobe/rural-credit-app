@@ -19,7 +19,8 @@ import { Documento } from '@/lib/crm-utils'
 import { documentosApi } from '@/lib/mock-api'
 import { toast } from '@/hooks/use-toast'
 
-export default function DocumentoTagsPage({ params }: { params: { id: string } }) {
+export default async function DocumentoTagsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const router = useRouter()
   const [documento, setDocumento] = useState<Documento | null>(null)
   const [tags, setTags] = useState<string[]>([])
@@ -31,7 +32,7 @@ export default function DocumentoTagsPage({ params }: { params: { id: string } }
     const carregarDocumento = async () => {
       try {
         setCarregando(true)
-        const dados = await documentosApi.buscarDocumentoPorId(params.id)
+        const dados = await documentosApi.buscarDocumentoPorId(id)
         
         if (!dados) {
           toast({
@@ -45,22 +46,21 @@ export default function DocumentoTagsPage({ params }: { params: { id: string } }
         
         setDocumento(dados)
         setTags(dados.tags || [])
-        
+        setNovaTag('')
       } catch (error) {
         console.error('Erro ao carregar documento:', error)
         toast({
           title: 'Erro',
-          description: 'Não foi possível carregar os dados do documento',
+          description: 'Falha ao carregar os dados do documento',
           variant: 'destructive',
         })
-        router.push('/crm/documentos')
       } finally {
         setCarregando(false)
       }
     }
     
     carregarDocumento()
-  }, [params.id, router])
+  }, [id, router])
   
   const adicionarTag = () => {
     if (!novaTag.trim()) return
@@ -91,24 +91,22 @@ export default function DocumentoTagsPage({ params }: { params: { id: string } }
     try {
       setSalvando(true)
       
-      const documentoAtualizado = {
+      await documentosApi.atualizarDocumento(id, {
         ...documento,
         tags,
-      }
-      
-      await documentosApi.atualizarDocumento(params.id, documentoAtualizado)
+      })
       
       toast({
         title: 'Sucesso',
         description: 'Tags atualizadas com sucesso',
       })
       
-      router.push(`/crm/documentos/${params.id}`)
+      router.push(`/crm/documentos/${id}`)
     } catch (error) {
       console.error('Erro ao salvar tags:', error)
       toast({
         title: 'Erro',
-        description: 'Não foi possível salvar as alterações',
+        description: 'Falha ao salvar as tags',
         variant: 'destructive',
       })
     } finally {
@@ -151,11 +149,11 @@ export default function DocumentoTagsPage({ params }: { params: { id: string } }
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="icon" asChild>
-            <Link href={`/crm/documentos/${params.id}`}>
+            <Link href={`/crm/documentos/${id}`}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-          <h1 className="text-2xl font-bold tracking-tight">Gerenciar Tags</h1>
+          <h1 className="text-xl font-semibold">Gerenciar Tags</h1>
         </div>
       </div>
 
@@ -206,7 +204,7 @@ export default function DocumentoTagsPage({ params }: { params: { id: string } }
         </CardContent>
         <CardFooter className="border-t bg-muted/50 flex justify-between">
           <Button variant="outline" asChild>
-            <Link href={`/crm/documentos/${params.id}`}>
+            <Link href={`/crm/documentos/${id}`}>
               Cancelar
             </Link>
           </Button>

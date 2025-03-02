@@ -19,7 +19,8 @@ import { Cliente, Interacao, formatarData } from '@/lib/crm-utils'
 import { clientesApi } from '@/lib/mock-api'
 import { toast } from '@/hooks/use-toast'
 
-export default function InteracoesClientePage({ params }: { params: { id: string } }) {
+export default async function InteracoesClientePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const router = useRouter()
   const [cliente, setCliente] = useState<Cliente | null>(null)
   const [interacoes, setInteracoes] = useState<Interacao[]>([])
@@ -31,7 +32,7 @@ export default function InteracoesClientePage({ params }: { params: { id: string
         setCarregando(true)
         
         // Carregar cliente
-        const dadosCliente = await clientesApi.buscarClientePorId(params.id)
+        const dadosCliente = await clientesApi.buscarClientePorId(id)
         if (!dadosCliente) {
           toast({
             title: 'Erro',
@@ -45,7 +46,7 @@ export default function InteracoesClientePage({ params }: { params: { id: string
         setCliente(dadosCliente)
         
         // Carregar interações do cliente
-        const interacoesDoCliente = await clientesApi.listarInteracoes(params.id)
+        const interacoesDoCliente = await clientesApi.listarInteracoes(id)
         setInteracoes(interacoesDoCliente)
         
       } catch (error) {
@@ -61,7 +62,7 @@ export default function InteracoesClientePage({ params }: { params: { id: string
     }
     
     carregarDados()
-  }, [params.id, router])
+  }, [id, router])
 
   if (carregando) {
     return (

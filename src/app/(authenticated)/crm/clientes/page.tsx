@@ -66,7 +66,10 @@ export default function ClientesPage() {
       cliente.cpfCnpj.includes(busca) ||
       cliente.email.toLowerCase().includes(busca.toLowerCase())
     
-    const correspondeAoFiltro = filtro === 'Todos' || cliente.perfil === filtro
+    const correspondeAoFiltro = filtro === 'Todos' || 
+      (filtro === 'Pequeno' && cliente.perfil === 'pequeno') ||
+      (filtro === 'Médio' && cliente.perfil === 'medio') ||
+      (filtro === 'Grande' && cliente.perfil === 'grande')
     
     return correspondeAoBusca && correspondeAoFiltro
   })
@@ -74,11 +77,11 @@ export default function ClientesPage() {
   // Função para obter a cor do badge com base no perfil
   const getCorBadge = (perfil: string) => {
     switch (perfil) {
-      case 'Pequeno':
+      case 'pequeno':
         return 'bg-blue-100 text-blue-800 hover:bg-blue-100'
-      case 'Médio':
+      case 'medio':
         return 'bg-green-100 text-green-800 hover:bg-green-100'
-      case 'Grande':
+      case 'grande':
         return 'bg-purple-100 text-purple-800 hover:bg-purple-100'
       default:
         return 'bg-gray-100 text-gray-800 hover:bg-gray-100'
@@ -175,11 +178,12 @@ export default function ClientesPage() {
                         <TableCell>{formatarCpfCnpj(cliente.cpfCnpj)}</TableCell>
                         <TableCell>{formatarTelefone(cliente.telefone)}</TableCell>
                         <TableCell>
-                          <Badge className={getCorBadge(cliente.perfil)}>
-                            {cliente.perfil}
+                          <Badge variant="outline" className={getCorBadge(cliente.perfil)}>
+                            {cliente.perfil === 'pequeno' ? 'Pequeno' : 
+                             cliente.perfil === 'medio' ? 'Médio' : 'Grande'}
                           </Badge>
                         </TableCell>
-                        <TableCell>{cliente.propriedades.length}</TableCell>
+                        <TableCell>{cliente.propriedades?.length || 0}</TableCell>
                         <TableCell>{formatarData(cliente.dataCadastro)}</TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>

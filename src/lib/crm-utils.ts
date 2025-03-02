@@ -62,6 +62,7 @@ export interface Documento {
   tags?: string[]
   clienteId: string
   projetoId?: string
+  visitaId?: string
   dataCriacao: string
   dataAtualizacao?: string
 }
@@ -74,6 +75,44 @@ export interface Interacao {
   assunto: string
   descricao: string
   responsavel: string
+  dataCriacao: string
+  dataAtualizacao?: string
+}
+
+export interface Oportunidade {
+  id: string
+  clienteId: string
+  titulo: string
+  descricao: string
+  valor: number
+  status: 'Contato Inicial' | 'Proposta Enviada' | 'Negociação' | 'Ganho' | 'Perdido'
+  proximoContato?: string
+  dataCriacao: string
+  dataAtualizacao?: string
+}
+
+export interface Simulacao {
+  id: string
+  clienteId: string
+  linhaCredito: string
+  valorFinanciamento: number
+  taxaJuros: number
+  prazoTotal: number
+  carencia: number
+  valorParcela: number
+  dataCriacao: string
+  dataAtualizacao?: string
+}
+
+export interface Visita {
+  id: string
+  clienteId: string
+  propriedadeId: string
+  projetoId?: string
+  data: string
+  status: 'Agendada' | 'Realizada' | 'Cancelada'
+  observacoes: string
+  fotos: string[]
   dataCriacao: string
   dataAtualizacao?: string
 }
@@ -122,12 +161,12 @@ export function formatarMoeda(valor: number): string {
   })
 }
 
-export const formatarData = (data: string): string => {
+export const formatarData = (data?: string): string => {
   if (!data) return 'N/A'
   return new Date(data).toLocaleDateString('pt-BR')
 }
 
-export const formatarDataHora = (data: string): string => {
+export const formatarDataHora = (data: string | undefined): string => {
   if (!data) return 'N/A'
   return new Date(data).toLocaleString('pt-BR')
 }
@@ -155,11 +194,10 @@ export const coresStatus = {
   },
   
   oportunidade: {
-    'Prospecção': 'bg-gray-100 text-gray-800 border-gray-200',
     'Contato Inicial': 'bg-blue-100 text-blue-800 border-blue-200',
-    'Proposta': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    'Proposta Enviada': 'bg-yellow-100 text-yellow-800 border-yellow-200',
     'Negociação': 'bg-purple-100 text-purple-800 border-purple-200',
-    'Fechado': 'bg-green-100 text-green-800 border-green-200',
+    'Ganho': 'bg-green-100 text-green-800 border-green-200',
     'Perdido': 'bg-red-100 text-red-800 border-red-200',
   },
   

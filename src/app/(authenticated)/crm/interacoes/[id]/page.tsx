@@ -19,7 +19,8 @@ import { Cliente, Interacao, formatarData, formatarDataHora } from '@/lib/crm-ut
 import { clientesApi } from '@/lib/mock-api'
 import { toast } from '@/hooks/use-toast'
 
-export default function InteracaoDetalhesPage({ params }: { params: { id: string } }) {
+export default async function InteracaoDetalhesPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const router = useRouter()
   const [interacao, setInteracao] = useState<Interacao | null>(null)
   const [cliente, setCliente] = useState<Cliente | null>(null)
@@ -32,7 +33,7 @@ export default function InteracaoDetalhesPage({ params }: { params: { id: string
         
         // Buscar todas as interações (em um sistema real, teríamos um endpoint específico)
         const todasInteracoes = await clientesApi.listarTodasInteracoes()
-        const interacaoEncontrada = todasInteracoes.find(i => i.id === params.id)
+        const interacaoEncontrada = todasInteracoes.find(i => i.id === id)
         
         if (!interacaoEncontrada) {
           toast({
@@ -65,7 +66,7 @@ export default function InteracaoDetalhesPage({ params }: { params: { id: string
     }
     
     carregarDados()
-  }, [params.id, router])
+  }, [id, router])
 
   const handleExcluir = async () => {
     if (!interacao || !cliente) return

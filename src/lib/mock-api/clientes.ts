@@ -396,6 +396,9 @@ export const clientesApi = {
         // Atualizar a lista de propriedades do cliente
         const cliente = clientesMock.find(c => c.id === propriedade.clienteId)
         if (cliente) {
+          if (!cliente.propriedades) {
+            cliente.propriedades = [];
+          }
           cliente.propriedades.push(novaPropriedade)
         }
         

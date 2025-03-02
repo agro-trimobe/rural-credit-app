@@ -27,7 +27,8 @@ import { Cliente, Interacao } from '@/lib/crm-utils'
 import { clientesApi } from '@/lib/mock-api'
 import { toast } from '@/hooks/use-toast'
 
-export default function NovaInteracaoPage({ params }: { params: { id: string } }) {
+export default async function NovaInteracaoPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const router = useRouter()
   const [salvando, setSalvando] = useState(false)
   const [cliente, setCliente] = useState<Cliente | null>(null)
@@ -42,7 +43,7 @@ export default function NovaInteracaoPage({ params }: { params: { id: string } }
   useEffect(() => {
     const carregarCliente = async () => {
       try {
-        const dadosCliente = await clientesApi.buscarClientePorId(params.id)
+        const dadosCliente = await clientesApi.buscarClientePorId(id)
         if (!dadosCliente) {
           toast({
             title: 'Erro',
@@ -70,24 +71,30 @@ export default function NovaInteracaoPage({ params }: { params: { id: string } }
     }
     
     carregarCliente()
-  }, [params.id, router])
+  }, [id, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSalvando(true)
-
+    
+    if (!tipo || !assunto || !descricao) {
+      toast({
+        title: 'Campos obrigatórios',
+        description: 'Preencha todos os campos obrigatórios',
+        variant: 'destructive',
+      })
+      return
+    }
+    
     try {
-      if (!cliente) {
-        throw new Error('Cliente não encontrado')
-      }
+      setSalvando(true)
       
       const novaInteracao: Omit<Interacao, 'id' | 'dataCriacao' | 'dataAtualizacao'> = {
-        clienteId: cliente.id,
+        clienteId: id,
         tipo,
-        data: new Date(data).toISOString(),
+        data: data || new Date().toISOString(),
         assunto,
+        responsavel,
         descricao,
-        responsavel
       }
       
       await clientesApi.adicionarInteracao(novaInteracao)
@@ -97,12 +104,12 @@ export default function NovaInteracaoPage({ params }: { params: { id: string } }
         description: 'Interação registrada com sucesso',
       })
       
-      router.push(`/crm/clientes/${cliente.id}`)
+      router.push(`/crm/clientes/${id}/interacoes`)
     } catch (error) {
-      console.error('Erro ao registrar interação:', error)
+      console.error('Erro ao salvar interação:', error)
       toast({
         title: 'Erro',
-        description: 'Não foi possível registrar a interação',
+        description: 'Falha ao registrar a interação',
         variant: 'destructive',
       })
     } finally {
@@ -123,11 +130,11 @@ export default function NovaInteracaoPage({ params }: { params: { id: string } }
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="icon" asChild>
-            <Link href={`/crm/clientes/${cliente.id}`}>
+            <Link href={`/crm/clientes/${id}/interacoes`}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-          <h1 className="text-2xl font-bold tracking-tight">Nova Interação</h1>
+          <h1 className="text-xl font-semibold">Nova Interação</h1>
         </div>
       </div>
 
@@ -209,7 +216,7 @@ export default function NovaInteracaoPage({ params }: { params: { id: string } }
           </CardContent>
           <CardFooter className="border-t bg-muted/50 flex justify-between">
             <Button variant="outline" asChild>
-              <Link href={`/crm/clientes/${cliente.id}`}>
+              <Link href={`/crm/clientes/${id}/interacoes`}>
                 Cancelar
               </Link>
             </Button>
@@ -220,10 +227,7 @@ export default function NovaInteracaoPage({ params }: { params: { id: string } }
                   Salvando...
                 </>
               ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Registrar Interação
-                </>
+                'Salvar'
               )}
             </Button>
           </CardFooter>

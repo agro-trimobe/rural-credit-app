@@ -89,6 +89,7 @@ const visitasMock: Visita[] = [
     data: '2024-03-05T10:00:00Z',
     status: 'Agendada',
     observacoes: 'Visita para avaliação da estrutura existente para recebimento das matrizes bovinas.',
+    fotos: [],
     dataCriacao: '2024-03-01T18:00:00Z',
     dataAtualizacao: '2024-03-01T18:00:00Z'
   },
@@ -118,6 +119,7 @@ const visitasMock: Visita[] = [
     data: '2024-03-10T14:00:00Z',
     status: 'Agendada',
     observacoes: 'Visita para apresentação dos resultados da análise de solo e discussão do plano de correção.',
+    fotos: [],
     dataCriacao: '2024-02-25T10:30:00Z',
     dataAtualizacao: '2024-02-25T10:30:00Z'
   },
@@ -129,6 +131,7 @@ const visitasMock: Visita[] = [
     data: '2024-03-15T09:00:00Z',
     status: 'Agendada',
     observacoes: 'Visita para acompanhamento do processo de aquisição do trator e verificação da documentação pendente.',
+    fotos: [],
     dataCriacao: '2024-02-28T14:00:00Z',
     dataAtualizacao: '2024-02-28T14:00:00Z'
   }

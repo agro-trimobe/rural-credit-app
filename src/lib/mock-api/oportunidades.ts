@@ -19,7 +19,7 @@ const oportunidadesMock: Oportunidade[] = [
     titulo: 'Expansão de Pomar',
     descricao: 'Cliente mencionou planos para expandir o pomar de laranja em mais 10ha. Oportunidade para novo projeto de financiamento.',
     valor: 120000,
-    status: 'Prospecção',
+    status: 'Contato Inicial',
     proximoContato: '2024-03-15T14:00:00Z',
     dataCriacao: '2024-02-25T17:45:00Z',
     dataAtualizacao: '2024-02-25T17:45:00Z'
@@ -30,7 +30,7 @@ const oportunidadesMock: Oportunidade[] = [
     titulo: 'Sistema de Energia Solar',
     descricao: 'Cliente busca reduzir custos com energia elétrica para o sistema de irrigação. Oportunidade para projeto de energia solar.',
     valor: 850000,
-    status: 'Proposta',
+    status: 'Proposta Enviada',
     proximoContato: '2024-03-05T11:00:00Z',
     dataCriacao: '2024-02-20T17:30:00Z',
     dataAtualizacao: '2024-02-28T09:15:00Z'
@@ -63,7 +63,7 @@ const oportunidadesMock: Oportunidade[] = [
     titulo: 'Sistema de Agricultura de Precisão',
     descricao: 'Cliente interessado em implementar sistema de agricultura de precisão em toda a propriedade. Oportunidade para projeto via Inovagro.',
     valor: 750000,
-    status: 'Proposta',
+    status: 'Proposta Enviada',
     proximoContato: '2024-03-12T10:00:00Z',
     dataCriacao: '2024-02-15T16:30:00Z',
     dataAtualizacao: '2024-02-28T11:45:00Z'
@@ -74,7 +74,7 @@ const oportunidadesMock: Oportunidade[] = [
     titulo: 'Construção de Curral',
     descricao: 'Cliente mencionou interesse em iniciar criação de gado de corte e necessita construir curral.',
     valor: 80000,
-    status: 'Prospecção',
+    status: 'Contato Inicial',
     proximoContato: '2024-03-20T14:00:00Z',
     dataCriacao: '2024-02-10T16:45:00Z',
     dataAtualizacao: '2024-02-10T16:45:00Z'
@@ -85,7 +85,7 @@ const oportunidadesMock: Oportunidade[] = [
     titulo: 'Aquisição de Caminhões',
     descricao: 'Cliente necessita renovar frota de caminhões para transporte da produção. Oportunidade para financiamento de 3 veículos.',
     valor: 900000,
-    status: 'Fechado',
+    status: 'Ganho',
     dataCriacao: '2023-10-15T09:30:00Z',
     dataAtualizacao: '2023-12-20T14:00:00Z'
   },
@@ -198,7 +198,7 @@ export const oportunidadesApi = {
   },
 
   // Atualizar status da oportunidade
-  atualizarStatusOportunidade: async (id: string, status: 'Prospecção' | 'Contato Inicial' | 'Proposta' | 'Negociação' | 'Fechado' | 'Perdido'): Promise<Oportunidade | null> => {
+  atualizarStatusOportunidade: async (id: string, status: 'Contato Inicial' | 'Proposta Enviada' | 'Negociação' | 'Ganho' | 'Perdido'): Promise<Oportunidade | null> => {
     return new Promise((resolve) => {
       setTimeout(() => {
         const index = oportunidadesMock.findIndex(o => o.id === id)
@@ -213,8 +213,8 @@ export const oportunidadesApi = {
           dataAtualizacao: new Date().toISOString()
         }
         
-        // Se o status for Fechado ou Perdido, remover próximo contato
-        if (status === 'Fechado' || status === 'Perdido') {
+        // Se o status for Ganho ou Perdido, remover próximo contato
+        if (status === 'Ganho' || status === 'Perdido') {
           delete oportunidadeAtualizada.proximoContato
         }
         
@@ -232,7 +232,7 @@ export const oportunidadesApi = {
   }> => {
     return new Promise((resolve) => {
       setTimeout(() => {
-        const statusPossiveis = ['Prospecção', 'Contato Inicial', 'Proposta', 'Negociação', 'Fechado', 'Perdido']
+        const statusPossiveis = ['Contato Inicial', 'Proposta Enviada', 'Negociação', 'Ganho', 'Perdido']
         
         const porStatus: { [key: string]: { quantidade: number, valor: number } } = {}
         let valorTotal = 0

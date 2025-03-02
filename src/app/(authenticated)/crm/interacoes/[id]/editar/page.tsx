@@ -27,7 +27,8 @@ import { Cliente, Interacao } from '@/lib/crm-utils'
 import { clientesApi } from '@/lib/mock-api'
 import { toast } from '@/hooks/use-toast'
 
-export default function EditarInteracaoPage({ params }: { params: { id: string } }) {
+export default async function InteracaoEditarPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const router = useRouter()
   const [salvando, setSalvando] = useState(false)
   const [interacao, setInteracao] = useState<Interacao | null>(null)
@@ -45,7 +46,7 @@ export default function EditarInteracaoPage({ params }: { params: { id: string }
       try {
         // Buscar todas as interações
         const todasInteracoes = await clientesApi.listarTodasInteracoes()
-        const interacaoEncontrada = todasInteracoes.find(i => i.id === params.id)
+        const interacaoEncontrada = todasInteracoes.find(i => i.id === id)
         
         if (!interacaoEncontrada) {
           toast({
@@ -83,7 +84,7 @@ export default function EditarInteracaoPage({ params }: { params: { id: string }
     }
     
     carregarDados()
-  }, [params.id, router])
+  }, [id, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

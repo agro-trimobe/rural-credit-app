@@ -29,7 +29,8 @@ import { Documento, Cliente, Projeto, formatarData, coresStatus, formatarTamanho
 import { documentosApi, clientesApi, projetosApi } from '@/lib/mock-api'
 import { toast } from '@/hooks/use-toast'
 
-export default function DocumentoDetalhesPage({ params }: { params: { id: string } }) {
+export default async function DocumentoDetalhesPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const router = useRouter()
   const [documento, setDocumento] = useState<Documento | null>(null)
   const [cliente, setCliente] = useState<Cliente | null>(null)
@@ -42,7 +43,7 @@ export default function DocumentoDetalhesPage({ params }: { params: { id: string
         setCarregando(true)
         
         // Carregar documento
-        const dadosDocumento = await documentosApi.buscarDocumentoPorId(params.id)
+        const dadosDocumento = await documentosApi.buscarDocumentoPorId(id)
         if (!dadosDocumento) {
           toast({
             title: 'Erro',
@@ -80,7 +81,7 @@ export default function DocumentoDetalhesPage({ params }: { params: { id: string
     }
     
     carregarDados()
-  }, [params.id, router])
+  }, [id, router])
 
   const handleExcluir = async () => {
     if (!documento) return
