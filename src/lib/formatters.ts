@@ -14,11 +14,13 @@ export function formatarMoeda(valor: number): string {
 
 /**
  * Formata um valor numérico com separadores de milhares
+ * @param valor Valor a ser formatado
+ * @param casasDecimais Número de casas decimais (padrão: 2)
  */
-export function formatarValor(valor: number): string {
+export function formatarValor(valor: number, casasDecimais: number = 2): string {
   return new Intl.NumberFormat('pt-BR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    minimumFractionDigits: casasDecimais,
+    maximumFractionDigits: casasDecimais
   }).format(valor);
 }
 
