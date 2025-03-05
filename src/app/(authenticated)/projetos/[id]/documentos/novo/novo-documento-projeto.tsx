@@ -116,9 +116,9 @@ export default function NovoDocumentoProjetoConteudo({ projetoId }: { projetoId:
         status: values.status,
         projetoId: projetoId,
         tamanho: arquivo.size,
-        dataCriacao: new Date().toISOString(),
-        dataAtualizacao: new Date().toISOString(),
         url: URL.createObjectURL(arquivo), // Simulação de URL
+        formato: arquivo.name.split('.').pop() || 'desconhecido',
+        clienteId: projeto?.clienteId || '',
       })
       
       toast({

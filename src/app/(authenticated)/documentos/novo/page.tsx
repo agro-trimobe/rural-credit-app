@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { 
   Card, 
@@ -25,18 +25,25 @@ import { ArrowLeft, Save, Upload } from 'lucide-react'
 import { Documento } from '@/lib/crm-utils'
 import { documentosApi } from '@/lib/mock-api/documentos'
 import { clientesApi } from '@/lib/mock-api/clientes'
+import { visitasApi } from '@/lib/mock-api/visitas'
 import { toast } from '@/hooks/use-toast'
 
 export default function NovoDocumentoPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const visitaId = searchParams.get('visitaId')
+  const clienteIdParam = searchParams.get('clienteId')
+  
   const [salvando, setSalvando] = useState(false)
   const [clientes, setClientes] = useState<{ id: string; nome: string }[]>([])
+  const [visitas, setVisitas] = useState<{ id: string; data: string; clienteId: string }[]>([])
   const [carregando, setCarregando] = useState(true)
   const [formData, setFormData] = useState<Partial<Documento>>({
     nome: '',
     tipo: '',
     formato: 'pdf',
     clienteId: '',
+    visitaId: '',
     status: 'Pendente',
     tamanho: 0,
     url: '',
@@ -44,15 +51,33 @@ export default function NovoDocumentoPage() {
   const [arquivo, setArquivo] = useState<File | null>(null)
 
   useEffect(() => {
-    const carregarClientes = async () => {
+    const carregarDados = async () => {
       try {
+        // Carregar clientes
         const dados = await clientesApi.listarClientes()
         setClientes(dados.map(c => ({ id: c.id, nome: c.nome })))
+        
+        // Carregar visitas
+        const dadosVisitas = await visitasApi.listarVisitas()
+        setVisitas(dadosVisitas.map(v => ({ 
+          id: v.id, 
+          data: new Date(v.data).toLocaleDateString('pt-BR'), 
+          clienteId: v.clienteId 
+        })))
+        
+        // Se tiver visitaId e clienteId nos parâmetros, preencher automaticamente
+        if (visitaId) {
+          setFormData(prev => ({ ...prev, visitaId }))
+        }
+        
+        if (clienteIdParam) {
+          setFormData(prev => ({ ...prev, clienteId: clienteIdParam }))
+        }
       } catch (error) {
-        console.error('Erro ao carregar clientes:', error)
+        console.error('Erro ao carregar dados:', error)
         toast({
           title: 'Erro',
-          description: 'Não foi possível carregar a lista de clientes.',
+          description: 'Não foi possível carregar os dados necessários.',
           variant: 'destructive',
         })
       } finally {
@@ -60,8 +85,8 @@ export default function NovoDocumentoPage() {
       }
     }
 
-    carregarClientes()
-  }, [])
+    carregarDados()
+  }, [visitaId, clienteIdParam])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -114,6 +139,7 @@ export default function NovoDocumentoPage() {
         url: formData.url,
         clienteId: formData.clienteId,
         projetoId: formData.projetoId || undefined,
+        visitaId: formData.visitaId || undefined,
         status: formData.status,
         id: `${Date.now()}`, // Gerar ID único
         dataCriacao: agora,
@@ -126,7 +152,13 @@ export default function NovoDocumentoPage() {
         title: 'Documento adicionado',
         description: 'O documento foi adicionado com sucesso.',
       })
-      router.push('/documentos')
+      
+      // Redirecionar com base na origem
+      if (visitaId) {
+        router.push(`/visitas/${visitaId}/documentos`)
+      } else {
+        router.push('/documentos')
+      }
     } catch (error) {
       console.error('Erro ao adicionar documento:', error)
       toast({
@@ -236,6 +268,28 @@ export default function NovoDocumentoPage() {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="visitaId">Visita (opcional)</Label>
+                <Select
+                  value={formData.visitaId || ""}
+                  onValueChange={(value) => handleSelectChange('visitaId', value)}
+                >
+                  <SelectTrigger id="visitaId">
+                    <SelectValue placeholder="Associar a uma visita" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Nenhuma</SelectItem>
+                    {visitas
+                      .filter(v => !formData.clienteId || v.clienteId === formData.clienteId)
+                      .map((visita) => (
+                        <SelectItem key={visita.id} value={visita.id}>
+                          Visita em {visita.data}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
                 <Select
                   value={formData.status}
@@ -256,7 +310,7 @@ export default function NovoDocumentoPage() {
           </CardContent>
           <CardFooter className="border-t bg-muted/50 flex justify-between">
             <Button variant="outline" asChild>
-              <Link href="/documentos">
+              <Link href={visitaId ? `/visitas/${visitaId}/documentos` : "/documentos"}>
                 Cancelar
               </Link>
             </Button>

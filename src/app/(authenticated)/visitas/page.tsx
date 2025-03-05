@@ -35,12 +35,14 @@ import {
   Trash2, 
   Eye,
   FileText,
-  Calendar
+  Calendar,
+  Camera
 } from 'lucide-react'
 import { Visita } from '@/lib/crm-utils'
 import { formatarData, coresStatus } from '@/lib/formatters'
 import { visitasApi } from '@/lib/mock-api/visitas'
 import { clientesApi } from '@/lib/mock-api/clientes'
+import { toast } from '@/hooks/use-toast'
 
 export default function VisitasPage() {
   const [visitas, setVisitas] = useState<Visita[]>([])
@@ -48,6 +50,7 @@ export default function VisitasPage() {
   const [carregando, setCarregando] = useState(true)
   const [busca, setBusca] = useState('')
   const [filtro, setFiltro] = useState<'Todos' | 'Agendada' | 'Realizada' | 'Cancelada'>('Todos')
+  const [excluindo, setExcluindo] = useState(false)
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -106,6 +109,40 @@ export default function VisitasPage() {
   // Verificar se a visita está atrasada (data no passado e status ainda é Agendada)
   const isVisitaAtrasada = (visita: Visita) => {
     return visita.status === 'Agendada' && new Date(visita.data) < new Date()
+  }
+
+  const handleExcluirVisita = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta visita?')) {
+      return
+    }
+    
+    try {
+      setExcluindo(true)
+      const sucesso = await visitasApi.excluirVisita(id)
+      
+      if (sucesso) {
+        // Atualizar a lista de visitas
+        setVisitas(prevVisitas => 
+          prevVisitas.filter(v => v.id !== id)
+        )
+        
+        toast({
+          title: 'Visita excluída',
+          description: 'A visita foi excluída com sucesso.',
+        })
+      } else {
+        throw new Error('Não foi possível excluir a visita.')
+      }
+    } catch (error) {
+      console.error('Erro ao excluir visita:', error)
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível excluir a visita.',
+        variant: 'destructive',
+      })
+    } finally {
+      setExcluindo(false)
+    }
   }
 
   if (carregando) {
@@ -271,7 +308,17 @@ export default function VisitasPage() {
                                 Documentos
                               </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
+                            <DropdownMenuItem asChild>
+                              <Link href={`/visitas/${visita.id}/fotos`}>
+                                <Camera className="mr-2 h-4 w-4" />
+                                Gerenciar Fotos
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="text-destructive"
+                              onClick={() => handleExcluirVisita(visita.id)}
+                              disabled={excluindo}
+                            >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Excluir
                             </DropdownMenuItem>
