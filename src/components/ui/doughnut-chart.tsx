@@ -3,7 +3,10 @@
 import * as React from 'react'
 import { Cell, Label, Legend, Pie, PieChart as RechartsPieChart, ResponsiveContainer, Tooltip } from 'recharts'
 
-import { ChartConfig, ChartContainer, ChartLegendContent, ChartTooltipContent } from '@/components/ui/chart'
+import { 
+  ChartConfig, 
+  ChartContainer
+} from '@/components/ui/charts'
 
 interface DoughnutChartProps {
   data: {
@@ -11,12 +14,30 @@ interface DoughnutChartProps {
     datasets: {
       label: string
       data: number[]
+      total: number
     }[]
   }
   className?: string
+  config?: {
+    colors: string[]
+    height: number
+    innerRadius: number
+    outerRadius: number
+    paddingAngle: number
+  }
 }
 
-export function DoughnutChart({ data, className }: DoughnutChartProps) {
+export function DoughnutChart({
+  data,
+  className,
+  config = {
+    colors: ['#16a34a', '#2563eb', '#d97706', '#dc2626', '#9333ea'],
+    height: 260,
+    innerRadius: 50,
+    outerRadius: 90,
+    paddingAngle: 2,
+  },
+}: DoughnutChartProps) {
   // Transformar os dados para o formato esperado pelo Recharts
   const chartData = React.useMemo(() => {
     return data.labels.map((label, index) => ({
@@ -32,35 +53,31 @@ export function DoughnutChart({ data, className }: DoughnutChartProps) {
 
   // Configuração do gráfico
   const chartConfig = React.useMemo(() => {
-    return data.labels.reduce((config, label, index) => {
-      const colors = [
-        'hsl(var(--chart-1))',
-        'hsl(var(--chart-2))',
-        'hsl(var(--chart-3))',
-        'hsl(var(--chart-4))',
-        'hsl(var(--chart-5))'
-      ]
+    const defaultColors = ['#16a34a', '#2563eb', '#d97706', '#dc2626', '#9333ea'];
+    const chartColors = config.colors || defaultColors;
+    
+    return data.labels.reduce((acc, label, index) => {
       return {
-        ...config,
+        ...acc,
         [label]: {
           label,
-          color: colors[index % colors.length]
+          color: chartColors[index % chartColors.length]
         },
       }
     }, {} as ChartConfig)
-  }, [data.labels])
+  }, [data.labels, config.colors])
 
   return (
     <ChartContainer config={chartConfig} className={className || "h-full w-full"}>
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={config.height}>
         <RechartsPieChart>
           <Pie
             data={chartData}
             cx="50%"
             cy="50%"
-            innerRadius={60}
-            outerRadius={80}
-            paddingAngle={2}
+            innerRadius={config.innerRadius}
+            outerRadius={config.outerRadius}
+            paddingAngle={config.paddingAngle}
             dataKey="value"
             nameKey="name"
             label={false}
@@ -69,50 +86,42 @@ export function DoughnutChart({ data, className }: DoughnutChartProps) {
             {chartData.map((entry, index) => (
               <Cell 
                 key={`cell-${index}`} 
-                fill={`hsl(var(--chart-${(index % 5) + 1}))`}
+                fill={config.colors[index % config.colors.length]}
               />
             ))}
             <Label
-              content={({ viewBox }) => {
-                if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                  return (
-                    <text
-                      x={viewBox.cx}
-                      y={viewBox.cy}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                    >
-                      <tspan
-                        x={viewBox.cx}
-                        y={viewBox.cy}
-                        className="fill-foreground text-3xl font-bold"
-                        style={{ fill: 'hsl(var(--foreground))', fontSize: '24px', fontWeight: 'bold' }}
-                      >
-                        {totalValue}
-                      </tspan>
-                      <tspan
-                        x={viewBox.cx}
-                        y={(viewBox.cy || 0) + 24}
-                        className="fill-muted-foreground"
-                        style={{ fill: 'hsl(var(--muted-foreground))', fontSize: '14px' }}
-                      >
-                        {data.datasets[0].label || 'Projetos'}
-                      </tspan>
-                    </text>
-                  )
-                }
-                return null
+              content={(props) => {
+                const { cx, cy } = props.viewBox as { cx: number; cy: number }
+                return (
+                  <text
+                    x={cx}
+                    y={cy}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    className="recharts-text recharts-label"
+                    fontSize="20px"
+                    fontWeight="bold"
+                  >
+                    {data.datasets[0]?.total || totalValue}
+                  </text>
+                )
               }}
+              position="center"
             />
           </Pie>
           
           {/* Tooltip e legenda */}
-          <Tooltip content={<ChartTooltipContent />} />
+          <Tooltip 
+            formatter={(value: number, name: string) => {
+              return [value, name]
+            }}
+          />
           <Legend 
-            content={<ChartLegendContent />} 
-            verticalAlign="middle" 
-            align="left"
-            layout="vertical"
+            verticalAlign="bottom" 
+            align="center"
+            layout="horizontal"
+            iconSize={12}
+            wrapperStyle={{ fontSize: '12px', paddingTop: '15px' }}
           />
         </RechartsPieChart>
       </ResponsiveContainer>

@@ -28,11 +28,41 @@ import { clientesApi } from '@/lib/mock-api/clientes'
 import { visitasApi } from '@/lib/mock-api/visitas'
 import { toast } from '@/hooks/use-toast'
 
+// Componente principal
 export default function NovoDocumentoPage() {
+  // Verificação de ambiente cliente
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  // Se não estiver montado (ambiente servidor), renderiza um placeholder
+  if (!isMounted) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="icon" asChild>
+              <Link href="/documentos">
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </Button>
+            <h1 className="text-2xl font-bold tracking-tight">Novo Documento</h1>
+          </div>
+        </div>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    )
+  }
+
+  // Código do componente que usa APIs do navegador
   const router = useRouter()
   const searchParams = useSearchParams()
-  const visitaId = searchParams.get('visitaId')
-  const clienteIdParam = searchParams.get('clienteId')
+  const visitaId = searchParams?.get('visitaId')
+  const clienteIdParam = searchParams?.get('clienteId')
   
   const [salvando, setSalvando] = useState(false)
   const [clientes, setClientes] = useState<{ id: string; nome: string }[]>([])
@@ -51,21 +81,24 @@ export default function NovoDocumentoPage() {
   const [arquivo, setArquivo] = useState<File | null>(null)
 
   useEffect(() => {
+    // Verificar se estamos no navegador
+    if (typeof window === 'undefined') return;
+
     const carregarDados = async () => {
       try {
-        // Carregar clientes
-        const dados = await clientesApi.listarClientes()
-        setClientes(dados.map(c => ({ id: c.id, nome: c.nome })))
+        const [clientesData, visitasData] = await Promise.all([
+          clientesApi.listarClientes(),
+          visitasApi.listarVisitas()
+        ])
         
-        // Carregar visitas
-        const dadosVisitas = await visitasApi.listarVisitas()
-        setVisitas(dadosVisitas.map(v => ({ 
+        setClientes(clientesData.map(c => ({ id: c.id, nome: c.nome })))
+        setVisitas(visitasData.map(v => ({ 
           id: v.id, 
           data: new Date(v.data).toLocaleDateString('pt-BR'), 
           clienteId: v.clienteId 
         })))
         
-        // Se tiver visitaId e clienteId nos parâmetros, preencher automaticamente
+        // Preencher dados iniciais se fornecidos via query params
         if (visitaId) {
           setFormData(prev => ({ ...prev, visitaId }))
         }
@@ -73,18 +106,14 @@ export default function NovoDocumentoPage() {
         if (clienteIdParam) {
           setFormData(prev => ({ ...prev, clienteId: clienteIdParam }))
         }
+        
+        setCarregando(false)
       } catch (error) {
         console.error('Erro ao carregar dados:', error)
-        toast({
-          title: 'Erro',
-          description: 'Não foi possível carregar os dados necessários.',
-          variant: 'destructive',
-        })
-      } finally {
         setCarregando(false)
       }
     }
-
+    
     carregarDados()
   }, [visitaId, clienteIdParam])
 
@@ -98,6 +127,9 @@ export default function NovoDocumentoPage() {
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Verificar se estamos no navegador
+    if (typeof window === 'undefined') return;
+    
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
       setArquivo(file)
@@ -110,7 +142,7 @@ export default function NovoDocumentoPage() {
         nome: file.name.split('.')[0], // Nome sem extensão
         formato: extensao,
         tamanho: file.size,
-        url: URL.createObjectURL(file) // URL temporária para o arquivo
+        url: typeof window !== 'undefined' ? URL.createObjectURL(file) : '' // URL temporária para o arquivo
       }))
     }
   }
@@ -118,6 +150,12 @@ export default function NovoDocumentoPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSalvando(true)
+
+    // Verificar se estamos no navegador
+    if (typeof window === 'undefined') {
+      setSalvando(false)
+      return;
+    }
 
     if (!arquivo) {
       toast({
@@ -130,22 +168,18 @@ export default function NovoDocumentoPage() {
     }
 
     try {
-      const agora = new Date().toISOString()
-      const novoDocumento = {
-        nome: formData.nome,
-        tipo: formData.tipo,
-        formato: formData.formato,
-        tamanho: Number(formData.tamanho),
-        url: formData.url,
-        clienteId: formData.clienteId,
-        projetoId: formData.projetoId || undefined,
-        visitaId: formData.visitaId || undefined,
-        status: formData.status,
-        id: `${Date.now()}`, // Gerar ID único
-        dataCriacao: agora,
-        dataAtualizacao: agora,
+      const novoDocumento: Omit<Documento, 'id' | 'dataCriacao' | 'dataAtualizacao'> = {
+        nome: formData.nome || '',
+        tipo: formData.tipo || '',
+        formato: formData.formato || 'pdf',
+        tamanho: Number(formData.tamanho) || 0,
+        url: formData.url || '',
+        clienteId: formData.clienteId || '',
+        projetoId: formData.projetoId,
+        visitaId: formData.visitaId,
+        status: formData.status || 'Pendente',
         tags: []
-      } as Documento
+      }
       
       await documentosApi.criarDocumento(novoDocumento)
       toast({

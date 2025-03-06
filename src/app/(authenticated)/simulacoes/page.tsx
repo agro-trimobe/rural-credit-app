@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,7 +35,7 @@ import { Separator } from '@/components/ui/separator'
 import { toast } from '@/hooks/use-toast'
 import { Simulacao } from '@/lib/crm-utils'
 import { formatarMoeda, formatarData } from '@/lib/formatters'
-import { simulacoesApi, linhasCredito } from '@/lib/mock-api/simulacoes'
+import { simulacoesApi } from '@/lib/mock-api/simulacoes'
 
 export default function SimulacoesPage() {
   const router = useRouter()
@@ -102,47 +102,9 @@ export default function SimulacoesPage() {
 
       <Separator />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xl">Total de Simulações</CardTitle>
-            <CardDescription>Número de simulações realizadas</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{simulacoes.length}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xl">Valor Total</CardTitle>
-            <CardDescription>Soma de todos os valores simulados</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {formatarMoeda(simulacoes.reduce((acc, sim) => acc + sim.valorFinanciamento, 0))}
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xl">Valor Médio</CardTitle>
-            <CardDescription>Média dos valores simulados</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {simulacoes.length > 0 
-                ? formatarMoeda(simulacoes.reduce((acc, sim) => acc + sim.valorFinanciamento, 0) / simulacoes.length) 
-                : formatarMoeda(0)}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       <Card>
         <CardHeader>
-          <CardTitle>Simulações Recentes</CardTitle>
+          <CardTitle>Simulações</CardTitle>
           <div className="flex items-center gap-2">
             <Search className="h-4 w-4 text-muted-foreground" />
             <Input
@@ -229,39 +191,6 @@ export default function SimulacoesPage() {
               </TableBody>
             </Table>
           )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Linhas de Crédito Disponíveis</CardTitle>
-          <CardDescription>
-            Confira as principais linhas de crédito rural disponíveis para simulação
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {linhasCredito.map((linha) => (
-              <div key={linha.id} className="border rounded-lg p-4 space-y-2">
-                <h3 className="font-semibold text-lg">{linha.nome}</h3>
-                <Badge variant="outline" className="bg-green-50">
-                  {linha.taxaMin}% a {linha.taxaMax}% a.a.
-                </Badge>
-                <p className="text-sm text-muted-foreground">
-                  Simule financiamentos com esta linha de crédito para verificar condições e valores.
-                </p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full"
-                  onClick={() => router.push(`/simulacoes/nova?linha=${linha.id}`)}
-                >
-                  <Calculator className="mr-2 h-4 w-4" />
-                  Simular
-                </Button>
-              </div>
-            ))}
-          </div>
         </CardContent>
       </Card>
     </div>

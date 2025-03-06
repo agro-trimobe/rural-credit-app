@@ -39,7 +39,8 @@ import {
   Download,
   Tag,
   File,
-  CheckCircle2
+  CheckCircle2,
+  Eye
 } from 'lucide-react'
 import { Documento } from '@/lib/crm-utils'
 import { formatarData, coresStatus, formatarTamanhoArquivo } from '@/lib/formatters'
@@ -308,6 +309,12 @@ export default function DocumentosPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                <Link href={`/documentos/${documento.id}`}>
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  Visualizar
+                                </Link>
+                              </DropdownMenuItem>
                               <DropdownMenuItem asChild>
                                 <a href={documento.url} target="_blank" rel="noopener noreferrer">
                                   <Download className="mr-2 h-4 w-4" />

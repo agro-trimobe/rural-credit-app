@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -80,11 +80,40 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+// Componente principal
 export default function NovaSimulacaoPage() {
+  return (
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" size="icon" asChild>
+            <Link href="/simulacoes">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <h1 className="text-2xl font-bold">Nova Simulação de Crédito</h1>
+        </div>
+      </div>
+      
+      <Suspense fallback={
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      }>
+        <NovaSimulacaoForm />
+      </Suspense>
+    </div>
+  )
+}
+
+// Componente de formulário que usa useSearchParams
+function NovaSimulacaoForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const linhaId = searchParams.get('linha')
+  const linhaId = searchParams?.get('linha')
   
+  // Verificação de ambiente cliente
+  const [isMounted, setIsMounted] = useState(false)
   const [clientes, setClientes] = useState<Array<{ id: string, nome: string }>>([])
   const [carregando, setCarregando] = useState(true)
   const [salvando, setSalvando] = useState(false)
@@ -113,6 +142,11 @@ export default function NovaSimulacaoPage() {
   
   // Carregar clientes ao inicializar
   useEffect(() => {
+    setIsMounted(true)
+    
+    // Verificar se estamos no navegador
+    if (typeof window === 'undefined') return;
+    
     const carregarClientes = async () => {
       try {
         setCarregando(true)
@@ -138,6 +172,9 @@ export default function NovaSimulacaoPage() {
   
   // Recalcular parcela quando os valores mudarem
   useEffect(() => {
+    // Verificar se estamos no navegador
+    if (typeof window === 'undefined' || !isMounted) return;
+    
     const calcularParcela = async () => {
       if (
         watchValorFinanciamento && 
@@ -161,10 +198,13 @@ export default function NovaSimulacaoPage() {
     }
     
     calcularParcela()
-  }, [watchValorFinanciamento, watchTaxaJuros, watchPrazoTotal, watchCarencia])
+  }, [watchValorFinanciamento, watchTaxaJuros, watchPrazoTotal, watchCarencia, isMounted])
   
   // Função para lidar com o envio do formulário
   async function onSubmit(values: FormValues) {
+    // Verificar se estamos no navegador
+    if (typeof window === 'undefined') return;
+    
     try {
       setSalvando(true)
       
@@ -204,30 +244,28 @@ export default function NovaSimulacaoPage() {
     }
   }
   
-  return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="icon" asChild>
-            <Link href="/simulacoes">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <h1 className="text-2xl font-bold">Nova Simulação de Crédito</h1>
-        </div>
+  // Se não estiver montado (ambiente servidor), renderiza um placeholder
+  if (!isMounted) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
-      
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Informações Básicas</CardTitle>
-                <CardDescription>
-                  Preencha as informações para simular o financiamento
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+    )
+  }
+  
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Dados da Simulação</CardTitle>
+            <CardDescription>
+              Preencha as informações para simular o financiamento
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
                 <FormField
                   control={form.control}
                   name="clienteId"
@@ -308,17 +346,9 @@ export default function NovaSimulacaoPage() {
                     </FormItem>
                   )}
                 />
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Condições do Financiamento</CardTitle>
-                <CardDescription>
-                  Defina as condições de pagamento
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+              </div>
+              
+              <div className="space-y-4">
                 <FormField
                   control={form.control}
                   name="taxaJuros"
@@ -390,51 +420,51 @@ export default function NovaSimulacaoPage() {
                     </FormItem>
                   )}
                 />
-              </CardContent>
-            </Card>
-          </div>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Resultado da Simulação</CardTitle>
-              <CardDescription>
-                Valores estimados com base nos parâmetros informados
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="border rounded-lg p-4 space-y-2">
-                  <p className="text-sm text-muted-foreground">Valor do Financiamento</p>
-                  <p className="text-2xl font-bold">{formatarMoeda(watchValorFinanciamento || 0)}</p>
-                </div>
-                <div className="border rounded-lg p-4 space-y-2">
-                  <p className="text-sm text-muted-foreground">Valor da Parcela (após carência)</p>
-                  <p className="text-2xl font-bold">{valorParcela ? formatarMoeda(valorParcela) : 'Calculando...'}</p>
-                </div>
-                <div className="border rounded-lg p-4 space-y-2">
-                  <p className="text-sm text-muted-foreground">Prazo de Amortização</p>
-                  <p className="text-2xl font-bold">{(watchPrazoTotal || 0) - (watchCarencia || 0)} meses</p>
-                </div>
               </div>
-            </CardContent>
-            <CardFooter className="flex justify-end space-x-2">
-              <Button variant="outline" asChild>
-                <Link href="/simulacoes">Cancelar</Link>
-              </Button>
-              <Button type="submit" disabled={salvando}>
-                {salvando ? (
-                  <>Salvando...</>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Salvar Simulação
-                  </>
-                )}
-              </Button>
-            </CardFooter>
-          </Card>
-        </form>
-      </Form>
-    </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Resultado da Simulação</CardTitle>
+            <CardDescription>
+              Valores estimados com base nos parâmetros informados
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="border rounded-lg p-4 space-y-2">
+                <p className="text-sm text-muted-foreground">Valor do Financiamento</p>
+                <p className="text-2xl font-bold">{formatarMoeda(watchValorFinanciamento || 0)}</p>
+              </div>
+              <div className="border rounded-lg p-4 space-y-2">
+                <p className="text-sm text-muted-foreground">Valor da Parcela (após carência)</p>
+                <p className="text-2xl font-bold">{valorParcela ? formatarMoeda(valorParcela) : 'Calculando...'}</p>
+              </div>
+              <div className="border rounded-lg p-4 space-y-2">
+                <p className="text-sm text-muted-foreground">Prazo de Amortização</p>
+                <p className="text-2xl font-bold">{(watchPrazoTotal || 0) - (watchCarencia || 0)} meses</p>
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-end space-x-2">
+            <Button variant="outline" asChild>
+              <Link href="/simulacoes">Cancelar</Link>
+            </Button>
+            <Button type="submit" disabled={salvando}>
+              {salvando ? (
+                <>Salvando...</>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Salvar Simulação
+                </>
+              )}
+            </Button>
+          </CardFooter>
+        </Card>
+      </form>
+    </Form>
   )
 }

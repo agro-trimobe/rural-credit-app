@@ -3,7 +3,10 @@
 import * as React from 'react'
 import { Cell, Label, Legend, Pie, PieChart as RechartsPieChart, ResponsiveContainer, Tooltip } from 'recharts'
 
-import { ChartConfig, ChartContainer, ChartLegendContent, ChartTooltipContent } from '@/components/ui/chart'
+import { 
+  ChartConfig, 
+  ChartContainer
+} from '@/components/ui/charts'
 
 interface PieChartProps {
   data: {
@@ -14,9 +17,24 @@ interface PieChartProps {
     }[]
   }
   className?: string
+  config?: {
+    colors: string[]
+    height: number
+    radius: number
+    paddingAngle: number
+  }
 }
 
-export function PieChart({ data, className }: PieChartProps) {
+export function PieChart({
+  data,
+  className,
+  config = {
+    colors: ['#16a34a', '#2563eb', '#d97706', '#dc2626', '#9333ea'],
+    height: 200,
+    radius: 80,
+    paddingAngle: 2,
+  },
+}: PieChartProps) {
   // Transformar os dados para o formato esperado pelo Recharts
   const chartData = React.useMemo(() => {
     return data.labels.map((label, index) => ({
@@ -32,35 +50,31 @@ export function PieChart({ data, className }: PieChartProps) {
 
   // Configuração do gráfico
   const chartConfig = React.useMemo(() => {
-    return data.labels.reduce((config, label, index) => {
-      const colors = [
-        'hsl(var(--chart-1))',
-        'hsl(var(--chart-2))',
-        'hsl(var(--chart-3))',
-        'hsl(var(--chart-4))',
-        'hsl(var(--chart-5))'
-      ]
+    const defaultColors = ['#16a34a', '#2563eb', '#d97706', '#dc2626', '#9333ea'];
+    const chartColors = config.colors || defaultColors;
+    
+    return data.labels.reduce((acc, label, index) => {
       return {
-        ...config,
+        ...acc,
         [label]: {
           label,
-          color: colors[index % colors.length]
+          color: chartColors[index % chartColors.length]
         },
       }
     }, {} as ChartConfig)
-  }, [data.labels])
+  }, [data.labels, config.colors])
 
   return (
     <ChartContainer config={chartConfig} className={className || "h-full w-full"}>
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={config.height}>
         <RechartsPieChart>
           <Pie
             data={chartData}
             cx="50%"
             cy="50%"
-            innerRadius={60}
-            outerRadius={80}
-            paddingAngle={2}
+            innerRadius={0}
+            outerRadius={config.radius}
+            paddingAngle={config.paddingAngle}
             dataKey="value"
             nameKey="name"
             label={false}
@@ -69,7 +83,7 @@ export function PieChart({ data, className }: PieChartProps) {
             {chartData.map((entry, index) => (
               <Cell 
                 key={`cell-${index}`} 
-                fill={`hsl(var(--chart-${(index % 5) + 1}))`}
+                fill={chartConfig[entry.name].color}
               />
             ))}
             <Label
@@ -86,7 +100,7 @@ export function PieChart({ data, className }: PieChartProps) {
                         x={viewBox.cx}
                         y={viewBox.cy}
                         className="fill-foreground text-3xl font-bold"
-                        style={{ fill: 'hsl(var(--foreground))', fontSize: '24px', fontWeight: 'bold' }}
+                        style={{ fill: 'hsl(var(--foreground))', fontSize: '18px', fontWeight: 'bold' }}
                       >
                         {totalValue}
                       </tspan>
@@ -94,7 +108,7 @@ export function PieChart({ data, className }: PieChartProps) {
                         x={viewBox.cx}
                         y={(viewBox.cy || 0) + 24}
                         className="fill-muted-foreground"
-                        style={{ fill: 'hsl(var(--muted-foreground))', fontSize: '14px' }}
+                        style={{ fill: 'hsl(var(--muted-foreground))', fontSize: '12px' }}
                       >
                         {data.datasets[0].label || 'Visitas'}
                       </tspan>
@@ -107,11 +121,17 @@ export function PieChart({ data, className }: PieChartProps) {
           </Pie>
           
           {/* Tooltip e legenda */}
-          <Tooltip content={<ChartTooltipContent />} />
+          <Tooltip 
+            formatter={(value: number, name: string) => {
+              return [value, name]
+            }}
+          />
           <Legend 
-            content={<ChartLegendContent />} 
-            verticalAlign="middle" 
-            align="right"
+            verticalAlign="bottom" 
+            align="center"
+            layout="horizontal"
+            iconSize={10}
+            wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
           />
         </RechartsPieChart>
       </ResponsiveContainer>

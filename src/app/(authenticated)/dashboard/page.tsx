@@ -2,19 +2,22 @@
 
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { BarChart, LineChart } from '@/components/ui/charts'
+import { DoughnutChart } from '@/components/ui/doughnut-chart'
 import { formatarMoeda } from '@/lib/formatters'
 import { clientesApi } from '@/lib/mock-api/clientes'
 import { projetosApi } from '@/lib/mock-api/projetos'
 import { visitasApi } from '@/lib/mock-api/visitas'
 import { oportunidadesApi } from '@/lib/mock-api/oportunidades'
-import { BarChart, LineChart } from '@/components/ui/charts'
-import { PieChart } from '@/components/ui/pie-chart'
-import { DoughnutChart } from '@/components/ui/doughnut-chart'
-import { CalendarIcon, ClipboardList, CreditCard, Users } from 'lucide-react'
+import { 
+  CalendarIcon, 
+  ClipboardList, 
+  CreditCard, 
+  TrendingUp
+} from 'lucide-react'
 import Link from 'next/link'
 
-export default function CRMDashboard() {
+export default function Dashboard() {
   const [estatisticas, setEstatisticas] = useState({
     totalClientes: 0,
     totalProjetos: 0,
@@ -85,15 +88,16 @@ export default function CRMDashboard() {
     carregarDados()
   }, [])
   
-  // Preparar dados para gráficos
+  // Dados para o gráfico de projetos
   const dadosGraficoProjetos = {
     labels: Object.keys(estatisticas.projetosStatus),
     datasets: [
       {
         label: 'Projetos',
         data: Object.values(estatisticas.projetosStatus),
-      },
-    ],
+        total: estatisticas.totalProjetos
+      }
+    ]
   }
   
   const dadosGraficoOportunidades = {
@@ -117,13 +121,14 @@ export default function CRMDashboard() {
   }
   
   const dadosGraficoVisitas = {
-    labels: Object.keys(estatisticas.visitasStatus),
+    labels: ['Realizada', 'Agendada'],
     datasets: [
       {
         label: 'Visitas',
-        data: Object.values(estatisticas.visitasStatus),
-      },
-    ],
+        data: [estatisticas.visitasStatus['Realizada'] || 0, estatisticas.visitasStatus['Agendada'] || 0],
+        total: estatisticas.totalVisitas
+      }
+    ]
   }
 
   if (carregando) {
@@ -143,115 +148,147 @@ export default function CRMDashboard() {
         </p>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2">
-            <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="py-2">
-            <div className="text-2xl font-bold">{estatisticas.totalClientes}</div>
-            <p className="text-xs text-muted-foreground">
-              <Link href="/clientes" className="text-primary hover:underline">
-                Ver todos os clientes
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2">
+      {/* Cards de Resumo */}
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+        {/* Card de Projetos */}
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-4">
             <CardTitle className="text-sm font-medium">Projetos Ativos</CardTitle>
-            <ClipboardList className="h-4 w-4 text-muted-foreground" />
+            <ClipboardList className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </CardHeader>
-          <CardContent className="py-2">
-            <div className="text-2xl font-bold">{estatisticas.totalProjetos}</div>
-            <p className="text-xs text-muted-foreground">
-              <Link href="/projetos" className="text-primary hover:underline">
-                Gerenciar projetos
+          <CardContent className="px-4 pb-3 pt-0">
+            <div className="text-xl font-bold">{estatisticas.totalProjetos}</div>
+            <div className="flex justify-between items-center mt-1">
+              <p className="text-xs text-muted-foreground">
+                Total em andamento
+              </p>
+              <Link href="/projetos" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                Ver detalhes
               </Link>
-            </p>
+            </div>
           </CardContent>
         </Card>
         
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2">
+        {/* Card de Valor Total em Projetos */}
+        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-4">
             <CardTitle className="text-sm font-medium">Valor em Projetos</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
+            <CreditCard className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
           </CardHeader>
-          <CardContent className="py-2">
-            <div className="text-2xl font-bold">{formatarMoeda(estatisticas.valorProjetos)}</div>
-            <p className="text-xs text-muted-foreground">
-              Valor total em projetos ativos
-            </p>
+          <CardContent className="px-4 pb-3 pt-0">
+            <div className="text-xl font-bold">{formatarMoeda(estatisticas.valorProjetos)}</div>
+            <div className="flex justify-between items-center mt-1">
+              <p className="text-xs text-muted-foreground">
+                Projetos ativos: {estatisticas.totalProjetos}
+              </p>
+              <Link href="/projetos" className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline">
+                Ver projetos
+              </Link>
+            </div>
           </CardContent>
         </Card>
         
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2">
-            <CardTitle className="text-sm font-medium">Próximas Visitas</CardTitle>
-            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+        {/* Card de Visitas */}
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-4">
+            <CardTitle className="text-sm font-medium">Visitas</CardTitle>
+            <CalendarIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
           </CardHeader>
-          <CardContent className="py-2">
-            <div className="text-2xl font-bold">{estatisticas.visitasStatus['Agendada'] || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              <Link href="/visitas" className="text-primary hover:underline">
-                Ver agenda de visitas
+          <CardContent className="px-4 pb-3 pt-0">
+            <div className="text-xl font-bold">{estatisticas.totalVisitas}</div>
+            <div className="flex justify-between items-center mt-1">
+              <p className="text-xs text-muted-foreground">
+                Agendadas: {estatisticas.visitasStatus['Agendada'] || 0}
+              </p>
+              <Link href="/visitas" className="text-xs text-green-600 dark:text-green-400 hover:underline">
+                Ver agenda
               </Link>
-            </p>
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Card de Oportunidades */}
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-4">
+            <CardTitle className="text-sm font-medium">Oportunidades</CardTitle>
+            <TrendingUp className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+          </CardHeader>
+          <CardContent className="px-4 pb-3 pt-0">
+            <div className="text-xl font-bold">{Object.values(estatisticas.oportunidadesStatus).reduce((acc, curr) => acc + curr.quantidade, 0)}</div>
+            <div className="flex justify-between items-center mt-1">
+              <p className="text-xs text-muted-foreground">
+                Valor: {formatarMoeda(estatisticas.valorOportunidades)}
+              </p>
+              <Link href="/oportunidades" className="text-xs text-purple-600 dark:text-purple-400 hover:underline">
+                Ver detalhes
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="projetos" className="space-y-3">
-        <TabsList>
-          <TabsTrigger value="projetos">Projetos</TabsTrigger>
-          <TabsTrigger value="oportunidades">Oportunidades</TabsTrigger>
-          <TabsTrigger value="visitas">Visitas</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="projetos" className="space-y-3">
-          <Card>
-            <CardHeader className="py-3">
-              <CardTitle>Projetos por Status</CardTitle>
-              <CardDescription>
-                Distribuição dos projetos por status atual
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex justify-center items-center h-72">
+      {/* Seção de Gráficos */}
+      <div className="grid gap-3 grid-cols-1 md:grid-cols-3">
+        {/* Gráfico de Projetos */}
+        <Card className="shadow-md">
+          <CardHeader className="pb-1 pt-2 px-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-sm">Projetos por Status</CardTitle>
+                <CardDescription className="text-xs">
+                  Distribuição por fase atual
+                </CardDescription>
+              </div>
+              <ClipboardList className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </CardHeader>
+          <CardContent className="flex justify-center items-center h-80 px-2 pb-3">
+            <div className="w-full h-full max-w-[250px]">
               <DoughnutChart data={dadosGraficoProjetos} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="oportunidades" className="space-y-3">
-          <Card>
-            <CardHeader className="py-3">
-              <CardTitle>Funil de Oportunidades</CardTitle>
-              <CardDescription>
-                Valor e quantidade de oportunidades por estágio
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="h-72">
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Gráfico de Oportunidades */}
+        <Card className="shadow-md">
+          <CardHeader className="pb-1 pt-2 px-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-sm">Funil de Vendas</CardTitle>
+                <CardDescription className="text-xs">
+                  Oportunidades por estágio
+                </CardDescription>
+              </div>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </CardHeader>
+          <CardContent className="h-80 px-2 pb-3">
+            <div className="w-full h-full">
               <BarChart data={dadosGraficoOportunidades} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="visitas" className="space-y-3">
-          <Card>
-            <CardHeader className="py-3">
-              <CardTitle>Visitas por Status</CardTitle>
-              <CardDescription>
-                Distribuição das visitas técnicas por status
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex justify-center items-center h-72">
-              <PieChart data={dadosGraficoVisitas} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Gráfico de Visitas */}
+        <Card className="shadow-md">
+          <CardHeader className="pb-1 pt-2 px-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-sm">Visitas por Status</CardTitle>
+                <CardDescription className="text-xs">
+                  Distribuição das visitas
+                </CardDescription>
+              </div>
+              <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </CardHeader>
+          <CardContent className="flex justify-center items-center h-80 px-2 pb-3">
+            <div className="w-full h-full max-w-[250px]">
+              <DoughnutChart data={dadosGraficoVisitas} />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
