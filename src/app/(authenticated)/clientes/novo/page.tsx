@@ -45,6 +45,22 @@ export default function NovoClientePage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
+    
+    // Aplicar máscara de data para o campo dataNascimento
+    if (name === 'dataNascimento') {
+      const numerosFiltrados = value.replace(/\D/g, '')
+      
+      if (numerosFiltrados.length <= 2) {
+        setDataNascimento(numerosFiltrados)
+      } else if (numerosFiltrados.length <= 4) {
+        setDataNascimento(`${numerosFiltrados.slice(0, 2)}/${numerosFiltrados.slice(2)}`)
+      } else if (numerosFiltrados.length <= 8) {
+        setDataNascimento(`${numerosFiltrados.slice(0, 2)}/${numerosFiltrados.slice(2, 4)}/${numerosFiltrados.slice(4)}`)
+      }
+      return
+    }
+    
+    // Para os outros campos, atualiza normalmente
     switch (name) {
       case 'nome':
         setNome(value)
@@ -88,11 +104,36 @@ export default function NovoClientePage() {
     }
   }
 
+  // Função para converter o formato DD/MM/AAAA para ISO
+  const converterDataParaISO = (dataFormatada: string): string => {
+    if (!dataFormatada || dataFormatada.length !== 10) return '';
+    
+    const [dia, mes, ano] = dataFormatada.split('/').map(Number);
+    if (isNaN(dia) || isNaN(mes) || isNaN(ano)) return '';
+    
+    // Validação básica de data
+    if (dia < 1 || dia > 31 || mes < 1 || mes > 12 || ano < 1900 || ano > 2100) return '';
+    
+    const data = new Date(ano, mes - 1, dia);
+    return data.toISOString();
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSalvando(true)
 
     try {
+      // Validação básica
+      if (!nome || !email || !telefone || !cpfCnpj || !tipoCliente || !perfil) {
+        toast({
+          title: 'Erro',
+          description: 'Preencha todos os campos obrigatórios',
+          variant: 'destructive',
+        })
+        setSalvando(false)
+        return
+      }
+      
       const novoCliente: Omit<Cliente, 'id'> = {
         nome,
         email,
@@ -100,7 +141,7 @@ export default function NovoClientePage() {
         cpfCnpj,
         tipo: tipoCliente,
         perfil,
-        dataNascimento,
+        dataNascimento: dataNascimento ? converterDataParaISO(dataNascimento) : '',
         endereco,
         cidade,
         estado,
@@ -232,9 +273,10 @@ export default function NovoClientePage() {
                 <Input
                   id="dataNascimento"
                   name="dataNascimento"
-                  type="date"
+                  placeholder="DD/MM/AAAA"
                   value={dataNascimento}
                   onChange={handleChange}
+                  maxLength={10}
                 />
               </div>
 

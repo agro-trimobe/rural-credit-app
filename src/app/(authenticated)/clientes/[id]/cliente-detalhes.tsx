@@ -37,8 +37,18 @@ import {
 } from 'lucide-react'
 import { Cliente, Interacao, Propriedade, Projeto } from '@/lib/crm-utils'
 import { formatarCpfCnpj, formatarTelefone, formatarData, formatarMoeda } from '@/lib/formatters'
-import { clientesApi, propriedadesApi, projetosApi } from '@/lib/mock-api'
+import { clientesApi, propriedadesApi, projetosApi, interacoesApi } from '@/lib/mock-api'
 import { toast } from '@/hooks/use-toast'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 // Componente cliente que implementa a lógica com hooks
 function ClienteDetalhesConteudo({ clienteId }: { clienteId: string }) {
@@ -49,6 +59,7 @@ function ClienteDetalhesConteudo({ clienteId }: { clienteId: string }) {
   const [projetos, setProjetos] = useState<Projeto[]>([])
   const [interacoes, setInteracoes] = useState<Interacao[]>([])
   const [abaAtiva, setAbaAtiva] = useState("propriedades")
+  const [dialogAberto, setDialogAberto] = useState(false)
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -77,30 +88,9 @@ function ClienteDetalhesConteudo({ clienteId }: { clienteId: string }) {
         const dadosProjetos = await projetosApi.listarProjetosPorCliente(clienteId)
         setProjetos(dadosProjetos)
         
-        // Carregar interações do cliente (simulado)
-        const interacoesSimuladas: Interacao[] = [
-          {
-            id: '1',
-            clienteId,
-            tipo: 'Ligação',
-            descricao: 'Cliente entrou em contato para tirar dúvidas sobre linhas de crédito disponíveis.',
-            data: new Date('2024-02-15T10:30:00').toISOString(),
-            responsavel: 'João Silva',
-            assunto: 'Dúvidas sobre linhas de crédito',
-            dataCriacao: new Date('2024-02-15T10:30:00').toISOString()
-          },
-          {
-            id: '2',
-            clienteId,
-            tipo: 'Email',
-            descricao: 'Enviado material informativo sobre o Pronaf.',
-            data: new Date('2024-02-20T14:45:00').toISOString(),
-            responsavel: 'Maria Oliveira',
-            assunto: 'Material informativo',
-            dataCriacao: new Date('2024-02-20T14:45:00').toISOString()
-          }
-        ]
-        setInteracoes(interacoesSimuladas)
+        // Carregar interações do cliente
+        const interacoesCliente = await interacoesApi.listarInteracoesPorCliente(clienteId)
+        setInteracoes(interacoesCliente)
       } catch (error) {
         console.error('Erro ao carregar dados do cliente:', error)
         toast({
@@ -118,23 +108,28 @@ function ClienteDetalhesConteudo({ clienteId }: { clienteId: string }) {
 
   const handleExcluir = async () => {
     if (!cliente) return
-
-    if (window.confirm(`Tem certeza que deseja excluir o cliente ${cliente.nome}?`)) {
-      try {
-        await clientesApi.excluirCliente(cliente.id)
-        toast({
-          title: 'Cliente excluído',
-          description: 'O cliente foi excluído com sucesso.',
-        })
-        router.push('/clientes')
-      } catch (error) {
-        console.error('Erro ao excluir cliente:', error)
-        toast({
-          title: 'Erro',
-          description: 'Não foi possível excluir o cliente.',
-          variant: 'destructive',
-        })
-      }
+    setDialogAberto(true)
+  }
+  
+  const confirmarExclusao = async () => {
+    if (!cliente) return
+    
+    try {
+      await clientesApi.excluirCliente(cliente.id)
+      toast({
+        title: 'Cliente excluído',
+        description: 'O cliente foi excluído com sucesso.',
+      })
+      router.push('/clientes')
+    } catch (error) {
+      console.error('Erro ao excluir cliente:', error)
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível excluir o cliente.',
+        variant: 'destructive',
+      })
+    } finally {
+      setDialogAberto(false)
     }
   }
 
@@ -397,6 +392,24 @@ function ClienteDetalhesConteudo({ clienteId }: { clienteId: string }) {
           </Tabs>
         </CardContent>
       </Card>
+      
+      {/* Diálogo de confirmação de exclusão */}
+      <AlertDialog open={dialogAberto} onOpenChange={setDialogAberto}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {cliente && `Tem certeza que deseja excluir o cliente ${cliente.nome}?`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmarExclusao} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

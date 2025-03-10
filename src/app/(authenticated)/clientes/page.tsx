@@ -38,12 +38,25 @@ import {
 import { Cliente } from '@/lib/crm-utils'
 import { formatarCpfCnpj, formatarTelefone, formatarData } from '@/lib/formatters'
 import { clientesApi } from '@/lib/mock-api'
+import { toast } from '@/hooks/use-toast'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [carregando, setCarregando] = useState(true)
   const [busca, setBusca] = useState('')
   const [filtro, setFiltro] = useState<'Todos' | 'Pequeno' | 'Médio' | 'Grande'>('Todos')
+  const [clienteParaExcluir, setClienteParaExcluir] = useState<Cliente | null>(null)
+  const [dialogAberto, setDialogAberto] = useState(false)
 
   useEffect(() => {
     const carregarClientes = async () => {
@@ -86,6 +99,39 @@ export default function ClientesPage() {
         return 'bg-purple-100 text-purple-800 hover:bg-purple-100'
       default:
         return 'bg-gray-100 text-gray-800 hover:bg-gray-100'
+    }
+  }
+
+  // Função para abrir o diálogo de confirmação
+  const confirmarExclusao = (cliente: Cliente) => {
+    setClienteParaExcluir(cliente)
+    setDialogAberto(true)
+  }
+
+  // Função para excluir cliente
+  const handleExcluirCliente = async () => {
+    if (!clienteParaExcluir) return
+    
+    try {
+      await clientesApi.excluirCliente(clienteParaExcluir.id)
+      
+      // Atualiza a lista de clientes após a exclusão
+      setClientes(clientes.filter(c => c.id !== clienteParaExcluir.id))
+      
+      toast({
+        title: 'Cliente excluído',
+        description: 'O cliente foi excluído com sucesso.',
+      })
+    } catch (error) {
+      console.error('Erro ao excluir cliente:', error)
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível excluir o cliente.',
+        variant: 'destructive',
+      })
+    } finally {
+      setDialogAberto(false)
+      setClienteParaExcluir(null)
     }
   }
 
@@ -207,7 +253,10 @@ export default function ClientesPage() {
                                   Editar
                                 </Link>
                               </DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive">
+                              <DropdownMenuItem 
+                                className="text-destructive"
+                                onClick={() => confirmarExclusao(cliente)}
+                              >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Excluir
                               </DropdownMenuItem>
@@ -223,6 +272,24 @@ export default function ClientesPage() {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Diálogo de confirmação de exclusão */}
+      <AlertDialog open={dialogAberto} onOpenChange={setDialogAberto}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {clienteParaExcluir && `Tem certeza que deseja excluir o cliente ${clienteParaExcluir.nome}?`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleExcluirCliente} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
