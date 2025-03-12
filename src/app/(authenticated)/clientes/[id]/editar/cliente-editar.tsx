@@ -260,7 +260,7 @@ export default function ClienteEditarConteudo({ clienteId }: { clienteId: string
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="nome">Nome</Label>
+                <Label htmlFor="nome">Nome <span className="text-destructive">*</span></Label>
                 <Input
                   id="nome"
                   name="nome"
@@ -271,7 +271,7 @@ export default function ClienteEditarConteudo({ clienteId }: { clienteId: string
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="cpfCnpj">CPF/CNPJ</Label>
+                <Label htmlFor="cpfCnpj">CPF/CNPJ <span className="text-destructive">*</span></Label>
                 <Input
                   id="cpfCnpj"
                   name="cpfCnpj"
@@ -284,7 +284,7 @@ export default function ClienteEditarConteudo({ clienteId }: { clienteId: string
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="telefone">Telefone</Label>
+                <Label htmlFor="telefone">Telefone <span className="text-destructive">*</span></Label>
                 <Input
                   id="telefone"
                   name="telefone"
@@ -295,7 +295,7 @@ export default function ClienteEditarConteudo({ clienteId }: { clienteId: string
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Email <span className="text-destructive">*</span></Label>
                 <Input
                   id="email"
                   name="email"
@@ -369,7 +369,7 @@ export default function ClienteEditarConteudo({ clienteId }: { clienteId: string
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="tipo">Tipo</Label>
+                <Label htmlFor="tipo">Tipo de Cliente <span className="text-destructive">*</span></Label>
                 <Select
                   value={formData.tipo}
                   onValueChange={(value) => handleSelectChange(value, 'tipo')}
@@ -388,7 +388,7 @@ export default function ClienteEditarConteudo({ clienteId }: { clienteId: string
             <Separator />
             
             <div className="space-y-2">
-              <Label htmlFor="perfil">Perfil do Cliente</Label>
+              <Label htmlFor="perfil">Perfil <span className="text-destructive">*</span></Label>
               <Select
                 value={formData.perfil}
                 onValueChange={(value) => handleSelectChange(value, 'perfil')}

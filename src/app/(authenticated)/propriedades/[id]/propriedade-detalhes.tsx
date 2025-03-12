@@ -39,6 +39,16 @@ import { Cliente, Propriedade, Projeto } from '@/lib/crm-utils'
 import { formatarData, formatarMoeda } from '@/lib/formatters'
 import { clientesApi, propriedadesApi, projetosApi } from '@/lib/mock-api'
 import { toast } from '@/hooks/use-toast'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 // Componente cliente que implementa a lógica com hooks
 function PropriedadeDetalhesConteudo({ propriedadeId }: { propriedadeId: string }) {
@@ -48,6 +58,7 @@ function PropriedadeDetalhesConteudo({ propriedadeId }: { propriedadeId: string 
   const [projetos, setProjetos] = useState<Projeto[]>([])
   const [carregando, setCarregando] = useState(true)
   const [abaAtiva, setAbaAtiva] = useState("informacoes")
+  const [dialogAberto, setDialogAberto] = useState(false)
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -95,23 +106,28 @@ function PropriedadeDetalhesConteudo({ propriedadeId }: { propriedadeId: string 
 
   const handleExcluir = async () => {
     if (!propriedade) return
-
-    if (window.confirm(`Tem certeza que deseja excluir a propriedade ${propriedade.nome}?`)) {
-      try {
-        await propriedadesApi.excluirPropriedade(propriedade.id)
-        toast({
-          title: 'Propriedade excluída',
-          description: 'A propriedade foi excluída com sucesso.',
-        })
-        router.push('/propriedades')
-      } catch (error) {
-        console.error('Erro ao excluir propriedade:', error)
-        toast({
-          title: 'Erro',
-          description: 'Não foi possível excluir a propriedade.',
-          variant: 'destructive',
-        })
-      }
+    setDialogAberto(true)
+  }
+  
+  const confirmarExclusao = async () => {
+    if (!propriedade) return
+    
+    try {
+      await propriedadesApi.excluirPropriedade(propriedade.id)
+      toast({
+        title: 'Propriedade excluída',
+        description: 'A propriedade foi excluída com sucesso.',
+      })
+      router.push('/propriedades')
+    } catch (error) {
+      console.error('Erro ao excluir propriedade:', error)
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível excluir a propriedade.',
+        variant: 'destructive',
+      })
+    } finally {
+      setDialogAberto(false)
     }
   }
 
@@ -327,6 +343,24 @@ function PropriedadeDetalhesConteudo({ propriedadeId }: { propriedadeId: string 
           </Tabs>
         </CardContent>
       </Card>
+      
+      {/* Diálogo de confirmação de exclusão */}
+      <AlertDialog open={dialogAberto} onOpenChange={setDialogAberto}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {propriedade && `Tem certeza que deseja excluir a propriedade ${propriedade.nome}?`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmarExclusao} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

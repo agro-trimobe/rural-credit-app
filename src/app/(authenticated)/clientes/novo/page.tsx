@@ -191,7 +191,7 @@ export default function NovoClientePage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="nome">Nome</Label>
+                <Label htmlFor="nome">Nome <span className="text-destructive">*</span></Label>
                 <Input
                   id="nome"
                   name="nome"
@@ -202,7 +202,7 @@ export default function NovoClientePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Email <span className="text-destructive">*</span></Label>
                 <Input
                   id="email"
                   name="email"
@@ -214,7 +214,7 @@ export default function NovoClientePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="telefone">Telefone</Label>
+                <Label htmlFor="telefone">Telefone <span className="text-destructive">*</span></Label>
                 <Input
                   id="telefone"
                   name="telefone"
@@ -225,7 +225,7 @@ export default function NovoClientePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="cpfCnpj">CPF/CNPJ</Label>
+                <Label htmlFor="cpfCnpj">CPF/CNPJ <span className="text-destructive">*</span></Label>
                 <Input
                   id="cpfCnpj"
                   name="cpfCnpj"
@@ -236,7 +236,7 @@ export default function NovoClientePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="tipoCliente">Tipo de Cliente</Label>
+                <Label htmlFor="tipoCliente">Tipo de Cliente <span className="text-destructive">*</span></Label>
                 <Select
                   value={tipoCliente}
                   onValueChange={(value) => handleSelectChange('tipoCliente', value)}
@@ -252,7 +252,7 @@ export default function NovoClientePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="perfil">Perfil</Label>
+                <Label htmlFor="perfil">Perfil <span className="text-destructive">*</span></Label>
                 <Select
                   value={perfil}
                   onValueChange={(value) => handleSelectChange('perfil', value)}

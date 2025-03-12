@@ -38,7 +38,7 @@ export default function ProjetoNovoPage() {
     clienteId: '',
     propriedadeId: '',
     status: 'Em Elaboração' as 'Em Elaboração' | 'Em Análise' | 'Aprovado' | 'Contratado' | 'Cancelado',
-    valorTotal: 0,
+    valorTotal: '',
     linhaCredito: '',
     dataPrevisaoTermino: ''
   })
@@ -65,58 +65,165 @@ export default function ProjetoNovoPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  // Função para aplicar máscara de valor monetário (R$)
+  const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target
+    
+    // Remove todos os caracteres não numéricos
+    const numeros = value.replace(/\D/g, '')
+    
+    // Converte para número e formata como moeda brasileira
+    const valorNumerico = parseInt(numeros, 10) / 100
+    
+    // Formata o valor como string no formato R$ 0,00
+    const valorFormatado = valorNumerico.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    })
+    
+    // Atualiza o estado com o valor formatado
+    setFormData(prev => ({ ...prev, valorTotal: valorFormatado }))
+  }
+
+  // Função para converter valor formatado (R$ 0,00) para número ao enviar
+  const converterValorParaNumero = (valorFormatado: string) => {
+    // Remove o símbolo da moeda e outros caracteres não numéricos, mantendo o ponto decimal
+    const valorLimpo = valorFormatado.replace(/[^\d,]/g, '').replace(',', '.')
+    
+    // Converte para número
+    return parseFloat(valorLimpo) || 0
   }
 
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: parseFloat(value) || 0 }))
+    setFormData(prev => ({ ...prev, [name]: parseFloat(value) || 0 }))
   }
 
-  const handleSelectChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-
-    // Se o cliente mudar, atualizar lista de propriedades
-    if (field === 'clienteId') {
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }))
+    
+    // Se o cliente for alterado, resetar a propriedade selecionada
+    if (name === 'clienteId') {
       setFormData(prev => ({ ...prev, propriedadeId: '' }))
-      carregarPropriedadesDoCliente(value)
+      carregarPropriedades(value)
     }
   }
 
-  const carregarPropriedadesDoCliente = async (clienteId: string) => {
+  // Função para carregar propriedades de um cliente
+  const carregarPropriedades = async (clienteId: string) => {
     try {
       const propriedadesDoCliente = await propriedadesApi.listarPropriedadesPorCliente(clienteId)
       setPropriedades(propriedadesDoCliente.map(p => ({ id: p.id, nome: p.nome })))
     } catch (error) {
       console.error('Erro ao carregar propriedades:', error)
       setPropriedades([])
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível carregar as propriedades do cliente.',
+        variant: 'destructive',
+      })
     }
+  }
+
+  // Função para aplicar máscara de data (DD/MM/AAAA)
+  const handleDataChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target
+    
+    // Remove todos os caracteres não numéricos
+    const numeros = value.replace(/\D/g, '')
+    
+    // Aplica a máscara conforme o usuário digita
+    let dataFormatada = ''
+    if (numeros.length > 0) {
+      // Adiciona o dia (até 2 dígitos)
+      dataFormatada = numeros.substring(0, Math.min(2, numeros.length))
+      
+      // Adiciona o mês após o dia (se houver mais de 2 dígitos)
+      if (numeros.length > 2) {
+        dataFormatada += '/' + numeros.substring(2, Math.min(4, numeros.length))
+      }
+      
+      // Adiciona o ano após o mês (se houver mais de 4 dígitos)
+      if (numeros.length > 4) {
+        dataFormatada += '/' + numeros.substring(4, Math.min(8, numeros.length))
+      }
+    }
+    
+    setFormData(prev => ({ ...prev, dataPrevisaoTermino: dataFormatada }))
+  }
+
+  // Função para converter data de DD/MM/AAAA para formato ISO (AAAA-MM-DD)
+  const converterDataParaISO = (data: string) => {
+    if (!data) return ''
+    
+    const partes = data.split('/')
+    if (partes.length !== 3) return ''
+    
+    const dia = partes[0]
+    const mes = partes[1]
+    const ano = partes[2]
+    
+    // Verifica se a data é válida
+    if (dia.length !== 2 || mes.length !== 2 || ano.length !== 4) return ''
+    
+    return `${ano}-${mes}-${dia}`
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validação básica
+    if (!formData.titulo || !formData.clienteId || !formData.propriedadeId || !formData.dataPrevisaoTermino) {
+      toast({
+        title: 'Erro',
+        description: 'Por favor, preencha todos os campos obrigatórios.',
+        variant: 'destructive',
+      })
+      return
+    }
+    
     setSalvando(true)
-
+    
     try {
-      // Formatar a data de previsão para o formato ISO
-      const dadosNovoProjeto = {
-        ...formData,
-        dataPrevisaoTermino: formData.dataPrevisaoTermino 
-          ? new Date(formData.dataPrevisaoTermino).toISOString()
-          : new Date().toISOString()
+      // Converter a data para o formato ISO antes de enviar
+      const dataISO = converterDataParaISO(formData.dataPrevisaoTermino)
+      
+      if (!dataISO) {
+        toast({
+          title: 'Erro',
+          description: 'Data inválida. Por favor, use o formato DD/MM/AAAA.',
+          variant: 'destructive',
+        })
+        setSalvando(false)
+        return
       }
       
-      const novoProjeto = await projetosApi.criarProjeto(dadosNovoProjeto)
+      // Converter o valor formatado para número
+      const valorNumerico = converterValorParaNumero(formData.valorTotal)
+      
+      // Criar objeto com os dados do projeto
+      const novoProjeto = {
+        ...formData,
+        dataPrevisaoTermino: dataISO,
+        valorTotal: valorNumerico
+      }
+      
+      await projetosApi.criarProjeto(novoProjeto)
+      
       toast({
         title: 'Projeto criado',
-        description: 'O novo projeto foi criado com sucesso',
+        description: 'O projeto foi criado com sucesso.',
       })
-      router.push(`/projetos/${novoProjeto.id}`)
+      
+      router.push('/projetos')
     } catch (error) {
       console.error('Erro ao criar projeto:', error)
       toast({
         title: 'Erro',
-        description: 'Não foi possível criar o novo projeto',
+        description: 'Não foi possível criar o projeto.',
         variant: 'destructive',
       })
     } finally {
@@ -156,7 +263,9 @@ export default function ProjetoNovoPage() {
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="titulo">Título</Label>
+                <Label htmlFor="titulo">
+                  Título <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="titulo"
                   name="titulo"
@@ -174,12 +283,13 @@ export default function ProjetoNovoPage() {
                   value={formData.descricao}
                   onChange={handleChange}
                   rows={4}
-                  required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="clienteId">Cliente</Label>
+                <Label htmlFor="clienteId">
+                  Cliente <span className="text-destructive">*</span>
+                </Label>
                 <Select
                   value={formData.clienteId}
                   onValueChange={(value) => handleSelectChange('clienteId', value)}
@@ -198,7 +308,9 @@ export default function ProjetoNovoPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="propriedadeId">Propriedade</Label>
+                <Label htmlFor="propriedadeId">
+                  Propriedade <span className="text-destructive">*</span>
+                </Label>
                 <Select
                   value={formData.propriedadeId}
                   onValueChange={(value) => handleSelectChange('propriedadeId', value)}
@@ -224,21 +336,23 @@ export default function ProjetoNovoPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="valorTotal">Valor Total (R$)</Label>
+                <Label htmlFor="valorTotal">
+                  Valor Total <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="valorTotal"
                   name="valorTotal"
-                  type="number"
-                  min="0"
-                  step="0.01"
+                  placeholder="R$ 0,00"
                   value={formData.valorTotal}
-                  onChange={handleNumberChange}
+                  onChange={handleValorChange}
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="linhaCredito">Linha de Crédito</Label>
+                <Label htmlFor="linhaCredito">
+                  Linha de Crédito <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="linhaCredito"
                   name="linhaCredito"
@@ -268,13 +382,16 @@ export default function ProjetoNovoPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="dataPrevisaoTermino">Previsão de Término</Label>
+                <Label htmlFor="dataPrevisaoTermino">
+                  Previsão de Término <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="dataPrevisaoTermino"
                   name="dataPrevisaoTermino"
-                  type="date"
+                  placeholder="DD/MM/AAAA"
                   value={formData.dataPrevisaoTermino}
-                  onChange={handleChange}
+                  onChange={handleDataChange}
+                  maxLength={10}
                   required
                 />
               </div>

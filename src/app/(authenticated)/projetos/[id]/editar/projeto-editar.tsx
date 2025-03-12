@@ -28,32 +28,42 @@ import { Projeto, Cliente, Propriedade } from '@/lib/crm-utils'
 import { projetosApi, clientesApi, propriedadesApi } from '@/lib/mock-api'
 import { toast } from '@/hooks/use-toast'
 
+// Interface estendida para incluir campos adicionais que não existem no tipo Projeto
+interface ProjetoExtendido extends Projeto {
+  taxaJuros?: string;
+  prazo?: string;
+  carencia?: string;
+}
+
 function ProjetoEditarConteudo({ projetoId }: { projetoId: string }) {
   const router = useRouter()
   const [carregando, setCarregando] = useState(true)
   const [salvando, setSalvando] = useState(false)
-  const [projeto, setProjeto] = useState<Projeto | null>(null)
+  const [projeto, setProjeto] = useState<ProjetoExtendido | null>(null)
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [propriedades, setPropriedades] = useState<Propriedade[]>([])
   
   // Formulário
   const [titulo, setTitulo] = useState('')
   const [descricao, setDescricao] = useState('')
-  const [clienteId, setClienteId] = useState('')
-  const [propriedadeId, setPropriedadeId] = useState('')
+  const [clienteId, setClienteId] = useState<string | undefined>(undefined)
+  const [propriedadeId, setPropriedadeId] = useState<string | undefined>(undefined)
   const [linhaCredito, setLinhaCredito] = useState('')
   const [valorTotal, setValorTotal] = useState('')
   const [status, setStatus] = useState<'Em Elaboração' | 'Em Análise' | 'Aprovado' | 'Contratado' | 'Cancelado'>('Em Análise')
   const [taxaJuros, setTaxaJuros] = useState('')
   const [prazo, setPrazo] = useState('')
   const [carencia, setCarencia] = useState('')
+  const [dataPrevisaoTermino, setDataPrevisaoTermino] = useState('')
   
   useEffect(() => {
     const carregarDados = async () => {
       try {
+        setCarregando(true)
+        
         // Carregar projeto
-        const projeto = await projetosApi.buscarProjetoPorId(projetoId)
-        if (!projeto) {
+        const projetoCarregado = await projetosApi.buscarProjetoPorId(projetoId)
+        if (!projetoCarregado) {
           toast({
             title: 'Erro',
             description: 'Projeto não encontrado',
@@ -63,19 +73,47 @@ function ProjetoEditarConteudo({ projetoId }: { projetoId: string }) {
           return
         }
         
-        setProjeto(projeto)
+        // Tratar como ProjetoExtendido para adicionar campos adicionais
+        const projetoExtendido: ProjetoExtendido = {
+          ...projetoCarregado,
+          taxaJuros: '0',
+          prazo: '0',
+          carencia: '0'
+        }
         
-        // Preencher formulário
-        setTitulo(projeto.titulo)
-        setDescricao(projeto.descricao || '')
-        setClienteId(projeto.clienteId || '')
-        setPropriedadeId(projeto.propriedadeId || '')
-        setLinhaCredito(projeto.linhaCredito)
-        setValorTotal(String(projeto.valorTotal))
-        setStatus(projeto.status)
-        setTaxaJuros('0')
-        setPrazo('0')
-        setCarencia('0')
+        setProjeto(projetoExtendido)
+        
+        // Preencher formulário com dados do projeto
+        setTitulo(projetoExtendido.titulo)
+        setDescricao(projetoExtendido.descricao || '')
+        
+        // Garantir que os IDs nunca sejam strings vazias
+        setClienteId(projetoExtendido.clienteId || undefined)
+        setPropriedadeId(projetoExtendido.propriedadeId || undefined)
+        setLinhaCredito(projetoExtendido.linhaCredito)
+        
+        // Formatar o valor como moeda brasileira
+        const valorFormatado = projetoExtendido.valorTotal.toLocaleString('pt-BR', {
+          style: 'currency',
+          currency: 'BRL',
+        })
+        setValorTotal(valorFormatado)
+        
+        setStatus(projetoExtendido.status)
+        
+        // Definir valores padrão para campos adicionais
+        setTaxaJuros(projetoExtendido.taxaJuros || '0')
+        setPrazo(projetoExtendido.prazo || '0')
+        setCarencia(projetoExtendido.carencia || '0')
+        
+        // Formatar a data de previsão de término se existir
+        if (projetoExtendido.dataPrevisaoTermino) {
+          const data = new Date(projetoExtendido.dataPrevisaoTermino)
+          const dia = String(data.getDate()).padStart(2, '0')
+          const mes = String(data.getMonth() + 1).padStart(2, '0')
+          const ano = data.getFullYear()
+          setDataPrevisaoTermino(`${dia}/${mes}/${ano}`)
+        }
         
         // Carregar clientes
         const listaClientes = await clientesApi.listarClientes()
@@ -109,9 +147,6 @@ function ProjetoEditarConteudo({ projetoId }: { projetoId: string }) {
       case 'descricao':
         setDescricao(value)
         break
-      case 'valorTotal':
-        setValorTotal(value)
-        break
       case 'taxaJuros':
         setTaxaJuros(value)
         break
@@ -124,41 +159,132 @@ function ProjetoEditarConteudo({ projetoId }: { projetoId: string }) {
     }
   }
   
+  // Função para aplicar máscara de valor monetário (R$)
+  const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target
+    
+    // Remove todos os caracteres não numéricos
+    const numeros = value.replace(/\D/g, '')
+    
+    // Converte para número e formata como moeda brasileira
+    const valorNumerico = parseInt(numeros, 10) / 100
+    
+    // Formata o valor como string no formato R$ 0,00
+    const valorFormatado = valorNumerico.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    })
+    
+    // Atualiza o estado
+    setValorTotal(valorFormatado)
+  }
+  
+  // Função para converter valor formatado (R$ 0,00) para número ao enviar
+  const converterValorParaNumero = (valorFormatado: string) => {
+    // Remove o símbolo da moeda e outros caracteres não numéricos, mantendo o ponto decimal
+    const valorLimpo = valorFormatado.replace(/[^\d,]/g, '').replace(',', '.')
+    
+    // Converte para número
+    return parseFloat(valorLimpo) || 0
+  }
+  
+  // Função para aplicar máscara de data (DD/MM/AAAA)
+  const handleDataChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target
+    
+    // Remove caracteres não numéricos
+    const numeros = value.replace(/\D/g, '')
+    
+    let dataFormatada = ''
+    
+    if (numeros.length > 0) {
+      // Adiciona o dia (até 2 dígitos)
+      dataFormatada = numeros.substring(0, Math.min(2, numeros.length))
+      
+      // Adiciona o mês após o dia (se houver mais de 2 dígitos)
+      if (numeros.length > 2) {
+        dataFormatada += '/' + numeros.substring(2, Math.min(4, numeros.length))
+      }
+      
+      // Adiciona o ano após o mês (se houver mais de 4 dígitos)
+      if (numeros.length > 4) {
+        dataFormatada += '/' + numeros.substring(4, Math.min(8, numeros.length))
+      }
+    }
+    
+    setDataPrevisaoTermino(dataFormatada)
+  }
+  
+  // Função para converter data de DD/MM/AAAA para formato ISO (AAAA-MM-DD)
+  const converterDataParaISO = (data: string) => {
+    if (!data) return ''
+    
+    const partes = data.split('/')
+    if (partes.length !== 3) return ''
+    
+    const dia = partes[0]
+    const mes = partes[1]
+    const ano = partes[2]
+    
+    // Verifica se a data é válida
+    if (dia.length !== 2 || mes.length !== 2 || ano.length !== 4) return ''
+    
+    return `${ano}-${mes}-${dia}`
+  }
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!projeto) return
     
+    // Validação básica
+    if (!titulo || !linhaCredito || !valorTotal || !status || !taxaJuros || !prazo || !clienteId || !dataPrevisaoTermino) {
+      toast({
+        title: 'Erro',
+        description: 'Por favor, preencha todos os campos obrigatórios',
+        variant: 'destructive',
+      })
+      return
+    }
+    
+    // Validar formato da data
+    const dataISO = converterDataParaISO(dataPrevisaoTermino)
+    if (!dataISO) {
+      toast({
+        title: 'Erro',
+        description: 'Por favor, informe uma data válida no formato DD/MM/AAAA',
+        variant: 'destructive',
+      })
+      return
+    }
+    
+    setSalvando(true)
+    
     try {
-      setSalvando(true)
+      // Converter o valor formatado para número
+      const valorNumerico = converterValorParaNumero(valorTotal)
       
-      // Validação básica
-      if (!titulo || !linhaCredito || !valorTotal || !status || !taxaJuros || !prazo) {
-        toast({
-          title: 'Erro',
-          description: 'Preencha todos os campos obrigatórios',
-          variant: 'destructive',
-        })
-        setSalvando(false)
-        return
-      }
+      // Garantir que os IDs nunca sejam undefined
+      const clienteIdFinal = clienteId || projeto.clienteId
+      const propriedadeIdFinal = propriedadeId || projeto.propriedadeId
       
-      // Atualizar projeto
-      const dadosAtualizados: Projeto = {
-        ...projeto,
+      // Criar objeto com os dados básicos do projeto (sem campos adicionais)
+      const projetoAtualizado: Projeto = {
+        id: projeto.id,
         titulo,
         descricao,
-        clienteId: clienteId || projeto.clienteId,
-        propriedadeId: propriedadeId || projeto.propriedadeId,
+        clienteId: clienteIdFinal,
+        propriedadeId: propriedadeIdFinal,
         linhaCredito,
-        valorTotal: Number(valorTotal),
+        valorTotal: valorNumerico,
         status,
         documentos: projeto.documentos,
         dataCriacao: projeto.dataCriacao,
-        dataAtualizacao: new Date().toISOString()
+        dataAtualizacao: new Date().toISOString(),
+        dataPrevisaoTermino: dataISO
       }
       
-      await projetosApi.atualizarProjeto(projetoId, dadosAtualizados)
+      await projetosApi.atualizarProjeto(projetoId, projetoAtualizado)
       toast({
         title: 'Projeto atualizado',
         description: 'Os dados do projeto foram atualizados com sucesso',
@@ -232,13 +358,16 @@ function ProjetoEditarConteudo({ projetoId }: { projetoId: string }) {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="cliente">Cliente</Label>
-                <Select value={clienteId} onValueChange={setClienteId}>
+                <Label htmlFor="cliente">Cliente <span className="text-destructive">*</span></Label>
+                <Select 
+                  value={clienteId} 
+                  onValueChange={setClienteId}
+                  defaultValue={clientes.length > 0 ? clientes[0].id : undefined}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um cliente" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
                     {clientes.map((cliente) => (
                       <SelectItem key={cliente.id} value={cliente.id}>
                         {cliente.nome}
@@ -250,12 +379,15 @@ function ProjetoEditarConteudo({ projetoId }: { projetoId: string }) {
               
               <div className="space-y-2">
                 <Label htmlFor="propriedade">Propriedade</Label>
-                <Select value={propriedadeId} onValueChange={setPropriedadeId}>
+                <Select 
+                  value={propriedadeId} 
+                  onValueChange={setPropriedadeId}
+                  defaultValue={propriedades.length > 0 ? propriedades[0].id : undefined}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione uma propriedade" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhuma</SelectItem>
                     {propriedades.map((propriedade) => (
                       <SelectItem key={propriedade.id} value={propriedade.id}>
                         {propriedade.nome}
@@ -270,34 +402,33 @@ function ProjetoEditarConteudo({ projetoId }: { projetoId: string }) {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="linhaCredito">Linha de Crédito</Label>
-                <Select value={linhaCredito} onValueChange={setLinhaCredito}>
+                <Label htmlFor="linhaCredito">Linha de Crédito <span className="text-destructive">*</span></Label>
+                <Select 
+                  value={linhaCredito || undefined} 
+                  onValueChange={setLinhaCredito}
+                  defaultValue="PRONAF"
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione a linha de crédito" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Pronaf">Pronaf</SelectItem>
-                    <SelectItem value="Pronamp">Pronamp</SelectItem>
-                    <SelectItem value="Inovagro">Inovagro</SelectItem>
-                    <SelectItem value="Moderagro">Moderagro</SelectItem>
+                    <SelectItem value="PRONAF">PRONAF</SelectItem>
+                    <SelectItem value="PRONAMP">PRONAMP</SelectItem>
+                    <SelectItem value="INOVAGRO">INOVAGRO</SelectItem>
                     <SelectItem value="ABC+">ABC+</SelectItem>
-                    <SelectItem value="FCO Rural">FCO Rural</SelectItem>
-                    <SelectItem value="Funcafé">Funcafé</SelectItem>
+                    <SelectItem value="MODERFROTA">MODERFROTA</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="valorTotal">Valor Total (R$)</Label>
+                <Label htmlFor="valorTotal">Valor Total <span className="text-destructive">*</span></Label>
                 <Input
                   id="valorTotal"
                   name="valorTotal"
                   value={valorTotal}
-                  onChange={handleChange}
-                  placeholder="Valor total do projeto"
-                  type="number"
-                  min="0"
-                  step="0.01"
+                  onChange={handleValorChange}
+                  placeholder="R$ 0,00"
                 />
               </div>
             </div>
@@ -305,7 +436,11 @@ function ProjetoEditarConteudo({ projetoId }: { projetoId: string }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
-                <Select value={status} onValueChange={(value) => setStatus(value as any)}>
+                <Select 
+                  value={status} 
+                  onValueChange={(value) => setStatus(value as any)}
+                  defaultValue="Em Elaboração"
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o status" />
                   </SelectTrigger>
@@ -358,6 +493,23 @@ function ProjetoEditarConteudo({ projetoId }: { projetoId: string }) {
                   placeholder="Carência em meses"
                   type="number"
                   min="0"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="dataPrevisaoTermino">
+                  Previsão de Término <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="dataPrevisaoTermino"
+                  name="dataPrevisaoTermino"
+                  placeholder="DD/MM/AAAA"
+                  value={dataPrevisaoTermino}
+                  onChange={handleDataChange}
+                  maxLength={10}
+                  required
                 />
               </div>
             </div>
