@@ -32,7 +32,7 @@ import {
 } from 'lucide-react'
 import { Projeto, Cliente, Propriedade, Documento } from '@/lib/crm-utils'
 import { formatarMoeda, formatarData } from '@/lib/formatters'
-import { projetosApi, clientesApi, propriedadesApi } from '@/lib/mock-api'
+import { projetosApi, clientesApi, propriedadesApi, documentosApi } from '@/lib/mock-api'
 import { toast } from '@/hooks/use-toast'
 
 // Componente cliente que implementa a lógica com hooks
@@ -74,8 +74,8 @@ function ProjetoDetalhesConteudo({ projetoId }: { projetoId: string }) {
           setPropriedade(dadosPropriedade)
         }
         
-        // Carregar documentos
-        const listaDocumentos = await projetosApi.listarDocumentos(projetoId)
+        // Carregar documentos usando a API de documentos para garantir consistência
+        const listaDocumentos = await documentosApi.listarDocumentosPorProjeto(projetoId)
         setDocumentos(listaDocumentos)
         
       } catch (error) {
@@ -206,7 +206,7 @@ function ProjetoDetalhesConteudo({ projetoId }: { projetoId: string }) {
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground mb-2">Documentos</h3>
-                  <p className="text-sm">{projeto.documentos.length} documentos</p>
+                  <p className="text-sm">{documentos.length} documentos</p>
                 </div>
               </div>
             </CardContent>

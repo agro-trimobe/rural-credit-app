@@ -1,4 +1,5 @@
 import { Documento, gerarIdAleatorio } from '../crm-utils'
+import { projetosApi } from './projetos'
 
 // Dados mockados para documentos
 const documentosMock: Documento[] = [
@@ -399,22 +400,35 @@ export const documentosApi = {
     })
   },
 
-  // Criar novo documento
-  criarDocumento: async (documento: Omit<Documento, 'id' | 'dataCriacao' | 'dataAtualizacao'>): Promise<Documento> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const novoDocumento: Documento = {
-          ...documento,
-          id: gerarIdAleatorio(),
-          dataCriacao: new Date().toISOString(),
-          dataAtualizacao: new Date().toISOString()
+// Criar novo documento
+criarDocumento: async (documento: Omit<Documento, 'id' | 'dataCriacao' | 'dataAtualizacao'>): Promise<Documento> => {
+  return new Promise(async (resolve) => {
+    setTimeout(async () => {
+      const novoDocumento: Documento = {
+        ...documento,
+        id: gerarIdAleatorio(),
+        dataCriacao: new Date().toISOString(),
+        dataAtualizacao: new Date().toISOString()
+      }
+      
+      documentosMock.push(novoDocumento)
+      
+      // Se o documento estiver associado a um projeto, adicionar o ID do documento ao array documentos do projeto
+      if (novoDocumento.projetoId) {
+        try {
+          const projeto = await projetosApi.buscarProjetoPorId(novoDocumento.projetoId)
+          if (projeto && !projeto.documentos.includes(novoDocumento.id)) {
+            projeto.documentos.push(novoDocumento.id)
+          }
+        } catch (error) {
+          console.error('Erro ao associar documento ao projeto:', error)
         }
-        
-        documentosMock.push(novoDocumento)
-        resolve({ ...novoDocumento })
-      }, 700)
-    })
-  },
+      }
+      
+      resolve({ ...novoDocumento })
+    }, 700)
+  })
+},
 
   // Atualizar documento
   atualizarDocumento: async (id: string, dadosAtualizados: Partial<Omit<Documento, 'id' | 'dataCriacao' | 'dataAtualizacao'>>): Promise<Documento | null> => {
