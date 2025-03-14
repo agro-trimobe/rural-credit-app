@@ -19,6 +19,16 @@ import {
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -51,6 +61,8 @@ export default function VisitasPage() {
   const [busca, setBusca] = useState('')
   const [filtro, setFiltro] = useState<'Todos' | 'Agendada' | 'Realizada' | 'Cancelada'>('Todos')
   const [excluindo, setExcluindo] = useState(false)
+  const [visitaParaExcluir, setVisitaParaExcluir] = useState<string | null>(null)
+  const [dialogoExclusaoAberto, setDialogoExclusaoAberto] = useState(false)
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -112,36 +124,43 @@ export default function VisitasPage() {
   }
 
   const handleExcluirVisita = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir esta visita?')) {
-      return
-    }
+    setVisitaParaExcluir(id)
+    setDialogoExclusaoAberto(true)
+  }
+
+  const confirmarExclusao = async () => {
+    if (!visitaParaExcluir) return
     
     try {
       setExcluindo(true)
-      const sucesso = await visitasApi.excluirVisita(id)
+      const sucesso = await visitasApi.excluirVisita(visitaParaExcluir)
       
       if (sucesso) {
-        // Atualizar a lista de visitas
-        setVisitas(prevVisitas => 
-          prevVisitas.filter(v => v.id !== id)
-        )
+        // Atualizar a lista de visitas removendo a visita excluída
+        setVisitas(visitas.filter(v => v.id !== visitaParaExcluir))
         
         toast({
           title: 'Visita excluída',
           description: 'A visita foi excluída com sucesso.',
         })
       } else {
-        throw new Error('Não foi possível excluir a visita.')
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível excluir a visita.',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Erro ao excluir visita:', error)
       toast({
         title: 'Erro',
-        description: 'Não foi possível excluir a visita.',
+        description: 'Ocorreu um erro ao excluir a visita.',
         variant: 'destructive',
       })
     } finally {
       setExcluindo(false)
+      setVisitaParaExcluir(null)
+      setDialogoExclusaoAberto(false)
     }
   }
 
@@ -333,6 +352,20 @@ export default function VisitasPage() {
           </div>
         </CardContent>
       </Card>
+      <AlertDialog open={dialogoExclusaoAberto} onOpenChange={setDialogoExclusaoAberto}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Visita</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogDescription>
+            Tem certeza que deseja excluir esta visita?
+          </AlertDialogDescription>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmarExclusao} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

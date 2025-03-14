@@ -25,6 +25,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { MaskedInput } from '@/components/ui/masked-input'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
@@ -75,7 +76,7 @@ export default function VisitaEditarConteudo({ visitaId }: { visitaId: string })
       observacoes: '',
       clienteId: '',
       propriedadeId: '',
-      projetoId: '',
+      projetoId: 'nenhum',
     },
   })
 
@@ -132,7 +133,7 @@ export default function VisitaEditarConteudo({ visitaId }: { visitaId: string })
           observacoes: dadosVisita.observacoes,
           clienteId: dadosVisita.clienteId,
           propriedadeId: dadosVisita.propriedadeId,
-          projetoId: dadosVisita.projetoId || '',
+          projetoId: dadosVisita.projetoId || 'nenhum',
         })
       } catch (error) {
         console.error('Erro ao carregar dados:', error)
@@ -166,7 +167,7 @@ export default function VisitaEditarConteudo({ visitaId }: { visitaId: string })
       setProjetosFiltrados(projsFiltrados)
       
       // Limpar seleção de projeto
-      form.setValue('projetoId', '')
+      form.setValue('projetoId', 'nenhum')
     } catch (error) {
       console.error('Erro ao atualizar propriedades e projetos:', error)
     }
@@ -178,14 +179,21 @@ export default function VisitaEditarConteudo({ visitaId }: { visitaId: string })
     try {
       setSalvando(true)
       
+      // Converter data do formato DD/MM/YYYY HH:MM para ISO
+      const dataPartes = values.data.split(' ');
+      const dataFormatada = dataPartes[0].split('/').reverse().join('-');
+      const dataHoraISO = dataPartes.length > 1 
+        ? `${dataFormatada}T${dataPartes[1]}:00` 
+        : `${dataFormatada}T00:00:00`;
+      
       // Atualizar visita
       const visitaAtualizada = await visitasApi.atualizarVisita(visitaId, {
-        data: values.data,
+        data: dataHoraISO,
         status: values.status,
         observacoes: values.observacoes || '',
         clienteId: values.clienteId,
         propriedadeId: values.propriedadeId,
-        projetoId: values.projetoId || undefined,
+        projetoId: values.projetoId === 'nenhum' ? undefined : values.projetoId,
       })
       
       if (!visitaAtualizada) {
@@ -318,7 +326,7 @@ export default function VisitaEditarConteudo({ visitaId }: { visitaId: string })
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">Nenhum</SelectItem>
+                          <SelectItem value="nenhum">Nenhum</SelectItem>
                           {projetosFiltrados.map((projeto) => (
                             <SelectItem key={projeto.id} value={projeto.id}>
                               {projeto.titulo}
@@ -341,9 +349,9 @@ export default function VisitaEditarConteudo({ visitaId }: { visitaId: string })
                     <FormItem>
                       <FormLabel>Data e Hora da Visita</FormLabel>
                       <FormControl>
-                        <Input
-                          type="datetime-local"
-                          placeholder="Data e hora da visita"
+                        <MaskedInput
+                          mask="datahora"
+                          placeholder="DD/MM/AAAA HH:MM"
                           {...field}
                           disabled={salvando}
                         />

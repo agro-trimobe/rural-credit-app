@@ -20,6 +20,16 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -52,9 +62,11 @@ export default function VisitaDocumentosConteudo({ visitaId }: { visitaId: strin
   const [visita, setVisita] = useState<Visita | null>(null)
   const [documentos, setDocumentos] = useState<Documento[]>([])
   const [nomeCliente, setNomeCliente] = useState<string>('')
-  const [carregando, setCarregando] = useState(true)
   const [busca, setBusca] = useState('')
+  const [carregando, setCarregando] = useState(true)
   const [excluindo, setExcluindo] = useState(false)
+  const [documentoParaExcluir, setDocumentoParaExcluir] = useState<string | null>(null)
+  const [dialogoExclusaoAberto, setDialogoExclusaoAberto] = useState(false)
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -111,36 +123,43 @@ export default function VisitaDocumentosConteudo({ visitaId }: { visitaId: strin
   })
 
   const handleExcluirDocumento = async (documentoId: string) => {
-    if (!confirm('Tem certeza que deseja excluir este documento?')) {
-      return
-    }
+    setDocumentoParaExcluir(documentoId)
+    setDialogoExclusaoAberto(true)
+  }
+
+  const confirmarExclusao = async () => {
+    if (!documentoParaExcluir) return
     
     try {
       setExcluindo(true)
-      const sucesso = await documentosApi.excluirDocumento(documentoId)
+      const sucesso = await documentosApi.excluirDocumento(documentoParaExcluir)
       
       if (sucesso) {
-        // Atualizar a lista de documentos
-        setDocumentos(prevDocumentos => 
-          prevDocumentos.filter(doc => doc.id !== documentoId)
-        )
+        // Atualizar a lista de documentos removendo o documento excluído
+        setDocumentos(documentos.filter(doc => doc.id !== documentoParaExcluir))
         
         toast({
           title: 'Documento excluído',
           description: 'O documento foi excluído com sucesso.',
         })
       } else {
-        throw new Error('Não foi possível excluir o documento.')
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível excluir o documento.',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Erro ao excluir documento:', error)
       toast({
         title: 'Erro',
-        description: 'Não foi possível excluir o documento.',
+        description: 'Ocorreu um erro ao excluir o documento.',
         variant: 'destructive',
       })
     } finally {
       setExcluindo(false)
+      setDocumentoParaExcluir(null)
+      setDialogoExclusaoAberto(false)
     }
   }
 
@@ -327,6 +346,22 @@ export default function VisitaDocumentosConteudo({ visitaId }: { visitaId: strin
           </div>
         </CardFooter>
       </Card>
+
+      {/* Diálogo de confirmação de exclusão */}
+      <AlertDialog open={dialogoExclusaoAberto} onOpenChange={setDialogoExclusaoAberto}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Documento</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogDescription>
+            Tem certeza que deseja excluir este documento?
+          </AlertDialogDescription>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmarExclusao} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

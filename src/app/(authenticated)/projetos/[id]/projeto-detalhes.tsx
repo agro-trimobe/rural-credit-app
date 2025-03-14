@@ -34,6 +34,16 @@ import { Projeto, Cliente, Propriedade, Documento } from '@/lib/crm-utils'
 import { formatarMoeda, formatarData } from '@/lib/formatters'
 import { projetosApi, clientesApi, propriedadesApi, documentosApi } from '@/lib/mock-api'
 import { toast } from '@/hooks/use-toast'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 // Componente cliente que implementa a lógica com hooks
 function ProjetoDetalhesConteudo({ projetoId }: { projetoId: string }) {
@@ -43,6 +53,7 @@ function ProjetoDetalhesConteudo({ projetoId }: { projetoId: string }) {
   const [propriedade, setPropriedade] = useState<Propriedade | null>(null)
   const [documentos, setDocumentos] = useState<Documento[]>([])
   const [carregando, setCarregando] = useState(true)
+  const [dialogAberto, setDialogAberto] = useState(false)
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -96,9 +107,11 @@ function ProjetoDetalhesConteudo({ projetoId }: { projetoId: string }) {
   const handleExcluir = async () => {
     if (!projeto) return
     
-    if (!confirm('Tem certeza que deseja excluir este projeto? Esta ação não pode ser desfeita.')) {
-      return
-    }
+    setDialogAberto(true)
+  }
+  
+  const confirmarExclusao = async () => {
+    if (!projeto) return
     
     try {
       await projetosApi.excluirProjeto(projeto.id)
@@ -116,6 +129,8 @@ function ProjetoDetalhesConteudo({ projetoId }: { projetoId: string }) {
         description: 'Não foi possível excluir o projeto',
         variant: 'destructive',
       })
+    } finally {
+      setDialogAberto(false)
     }
   }
 
@@ -335,6 +350,24 @@ function ProjetoDetalhesConteudo({ projetoId }: { projetoId: string }) {
           </div>
         </div>
       </div>
+      
+      {/* Diálogo de confirmação de exclusão */}
+      <AlertDialog open={dialogAberto} onOpenChange={setDialogAberto}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este projeto? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmarExclusao} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

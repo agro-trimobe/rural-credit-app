@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { MaskedInput } from '@/components/ui/masked-input'
 import {
   Form,
   FormControl,
@@ -128,8 +129,15 @@ export default function EditarOportunidadePage() {
     try {
       setSalvando(true)
       
-      // Converter proximoContato para ISO string se existir
-      const proximoContato = data.proximoContato ? new Date(data.proximoContato).toISOString() : undefined
+      // Converter data do formato DD/MM/YYYY HH:MM para ISO
+      let proximoContato;
+      if (data.proximoContato) {
+        const dataPartes = data.proximoContato.split(' ');
+        const dataFormatada = dataPartes[0].split('/').reverse().join('-');
+        proximoContato = dataPartes.length > 1 
+          ? `${dataFormatada}T${dataPartes[1]}:00` 
+          : `${dataFormatada}T00:00:00`;
+      }
       
       const oportunidadeAtualizada = await oportunidadesApi.atualizarOportunidade(id, {
         ...data,
@@ -306,8 +314,8 @@ export default function EditarOportunidadePage() {
                     <FormItem>
                       <FormLabel>Próximo Contato</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="datetime-local" 
+                        <MaskedInput 
+                          mask="datahora" 
                           {...field} 
                           value={field.value || ''}
                         />

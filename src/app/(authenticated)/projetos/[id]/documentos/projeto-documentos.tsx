@@ -13,6 +13,16 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { 
   Table, 
   TableBody, 
@@ -47,6 +57,8 @@ export default function ProjetoDocumentosConteudo({ projetoId }: { projetoId: st
   const [projeto, setProjeto] = useState<Projeto | null>(null)
   const [busca, setBusca] = useState('')
   const [carregando, setCarregando] = useState(true)
+  const [documentoParaExcluir, setDocumentoParaExcluir] = useState<string | null>(null)
+  const [dialogoAberto, setDialogoAberto] = useState(false)
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -93,22 +105,29 @@ export default function ProjetoDocumentosConteudo({ projetoId }: { projetoId: st
   )
 
   const handleExcluirDocumento = async (documentoId: string) => {
-    if (window.confirm('Tem certeza que deseja excluir este documento?')) {
-      try {
-        await documentosApi.excluirDocumento(documentoId)
-        setDocumentos(documentos.filter(doc => doc.id !== documentoId))
-        toast({
-          title: 'Documento excluído',
-          description: 'O documento foi excluído com sucesso.',
-        })
-      } catch (error) {
-        console.error('Erro ao excluir documento:', error)
-        toast({
-          title: 'Erro',
-          description: 'Não foi possível excluir o documento.',
-          variant: 'destructive',
-        })
-      }
+    setDocumentoParaExcluir(documentoId)
+    setDialogoAberto(true)
+  }
+
+  const confirmarExclusao = async () => {
+    if (!documentoParaExcluir) return
+    
+    try {
+      await documentosApi.excluirDocumento(documentoParaExcluir)
+      setDocumentos(documentos.filter(doc => doc.id !== documentoParaExcluir))
+      toast({
+        title: 'Documento excluído',
+        description: 'O documento foi excluído com sucesso.',
+      })
+    } catch (error) {
+      console.error('Erro ao excluir documento:', error)
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível excluir o documento.',
+        variant: 'destructive',
+      })
+    } finally {
+      setDialogoAberto(false)
     }
   }
 
@@ -251,6 +270,24 @@ export default function ProjetoDocumentosConteudo({ projetoId }: { projetoId: st
           )}
         </CardContent>
       </Card>
+      <AlertDialog open={dialogoAberto} onOpenChange={setDialogoAberto}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Documento</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogDescription>
+            Tem certeza que deseja excluir este documento?
+          </AlertDialogDescription>
+          <AlertDialogFooter>
+            <AlertDialogCancel asChild>
+              <Button variant="outline">Cancelar</Button>
+            </AlertDialogCancel>
+            <AlertDialogAction asChild>
+              <Button variant="destructive" onClick={confirmarExclusao}>Excluir</Button>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

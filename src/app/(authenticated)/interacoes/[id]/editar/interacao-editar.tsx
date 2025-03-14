@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { MaskedInput } from '@/components/ui/masked-input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { 
@@ -131,7 +132,7 @@ function InteracaoEditarConteudo({ interacaoId }: { interacaoId: string }) {
         tipo,
         assunto,
         descricao,
-        data,
+        data: converterDataParaISO(data),
         status,
         observacoes: observacoes || undefined,
         dataAtualizacao: new Date().toISOString()
@@ -216,10 +217,10 @@ function InteracaoEditarConteudo({ interacaoId }: { interacaoId: string }) {
               
               <div className="space-y-2">
                 <Label htmlFor="data">Data</Label>
-                <Input
+                <MaskedInput
                   id="data"
                   name="data"
-                  type="date"
+                  mask="data"
                   value={data}
                   onChange={handleChange}
                 />
@@ -296,6 +297,14 @@ function InteracaoEditarConteudo({ interacaoId }: { interacaoId: string }) {
       </Card>
     </div>
   )
+}
+
+function converterDataParaISO(data: string) {
+  const partes = data.split('/');
+  const dia = partes[0];
+  const mes = partes[1];
+  const ano = partes[2];
+  return `${ano}-${mes}-${dia}T00:00:00.000Z`;
 }
 
 export default InteracaoEditarConteudo

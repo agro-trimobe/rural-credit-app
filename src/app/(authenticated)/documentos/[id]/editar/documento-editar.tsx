@@ -68,8 +68,8 @@ function DocumentoEditarConteudo({ documentoId }: { documentoId: string }) {
         setDescricao(documento.descricao || '')
         setTipo(documento.tipo)
         setStatus(documento.status === 'Ativo' ? 'Ativo' : 'Arquivado')
-        setClienteId(documento.clienteId || '')
-        setProjetoId(documento.projetoId || '')
+        setClienteId(documento.clienteId || 'nenhum')
+        setProjetoId(documento.projetoId || 'nenhum')
         setNomeArquivo(documento.nome)
         setFormato(documento.formato || '')
         setCaminho('')
@@ -144,8 +144,8 @@ function DocumentoEditarConteudo({ documentoId }: { documentoId: string }) {
         descricao,
         tipo,
         status,
-        clienteId,
-        projetoId: projetoId || documento.projetoId,
+        clienteId: clienteId === 'nenhum' ? '' : clienteId,
+        projetoId: projetoId === 'nenhum' ? '' : projetoId,
         formato: formato || documento.formato,
         tamanho: documento.tamanho,
         url: documento.url,
@@ -267,7 +267,7 @@ function DocumentoEditarConteudo({ documentoId }: { documentoId: string }) {
                     <SelectValue placeholder="Selecione um cliente" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
+                    <SelectItem value="nenhum">Nenhum</SelectItem>
                     {clientes.map((cliente) => (
                       <SelectItem key={cliente.id} value={cliente.id}>
                         {cliente.nome}
@@ -284,7 +284,7 @@ function DocumentoEditarConteudo({ documentoId }: { documentoId: string }) {
                     <SelectValue placeholder="Selecione um projeto" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
+                    <SelectItem value="nenhum">Nenhum</SelectItem>
                     {projetos.map((projeto) => (
                       <SelectItem key={projeto.id} value={projeto.id}>
                         {projeto.titulo}

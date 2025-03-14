@@ -19,6 +19,16 @@ import {
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -39,6 +49,7 @@ import {
 import { Projeto } from '@/lib/crm-utils'
 import { formatarMoeda, formatarData, coresStatus } from '@/lib/formatters'
 import { projetosApi, clientesApi } from '@/lib/mock-api'
+import { toast } from '@/hooks/use-toast'
 
 export default function ProjetosPage() {
   const [projetos, setProjetos] = useState<Projeto[]>([])
@@ -46,6 +57,9 @@ export default function ProjetosPage() {
   const [carregando, setCarregando] = useState(true)
   const [busca, setBusca] = useState('')
   const [filtro, setFiltro] = useState<'Todos' | 'Em Elaboração' | 'Em Análise' | 'Aprovado' | 'Contratado' | 'Cancelado'>('Todos')
+  const [excluindo, setExcluindo] = useState(false)
+  const [projetoParaExcluir, setProjetoParaExcluir] = useState<string | null>(null)
+  const [dialogoExclusaoAberto, setDialogoExclusaoAberto] = useState(false)
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -85,6 +99,47 @@ export default function ProjetosPage() {
     
     return correspondeAoBusca && correspondeAoFiltro
   })
+
+  const handleExcluirProjeto = (id: string) => {
+    setProjetoParaExcluir(id)
+    setDialogoExclusaoAberto(true)
+  }
+
+  const confirmarExclusao = async () => {
+    if (!projetoParaExcluir) return
+    
+    try {
+      setExcluindo(true)
+      const sucesso = await projetosApi.excluirProjeto(projetoParaExcluir)
+      
+      if (sucesso) {
+        // Atualizar a lista de projetos removendo o projeto excluído
+        setProjetos(projetos.filter(p => p.id !== projetoParaExcluir))
+        
+        toast({
+          title: 'Projeto excluído',
+          description: 'O projeto foi excluído com sucesso.',
+        })
+      } else {
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível excluir o projeto.',
+          variant: 'destructive',
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao excluir projeto:', error)
+      toast({
+        title: 'Erro',
+        description: 'Ocorreu um erro ao excluir o projeto.',
+        variant: 'destructive',
+      })
+    } finally {
+      setExcluindo(false)
+      setProjetoParaExcluir(null)
+      setDialogoExclusaoAberto(false)
+    }
+  }
 
   if (carregando) {
     return (
@@ -220,7 +275,7 @@ export default function ProjetosPage() {
                                 Documentos
                               </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
+                            <DropdownMenuItem className="text-destructive" onClick={() => handleExcluirProjeto(projeto.id)}>
                               <Trash2 className="mr-2 h-4 w-4" />
                               Excluir
                             </DropdownMenuItem>
@@ -235,6 +290,21 @@ export default function ProjetosPage() {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={dialogoExclusaoAberto} onOpenChange={setDialogoExclusaoAberto}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Projeto</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogDescription>
+            Você tem certeza que deseja excluir o projeto?
+          </AlertDialogDescription>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmarExclusao} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

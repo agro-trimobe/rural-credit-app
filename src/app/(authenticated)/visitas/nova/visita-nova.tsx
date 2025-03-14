@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { MaskedInput } from '@/components/ui/masked-input'
 import { Textarea } from '@/components/ui/textarea'
 import { 
   Select, 
@@ -216,12 +217,16 @@ export default function VisitaNovaConteudo() {
     try {
       setEnviando(true)
       
+      // Converter data do formato DD/MM/YYYY para ISO
+      const dataPartes = values.data.split('/');
+      const dataFormatada = `${dataPartes[2]}-${dataPartes[1]}-${dataPartes[0]}T00:00:00`;
+      
       // Preparar dados da visita
       const novaVisita: Omit<Visita, 'id' | 'dataCriacao' | 'dataAtualizacao'> = {
         clienteId: values.clienteId,
         propriedadeId: values.propriedadeId,
         projetoId: values.projetoId || undefined,
-        data: new Date(values.data).toISOString(),
+        data: dataFormatada,
         status: values.status,
         observacoes: values.observacoes || '',
         fotos: [],
@@ -411,8 +416,8 @@ export default function VisitaNovaConteudo() {
                       <FormControl>
                         <div className="relative">
                           <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            type="date"
+                          <MaskedInput
+                            mask="data"
                             className="pl-9"
                             {...field}
                             disabled={enviando}

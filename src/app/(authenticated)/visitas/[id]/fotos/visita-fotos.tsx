@@ -14,6 +14,16 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { 
   ArrowLeft, 
   Camera, 
@@ -34,6 +44,8 @@ export default function VisitaFotosConteudo({ visitaId }: { visitaId: string }) 
   const [excluindo, setExcluindo] = useState(false)
   const [arquivosSelecionados, setArquivosSelecionados] = useState<File[]>([])
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
+  const [fotoParaExcluir, setFotoParaExcluir] = useState<number | null>(null)
+  const [dialogoExclusaoAberto, setDialogoExclusaoAberto] = useState(false)
 
   useEffect(() => {
     const carregarVisita = async () => {
@@ -138,16 +150,19 @@ export default function VisitaFotosConteudo({ visitaId }: { visitaId: string }) 
   const handleRemoverFoto = async (index: number) => {
     if (!visita) return
     
-    if (!confirm('Tem certeza que deseja remover esta foto?')) {
-      return
-    }
+    setFotoParaExcluir(index)
+    setDialogoExclusaoAberto(true)
+  }
+
+  const handleConfirmarExclusao = async () => {
+    if (!visita || fotoParaExcluir === null) return
     
     try {
       setExcluindo(true)
       
       // Criar uma cópia do array de fotos sem a foto a ser removida
       const novasFotos = [...visita.fotos]
-      novasFotos.splice(index, 1)
+      novasFotos.splice(fotoParaExcluir, 1)
       
       // Atualizar a visita com o novo array de fotos
       const visitaAtualizada = await visitasApi.atualizarVisita(visitaId, {
@@ -174,6 +189,8 @@ export default function VisitaFotosConteudo({ visitaId }: { visitaId: string }) 
       })
     } finally {
       setExcluindo(false)
+      setFotoParaExcluir(null)
+      setDialogoExclusaoAberto(false)
     }
   }
 
@@ -339,6 +356,24 @@ export default function VisitaFotosConteudo({ visitaId }: { visitaId: string }) 
           </Button>
         </CardFooter>
       </Card>
+
+      <AlertDialog
+        open={dialogoExclusaoAberto}
+        onOpenChange={setDialogoExclusaoAberto}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogDescription>
+            Tem certeza que deseja excluir a foto?
+          </AlertDialogDescription>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmarExclusao} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

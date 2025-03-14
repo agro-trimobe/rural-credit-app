@@ -14,6 +14,16 @@ import {
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { 
   ArrowLeft, 
   FileEdit, 
@@ -44,6 +54,7 @@ export default function VisitaDetalhesConteudo({ visitaId }: { visitaId: string 
   const [nomeProjeto, setNomeProjeto] = useState<string>('')
   const [carregando, setCarregando] = useState(true)
   const [excluindo, setExcluindo] = useState(false)
+  const [dialogoExclusaoAberto, setDialogoExclusaoAberto] = useState(false)
 
   useEffect(() => {
     const carregarVisita = async () => {
@@ -100,10 +111,6 @@ export default function VisitaDetalhesConteudo({ visitaId }: { visitaId: string 
   const handleExcluir = async () => {
     if (!visita) return
     
-    if (!confirm('Tem certeza que deseja excluir esta visita?')) {
-      return
-    }
-    
     try {
       setExcluindo(true)
       const sucesso = await visitasApi.excluirVisita(visita.id)
@@ -115,17 +122,23 @@ export default function VisitaDetalhesConteudo({ visitaId }: { visitaId: string 
         })
         router.push('/visitas')
       } else {
-        throw new Error('Não foi possível excluir a visita.')
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível excluir a visita.',
+          variant: 'destructive',
+        })
+        setExcluindo(false)
       }
     } catch (error) {
       console.error('Erro ao excluir visita:', error)
       toast({
         title: 'Erro',
-        description: 'Não foi possível excluir a visita.',
+        description: 'Ocorreu um erro ao excluir a visita.',
         variant: 'destructive',
       })
-    } finally {
       setExcluindo(false)
+    } finally {
+      setDialogoExclusaoAberto(false)
     }
   }
 
@@ -174,7 +187,7 @@ export default function VisitaDetalhesConteudo({ visitaId }: { visitaId: string 
               <FileEdit className="mr-2 h-4 w-4" /> Editar
             </Link>
           </Button>
-          <Button variant="destructive" onClick={handleExcluir} disabled={excluindo}>
+          <Button variant="destructive" onClick={() => setDialogoExclusaoAberto(true)} disabled={excluindo}>
             <Trash2 className="mr-2 h-4 w-4" /> Excluir
           </Button>
           {visita.status === 'Agendada' && (
@@ -340,6 +353,22 @@ export default function VisitaDetalhesConteudo({ visitaId }: { visitaId: string 
           </Card>
         </div>
       </div>
+      {dialogoExclusaoAberto && (
+        <AlertDialog open={dialogoExclusaoAberto} onOpenChange={setDialogoExclusaoAberto}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir Visita</AlertDialogTitle>
+            </AlertDialogHeader>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta visita?
+            </AlertDialogDescription>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleExcluir}>Excluir</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   )
 }

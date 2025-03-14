@@ -14,6 +14,16 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { 
   ArrowLeft,
   FileEdit,
@@ -40,6 +50,7 @@ export default function OportunidadeDetalhesPage() {
   const [nomeCliente, setNomeCliente] = useState<string>('')
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
+  const [dialogoExclusaoAberto, setDialogoExclusaoAberto] = useState(false)
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -73,20 +84,22 @@ export default function OportunidadeDetalhesPage() {
   }, [id])
 
   const handleExcluir = async () => {
-    if (!window.confirm('Tem certeza que deseja excluir esta oportunidade?')) {
-      return
-    }
-    
+    setDialogoExclusaoAberto(true)
+  }
+
+  const confirmarExclusao = async () => {
     try {
       const sucesso = await oportunidadesApi.excluirOportunidade(id)
+      
       if (sucesso) {
         router.push('/oportunidades')
       } else {
-        alert('Erro ao excluir oportunidade')
+        throw new Error('Não foi possível excluir a oportunidade.')
       }
     } catch (error) {
-      console.error('Erro ao excluir:', error)
-      alert('Erro ao excluir oportunidade')
+      console.error('Erro ao excluir oportunidade:', error)
+    } finally {
+      setDialogoExclusaoAberto(false)
     }
   }
 
@@ -284,6 +297,21 @@ export default function OportunidadeDetalhesPage() {
           </Card>
         </div>
       </div>
+
+      <AlertDialog open={dialogoExclusaoAberto} onOpenChange={setDialogoExclusaoAberto}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Oportunidade</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogDescription>
+            Tem certeza que deseja excluir esta oportunidade?
+          </AlertDialogDescription>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmarExclusao} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
