@@ -37,12 +37,13 @@ import {
   FileCheck,
   Plus
 } from 'lucide-react'
-import { Visita } from '@/lib/crm-utils'
+import { Visita, Documento } from '@/lib/crm-utils'
 import { formatarData, formatarDataHora, coresStatus } from '@/lib/formatters'
 import { visitasApi } from '@/lib/mock-api/visitas'
 import { clientesApi } from '@/lib/mock-api/clientes'
 import { propriedadesApi } from '@/lib/mock-api/propriedades'
 import { projetosApi } from '@/lib/mock-api/projetos'
+import { documentosApi } from '@/lib/mock-api/documentos'
 import { toast } from '@/hooks/use-toast'
 
 // Componente cliente que implementa a lógica com hooks
@@ -52,6 +53,7 @@ export default function VisitaDetalhesConteudo({ visitaId }: { visitaId: string 
   const [nomeCliente, setNomeCliente] = useState<string>('')
   const [nomePropriedade, setNomePropriedade] = useState<string>('')
   const [nomeProjeto, setNomeProjeto] = useState<string>('')
+  const [documentos, setDocumentos] = useState<Documento[]>([])
   const [carregando, setCarregando] = useState(true)
   const [excluindo, setExcluindo] = useState(false)
   const [dialogoExclusaoAberto, setDialogoExclusaoAberto] = useState(false)
@@ -93,6 +95,10 @@ export default function VisitaDetalhesConteudo({ visitaId }: { visitaId: string 
             setNomeProjeto(projeto.titulo)
           }
         }
+
+        // Carregar documentos relacionados à visita
+        const docsVisita = await documentosApi.listarDocumentosPorVisita(visitaId)
+        setDocumentos(docsVisita)
       } catch (error) {
         console.error('Erro ao carregar visita:', error)
         toast({
@@ -315,14 +321,44 @@ export default function VisitaDetalhesConteudo({ visitaId }: { visitaId: string 
             <CardHeader>
               <CardTitle>Documentos</CardTitle>
               <CardDescription>
-                Documentos relacionados à visita
+                {documentos.length} documento(s) relacionado(s)
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
+              {documentos.length === 0 ? (
+                <div className="text-center py-4">
+                  <File className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                  <p className="text-muted-foreground">Nenhum documento relacionado</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {documentos.slice(0, 3).map((doc) => (
+                    <Link 
+                      key={doc.id} 
+                      href={`/documentos/${doc.id}`}
+                      className="flex items-center p-2 rounded-md border hover:bg-muted transition-colors"
+                    >
+                      <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <div className="flex-1 truncate">
+                        <p className="text-sm font-medium truncate">{doc.nome}</p>
+                        <p className="text-xs text-muted-foreground">{doc.tipo}</p>
+                      </div>
+                      <Badge variant="outline" className="ml-2">
+                        {doc.status}
+                      </Badge>
+                    </Link>
+                  ))}
+                  {documentos.length > 3 && (
+                    <p className="text-xs text-center text-muted-foreground mt-1">
+                      + {documentos.length - 3} documento(s)
+                    </p>
+                  )}
+                </div>
+              )}
+              <div className="space-y-2 mt-4">
                 <Button variant="outline" className="w-full" asChild>
                   <Link href={`/visitas/${visita.id}/documentos`}>
-                    <FileCheck className="mr-2 h-4 w-4" /> Ver Documentos
+                    <FileCheck className="mr-2 h-4 w-4" /> Ver Todos os Documentos
                   </Link>
                 </Button>
                 <Button variant="secondary" className="w-full" asChild>
@@ -353,22 +389,28 @@ export default function VisitaDetalhesConteudo({ visitaId }: { visitaId: string 
           </Card>
         </div>
       </div>
-      {dialogoExclusaoAberto && (
-        <AlertDialog open={dialogoExclusaoAberto} onOpenChange={setDialogoExclusaoAberto}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Excluir Visita</AlertDialogTitle>
-            </AlertDialogHeader>
+
+      <AlertDialog open={dialogoExclusaoAberto} onOpenChange={setDialogoExclusaoAberto}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir esta visita?
+              Esta ação não pode ser desfeita. Isso excluirá permanentemente a visita
+              e todos os dados associados a ela.
             </AlertDialogDescription>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleExcluir}>Excluir</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleExcluir}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={excluindo}
+            >
+              {excluindo ? 'Excluindo...' : 'Excluir'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

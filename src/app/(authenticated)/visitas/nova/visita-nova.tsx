@@ -225,7 +225,7 @@ export default function VisitaNovaConteudo() {
       const novaVisita: Omit<Visita, 'id' | 'dataCriacao' | 'dataAtualizacao'> = {
         clienteId: values.clienteId,
         propriedadeId: values.propriedadeId,
-        projetoId: values.projetoId || undefined,
+        projetoId: values.projetoId === 'nenhum' ? undefined : values.projetoId || undefined,
         data: dataFormatada,
         status: values.status,
         observacoes: values.observacoes || '',
@@ -237,7 +237,9 @@ export default function VisitaNovaConteudo() {
       
       // Criar documentos associados à visita (se houver)
       if (documentos.length > 0) {
-        const documentosValidos = documentos.filter(doc => doc.nome && doc.tipo)
+        const documentosValidos = documentos.filter(doc => 
+          doc.nome && doc.tipo && doc.tipo !== 'selecione'
+        )
         
         for (const doc of documentosValidos) {
           const tamanhoArquivo = doc.arquivo ? doc.arquivo.size : 0
@@ -385,7 +387,7 @@ export default function VisitaNovaConteudo() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">Nenhum projeto</SelectItem>
+                          <SelectItem value="nenhum">Nenhum projeto</SelectItem>
                           {projetosFiltrados.map((projeto) => (
                             <SelectItem key={projeto.id} value={projeto.id}>
                               {projeto.titulo}
@@ -539,7 +541,7 @@ export default function VisitaNovaConteudo() {
                                 onChange={(e) => atualizarDocumento(index, 'tipo', e.target.value)}
                                 disabled={enviando}
                               >
-                                <option value="">Selecione um tipo</option>
+                                <option value="selecione">Selecione um tipo</option>
                                 {tiposDocumentos.map((tipo) => (
                                   <option key={tipo} value={tipo}>{tipo}</option>
                                 ))}

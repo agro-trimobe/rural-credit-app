@@ -179,12 +179,23 @@ export default function VisitaEditarConteudo({ visitaId }: { visitaId: string })
     try {
       setSalvando(true)
       
-      // Converter data do formato DD/MM/YYYY HH:MM para ISO
-      const dataPartes = values.data.split(' ');
-      const dataFormatada = dataPartes[0].split('/').reverse().join('-');
-      const dataHoraISO = dataPartes.length > 1 
-        ? `${dataFormatada}T${dataPartes[1]}:00` 
-        : `${dataFormatada}T00:00:00`;
+      // Verificar o formato da data e converter para ISO
+      let dataHoraISO: string;
+      
+      // Se a data estiver no formato ISO (YYYY-MM-DDThh:mm)
+      if (values.data.includes('T') || values.data.includes('-')) {
+        dataHoraISO = values.data.includes('T') 
+          ? `${values.data}:00`.substring(0, 19) 
+          : `${values.data}T00:00:00`;
+      } 
+      // Se a data estiver no formato brasileiro (DD/MM/YYYY HH:MM)
+      else {
+        const dataPartes = values.data.split(' ');
+        const dataFormatada = dataPartes[0].split('/').reverse().join('-');
+        dataHoraISO = dataPartes.length > 1 
+          ? `${dataFormatada}T${dataPartes[1]}:00` 
+          : `${dataFormatada}T00:00:00`;
+      }
       
       // Atualizar visita
       const visitaAtualizada = await visitasApi.atualizarVisita(visitaId, {

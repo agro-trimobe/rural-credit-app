@@ -36,35 +36,8 @@ export default function NovoDocumentoCliente() {
   const visitaId = searchParams?.get('visitaId')
   const clienteIdParam = searchParams?.get('clienteId')
 
-  // Verificação de ambiente cliente
+  // Estados do componente - TODOS os hooks devem ser declarados antes de qualquer condicional
   const [isMounted, setIsMounted] = useState(false)
-
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
-
-  // Se não estiver montado (ambiente servidor), renderiza um placeholder
-  if (!isMounted) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="icon" asChild>
-              <Link href="/documentos">
-                <ArrowLeft className="h-4 w-4" />
-              </Link>
-            </Button>
-            <h1 className="text-2xl font-bold tracking-tight">Novo Documento</h1>
-          </div>
-        </div>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      </div>
-    )
-  }
-
-  // Estados do componente
   const [salvando, setSalvando] = useState(false)
   const [clientes, setClientes] = useState<{ id: string; nome: string }[]>([])
   const [visitas, setVisitas] = useState<{ id: string; data: string; clienteId: string }[]>([])
@@ -73,17 +46,23 @@ export default function NovoDocumentoCliente() {
     nome: '',
     tipo: '',
     formato: 'pdf',
-    clienteId: '',
-    visitaId: '',
+    clienteId: clienteIdParam || '',
+    visitaId: visitaId || '',
     status: 'Pendente',
     tamanho: 0,
     url: '',
   })
   const [arquivo, setArquivo] = useState<File | null>(null)
 
+  // Efeito para verificar montagem do componente
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  // Efeito para carregar dados
   useEffect(() => {
     // Verificar se estamos no navegador
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || !isMounted) return;
 
     const carregarDados = async () => {
       try {
@@ -116,7 +95,7 @@ export default function NovoDocumentoCliente() {
     }
     
     carregarDados()
-  }, [visitaId, clienteIdParam])
+  }, [isMounted, visitaId, clienteIdParam])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -197,23 +176,67 @@ export default function NovoDocumentoCliente() {
     }
   }
 
-  if (carregando) {
+  // Renderização condicional após declarar todos os hooks
+  if (!isMounted) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="icon" asChild>
+              <Link href="/documentos">
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </Button>
+            <h1 className="text-2xl font-bold tracking-tight">Novo Documento</h1>
+          </div>
+        </div>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
       </div>
     )
   }
+
+  if (carregando) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="icon" asChild>
+              <Link href="/documentos">
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </Button>
+            <h1 className="text-2xl font-bold tracking-tight">Novo Documento</h1>
+          </div>
+        </div>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    )
+  }
+
+  // Botão de voltar diferente dependendo da origem
+  const botaoVoltar = visitaId ? (
+    <Button variant="outline" size="icon" asChild>
+      <Link href={`/visitas/${visitaId}/documentos`}>
+        <ArrowLeft className="h-4 w-4" />
+      </Link>
+    </Button>
+  ) : (
+    <Button variant="outline" size="icon" asChild>
+      <Link href="/documentos">
+        <ArrowLeft className="h-4 w-4" />
+      </Link>
+    </Button>
+  )
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="icon" asChild>
-            <Link href="/documentos">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
+          {botaoVoltar}
           <h1 className="text-2xl font-bold tracking-tight">Novo Documento</h1>
         </div>
       </div>
@@ -221,66 +244,54 @@ export default function NovoDocumentoCliente() {
       <form onSubmit={handleSubmit}>
         <Card>
           <CardHeader>
-            <CardTitle>Upload de Documento</CardTitle>
+            <CardTitle>Informações do Documento</CardTitle>
             <CardDescription>
-              Faça upload de um novo documento e preencha as informações necessárias
+              Adicione um novo documento ao sistema.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              <Input
-                id="arquivo"
-                type="file"
-                className="hidden"
-                onChange={handleFileChange}
-              />
-              <Label 
-                htmlFor="arquivo" 
-                className="flex flex-col items-center justify-center cursor-pointer h-32"
-              >
-                <Upload className="h-10 w-10 text-muted-foreground mb-2" />
-                <span className="text-sm font-medium">
-                  {arquivo ? arquivo.name : 'Clique para selecionar um arquivo'}
-                </span>
-                {arquivo && (
-                  <span className="text-xs text-muted-foreground mt-1">
-                    {(arquivo.size / 1024 / 1024).toFixed(2)} MB
-                  </span>
-                )}
-              </Label>
-            </div>
-
+          <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="nome">Nome</Label>
+                <Label htmlFor="nome">Nome do Documento</Label>
                 <Input
                   id="nome"
                   name="nome"
                   value={formData.nome}
                   onChange={handleChange}
+                  placeholder="Nome do documento"
                   required
                 />
               </div>
-
               <div className="space-y-2">
-                <Label htmlFor="tipo">Tipo</Label>
-                <Input
-                  id="tipo"
-                  name="tipo"
-                  value={formData.tipo}
-                  onChange={handleChange}
-                  placeholder="Ex: Contrato, Nota Fiscal, Laudo"
-                  required
-                />
+                <Label htmlFor="tipo">Tipo de Documento</Label>
+                <Select
+                  value={formData.tipo || ''}
+                  onValueChange={(value) => handleSelectChange('tipo', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Contrato">Contrato</SelectItem>
+                    <SelectItem value="Relatório">Relatório</SelectItem>
+                    <SelectItem value="Proposta">Proposta</SelectItem>
+                    <SelectItem value="Análise">Análise</SelectItem>
+                    <SelectItem value="Laudo">Laudo</SelectItem>
+                    <SelectItem value="Outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+            </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="clienteId">Cliente</Label>
                 <Select
-                  value={formData.clienteId}
+                  value={formData.clienteId || ''}
                   onValueChange={(value) => handleSelectChange('clienteId', value)}
+                  disabled={!!clienteIdParam}
                 >
-                  <SelectTrigger id="clienteId">
+                  <SelectTrigger>
                     <SelectValue placeholder="Selecione o cliente" />
                   </SelectTrigger>
                   <SelectContent>
@@ -292,15 +303,15 @@ export default function NovoDocumentoCliente() {
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="space-y-2">
-                <Label htmlFor="visitaId">Visita (opcional)</Label>
+                <Label htmlFor="visitaId">Visita</Label>
                 <Select
-                  value={formData.visitaId || "nenhuma"}
+                  value={formData.visitaId || ''}
                   onValueChange={(value) => handleSelectChange('visitaId', value)}
+                  disabled={!!visitaId}
                 >
-                  <SelectTrigger id="visitaId">
-                    <SelectValue placeholder="Associar a uma visita" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a visita" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="nenhuma">Nenhuma</SelectItem>
@@ -308,42 +319,49 @@ export default function NovoDocumentoCliente() {
                       .filter(v => !formData.clienteId || v.clienteId === formData.clienteId)
                       .map((visita) => (
                         <SelectItem key={visita.id} value={visita.id}>
-                          Visita em {visita.data}
+                          Visita {visita.data}
                         </SelectItem>
                       ))}
                   </SelectContent>
                 </Select>
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value) => handleSelectChange('status', value)}
-                >
-                  <SelectTrigger id="status">
-                    <SelectValue placeholder="Selecione o status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Pendente">Pendente</SelectItem>
-                    <SelectItem value="Enviado">Enviado</SelectItem>
-                    <SelectItem value="Aprovado">Aprovado</SelectItem>
-                    <SelectItem value="Rejeitado">Rejeitado</SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="space-y-2">
+              <Label htmlFor="arquivo">Arquivo</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="arquivo"
+                  type="file"
+                  onChange={handleFileChange}
+                  className="flex-1"
+                  required
+                />
+                <Button type="button" variant="outline" size="icon">
+                  <Upload className="h-4 w-4" />
+                </Button>
               </div>
+              {arquivo && (
+                <p className="text-sm text-muted-foreground">
+                  {arquivo.name} ({Math.round(arquivo.size / 1024)} KB)
+                </p>
+              )}
             </div>
           </CardContent>
-          <CardFooter className="border-t bg-muted/50 flex justify-between">
-            <Button variant="outline" asChild>
-              <Link href={visitaId ? `/visitas/${visitaId}/documentos` : "/documentos"}>
-                Cancelar
-              </Link>
-            </Button>
-            <Button type="submit" disabled={salvando || !arquivo}>
+          <CardFooter className="flex justify-between">
+            {visitaId ? (
+              <Button variant="outline" asChild>
+                <Link href={`/visitas/${visitaId}/documentos`}>Cancelar</Link>
+              </Button>
+            ) : (
+              <Button variant="outline" asChild>
+                <Link href="/documentos">Cancelar</Link>
+              </Button>
+            )}
+            <Button type="submit" disabled={salvando}>
               {salvando ? (
                 <>
-                  <div className="animate-spin mr-2 h-4 w-4 border-2 border-background border-t-transparent rounded-full" />
+                  <div className="animate-spin mr-2 h-4 w-4 border-b-2 rounded-full border-background"></div>
                   Salvando...
                 </>
               ) : (

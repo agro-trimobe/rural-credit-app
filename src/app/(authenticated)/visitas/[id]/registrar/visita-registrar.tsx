@@ -255,7 +255,9 @@ export default function VisitaRegistrarConteudo({ visitaId }: { visitaId: string
       
       // 4. Criar documentos associados à visita (se houver)
       if (documentos.length > 0) {
-        const documentosValidos = documentos.filter(doc => doc.nome && doc.tipo)
+        const documentosValidos = documentos.filter(doc => 
+          doc.nome && doc.tipo && doc.tipo !== 'selecione'
+        )
         
         for (const doc of documentosValidos) {
           const tamanhoArquivo = doc.arquivo ? doc.arquivo.size : 0
@@ -465,7 +467,7 @@ export default function VisitaRegistrarConteudo({ visitaId }: { visitaId: string
                               onChange={(e) => atualizarDocumento(index, 'tipo', e.target.value)}
                               disabled={enviando}
                             >
-                              <option value="">Selecione um tipo</option>
+                              <option value="selecione">Selecione um tipo</option>
                               {tiposDocumentos.map((tipo) => (
                                 <option key={tipo} value={tipo}>{tipo}</option>
                               ))}
