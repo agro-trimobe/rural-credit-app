@@ -29,6 +29,16 @@ import {
   DropdownMenuSubContent 
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { 
   Search, 
   ChevronDown, 
@@ -46,8 +56,10 @@ import { Documento } from '@/lib/crm-utils'
 import { formatarData, coresStatus, formatarTamanhoArquivo } from '@/lib/formatters'
 import { documentosApi, clientesApi } from '@/lib/mock-api'
 import { useState, useEffect } from 'react'
+import { useToast } from '@/hooks/use-toast'
 
 export default function DocumentosPage() {
+  const { toast } = useToast()
   const [documentos, setDocumentos] = useState<Documento[]>([])
   const [clientesMap, setClientesMap] = useState<{[key: string]: string}>({})
   const [carregando, setCarregando] = useState(true)
@@ -55,6 +67,9 @@ export default function DocumentosPage() {
   const [filtro, setFiltro] = useState<string>('Todos')
   const [filtroTag, setFiltroTag] = useState<string>('')
   const [filtroStatus, setFiltroStatus] = useState<string>('')
+  const [excluindo, setExcluindo] = useState<string | null>(null)
+  const [documentoParaExcluir, setDocumentoParaExcluir] = useState<string | null>(null)
+  const [dialogoExclusaoAberto, setDialogoExclusaoAberto] = useState(false)
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -138,6 +153,49 @@ export default function DocumentosPage() {
       }
     } catch (error) {
       console.error('Erro ao alterar status:', error)
+    }
+  }
+
+  // Função para abrir o diálogo de confirmação de exclusão
+  const abrirDialogoExclusao = (id: string) => {
+    setDocumentoParaExcluir(id)
+    setDialogoExclusaoAberto(true)
+  }
+
+  // Função para excluir documento após confirmação
+  const handleExcluirDocumento = async () => {
+    if (!documentoParaExcluir) return
+
+    try {
+      setExcluindo(documentoParaExcluir)
+      const sucesso = await documentosApi.excluirDocumento(documentoParaExcluir)
+      
+      if (sucesso) {
+        // Atualiza a lista removendo o documento excluído
+        setDocumentos(documentos.filter(doc => doc.id !== documentoParaExcluir))
+        
+        toast({
+          title: 'Documento excluído',
+          description: 'O documento foi excluído com sucesso.',
+        })
+      } else {
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível excluir o documento.',
+          variant: 'destructive',
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao excluir documento:', error)
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível excluir o documento.',
+        variant: 'destructive',
+      })
+    } finally {
+      setExcluindo(null)
+      setDocumentoParaExcluir(null)
+      setDialogoExclusaoAberto(false)
     }
   }
 
@@ -363,7 +421,10 @@ export default function DocumentosPage() {
                                 </DropdownMenuSubContent>
                               </DropdownMenuSub>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem className="text-destructive">
+                              <DropdownMenuItem 
+                                className="text-destructive"
+                                onClick={() => abrirDialogoExclusao(documento.id)}
+                              >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Excluir
                               </DropdownMenuItem>
@@ -379,6 +440,38 @@ export default function DocumentosPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Diálogo de confirmação de exclusão */}
+      <AlertDialog
+        open={dialogoExclusaoAberto}
+        onOpenChange={setDialogoExclusaoAberto}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogDescription>
+            Tem certeza que deseja excluir este documento? Esta ação não pode ser desfeita.
+          </AlertDialogDescription>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleExcluirDocumento}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={!!excluindo}
+            >
+              {excluindo ? (
+                <>
+                  <div className="animate-spin mr-2 h-4 w-4 border-b-2 rounded-full border-destructive-foreground"></div>
+                  Excluindo...
+                </>
+              ) : (
+                'Confirmar'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

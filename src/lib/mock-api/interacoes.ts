@@ -131,16 +131,17 @@ export const interacoesApi = {
   },
   
   // Criar nova interação
-  criarInteracao: async (interacao: Omit<Interacao, 'id' | 'dataCriacao' | 'dataAtualizacao'>): Promise<Interacao> => {
+  criarInteracao: async (interacao: Omit<Interacao, 'id'>): Promise<Interacao> => {
     await delay(600);
     
-    const agora = new Date().toISOString();
+    // Garantir que a data fornecida pelo usuário seja preservada
     const novaInteracao: Interacao = {
       id: `int-${gerarIdAleatorio().substring(0, 6)}`,
       ...interacao,
-      dataCriacao: agora,
-      dataAtualizacao: agora
     };
+    
+    // Log para debug
+    console.log('Interação criada na API mockada:', novaInteracao);
     
     interacoesMock.push(novaInteracao);
     return { ...novaInteracao };
@@ -153,11 +154,18 @@ export const interacoesApi = {
     const index = interacoesMock.findIndex(i => i.id === id);
     if (index === -1) return null;
     
+    // Log para debug
+    console.log('Dados antes da atualização:', interacoesMock[index]);
+    console.log('Dados para atualização:', dadosAtualizados);
+    
+    // Preservar a data fornecida pelo usuário
     const interacaoAtualizada: Interacao = {
       ...interacoesMock[index],
       ...dadosAtualizados,
-      dataAtualizacao: new Date().toISOString()
     };
+    
+    // Log para debug
+    console.log('Interação atualizada na API mockada:', interacaoAtualizada);
     
     interacoesMock[index] = interacaoAtualizada;
     return { ...interacaoAtualizada };

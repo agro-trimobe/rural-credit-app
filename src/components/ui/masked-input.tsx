@@ -39,7 +39,14 @@ const MaskedInput = React.forwardRef<HTMLInputElement, MaskedInputProps>(
         
         // Chamar o onChange original com o valor atual
         if (onChange) {
-          onChange(e);
+          const newEvent = {
+            ...e,
+            target: {
+              ...e.target,
+              value: rawValue
+            }
+          };
+          onChange(newEvent as React.ChangeEvent<HTMLInputElement>);
         }
         return;
       }
@@ -51,31 +58,89 @@ const MaskedInput = React.forwardRef<HTMLInputElement, MaskedInputProps>(
       if (mask === 'data') {
         // Formato: DD/MM/YYYY
         if (numbersOnly.length > 0) {
-          formattedValue = numbersOnly.substring(0, 2);
+          // Limitar o dia a valores válidos (01-31)
+          const day = parseInt(numbersOnly.substring(0, 2), 10);
+          if (day > 31) {
+            formattedValue = '31';
+          } else if (day === 0 && numbersOnly.length >= 2) {
+            formattedValue = '01';
+          } else {
+            formattedValue = numbersOnly.substring(0, 2).padStart(2, '0');
+          }
         }
         if (numbersOnly.length > 2) {
-          formattedValue += '/' + numbersOnly.substring(2, 4);
+          // Limitar o mês a valores válidos (01-12)
+          const month = parseInt(numbersOnly.substring(2, 4), 10);
+          if (month > 12) {
+            formattedValue += '/12';
+          } else if (month === 0 && numbersOnly.length >= 4) {
+            formattedValue += '/01';
+          } else {
+            formattedValue += '/' + numbersOnly.substring(2, 4).padStart(2, '0');
+          }
         }
         if (numbersOnly.length > 4) {
-          formattedValue += '/' + numbersOnly.substring(4, 8);
+          // Limitar o ano a um valor razoável
+          const year = parseInt(numbersOnly.substring(4, 8), 10);
+          const currentYear = new Date().getFullYear();
+          
+          if (year < 1000 && numbersOnly.length >= 8) {
+            formattedValue += '/2000';
+          } else {
+            formattedValue += '/' + numbersOnly.substring(4, 8);
+          }
         }
       } else if (mask === 'datahora') {
         // Formato: DD/MM/YYYY HH:MM
         if (numbersOnly.length > 0) {
-          formattedValue = numbersOnly.substring(0, 2);
+          const day = parseInt(numbersOnly.substring(0, 2), 10);
+          if (day > 31) {
+            formattedValue = '31';
+          } else if (day === 0 && numbersOnly.length >= 2) {
+            formattedValue = '01';
+          } else {
+            formattedValue = numbersOnly.substring(0, 2).padStart(2, '0');
+          }
         }
         if (numbersOnly.length > 2) {
-          formattedValue += '/' + numbersOnly.substring(2, 4);
+          const month = parseInt(numbersOnly.substring(2, 4), 10);
+          if (month > 12) {
+            formattedValue += '/12';
+          } else if (month === 0 && numbersOnly.length >= 4) {
+            formattedValue += '/01';
+          } else {
+            formattedValue += '/' + numbersOnly.substring(2, 4).padStart(2, '0');
+          }
         }
         if (numbersOnly.length > 4) {
-          formattedValue += '/' + numbersOnly.substring(4, 8);
+          const year = parseInt(numbersOnly.substring(4, 8), 10);
+          if (year < 1000 && numbersOnly.length >= 8) {
+            formattedValue += '/2000';
+          } else {
+            formattedValue += '/' + numbersOnly.substring(4, 8);
+          }
         }
         if (numbersOnly.length > 8) {
-          formattedValue += ' ' + numbersOnly.substring(8, 10);
+          const hours = parseInt(numbersOnly.substring(8, 10), 10);
+          if (hours > 23) {
+            formattedValue += ' 23';
+          } else {
+            formattedValue += ' ' + numbersOnly.substring(8, 10).padStart(2, '0');
+          }
         }
         if (numbersOnly.length > 10) {
-          formattedValue += ':' + numbersOnly.substring(10, 12);
+          const minutes = parseInt(numbersOnly.substring(10, 12), 10);
+          if (minutes > 59) {
+            formattedValue += ':59';
+          } else {
+            formattedValue += ':' + numbersOnly.substring(10, 12).padStart(2, '0');
+          }
         }
+      }
+      
+      // Se o valor formatado estiver vazio mas temos entrada, manter o valor original
+      if (formattedValue === '' && rawValue !== '') {
+        formattedValue = rawValue;
       }
       
       // Atualizar o estado interno
@@ -130,25 +195,13 @@ const MaskedInput = React.forwardRef<HTMLInputElement, MaskedInputProps>(
       }
     };
 
-    // Combinar a ref passada pelo usuário com a ref interna
-    const combinedRef = React.useMemo(() => {
-      return (node: HTMLInputElement) => {
-        inputRef.current = node;
-        if (typeof ref === 'function') {
-          ref(node);
-        } else if (ref) {
-          ref.current = node;
-        }
-      };
-    }, [ref]);
-
     return (
       <Input
+        ref={ref || inputRef}
+        type="text"
         className={cn(className)}
-        ref={combinedRef}
         value={inputValue}
         onChange={handleChange}
-        placeholder={mask === 'data' ? 'DD/MM/AAAA' : 'DD/MM/AAAA HH:MM'}
         {...props}
       />
     );

@@ -51,6 +51,7 @@ export default function NovoDocumentoCliente() {
     status: 'Pendente',
     tamanho: 0,
     url: '',
+    descricao: '', 
   })
   const [arquivo, setArquivo] = useState<File | null>(null)
 
@@ -116,7 +117,8 @@ export default function NovoDocumentoCliente() {
       
       setFormData((prev) => ({
         ...prev,
-        nome: file.name.split('.')[0], // Nome sem extensão
+        // Manter o nome atual se já existir, caso contrário usar o nome do arquivo
+        nome: prev.nome && prev.nome.trim() !== '' ? prev.nome : file.name.split('.')[0],
         formato: extensao,
         tamanho: file.size,
         url: URL.createObjectURL(file) // URL temporária para o arquivo
@@ -149,8 +151,11 @@ export default function NovoDocumentoCliente() {
         projetoId: formData.projetoId,
         visitaId: formData.visitaId === 'nenhuma' ? '' : formData.visitaId,
         status: formData.status || 'Pendente',
-        tags: []
+        tags: [],
+        descricao: formData.descricao || '' 
       }
+      
+      console.log('Enviando documento:', novoDocumento); 
       
       await documentosApi.criarDocumento(novoDocumento)
       toast({
@@ -175,6 +180,64 @@ export default function NovoDocumentoCliente() {
       setSalvando(false)
     }
   }
+
+  const ArquivoUpload = () => (
+    <div className="space-y-2">
+      <Label htmlFor="arquivo">Arquivo</Label>
+      <div className="border rounded-md p-4 bg-muted/5">
+        <div className="flex flex-col gap-3">
+          {!arquivo ? (
+            <label 
+              htmlFor="arquivo" 
+              className="flex flex-col items-center justify-center w-full h-24 border border-dashed rounded-md cursor-pointer bg-background hover:bg-muted/10 transition-colors"
+            >
+              <div className="flex flex-col items-center justify-center py-3">
+                <Upload className="w-6 h-6 mb-1 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  Clique para selecionar um arquivo
+                </p>
+              </div>
+              <Input
+                id="arquivo"
+                type="file"
+                onChange={handleFileChange}
+                className="hidden"
+                required
+              />
+            </label>
+          ) : (
+            <div className="flex items-center justify-between p-3 border rounded-md bg-background">
+              <div className="flex items-center gap-3 overflow-hidden">
+                <div className="flex-shrink-0 w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center">
+                  <span className="text-xs font-medium text-primary">{arquivo.name.split('.').pop()?.toUpperCase()}</span>
+                </div>
+                <div className="overflow-hidden">
+                  <p className="text-sm font-medium truncate">{arquivo.name}</p>
+                  <p className="text-xs text-muted-foreground">{Math.round(arquivo.size / 1024)} KB</p>
+                </div>
+              </div>
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  setArquivo(null);
+                  // Reset do input file
+                  const fileInput = document.getElementById('arquivo') as HTMLInputElement;
+                  if (fileInput) fileInput.value = '';
+                }}
+                className="h-8 w-8 p-0"
+              >
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
+                  <path d="M11.7816 4.03157C12.0062 3.80702 12.0062 3.44295 11.7816 3.2184C11.5571 2.99385 11.193 2.99385 10.9685 3.2184L7.50005 6.68682L4.03164 3.2184C3.80708 2.99385 3.44301 2.99385 3.21846 3.2184C2.99391 3.44295 2.99391 3.80702 3.21846 4.03157L6.68688 7.49999L3.21846 10.9684C2.99391 11.193 2.99391 11.557 3.21846 11.7816C3.44301 12.0061 3.80708 12.0061 4.03164 11.7816L7.50005 8.31316L10.9685 11.7816C11.193 12.0061 11.5571 12.0061 11.7816 11.7816C12.0062 11.557 12.0062 11.193 11.7816 10.9684L8.31322 7.49999L11.7816 4.03157Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
+                </svg>
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 
   // Renderização condicional após declarar todos os hooks
   if (!isMounted) {
@@ -327,26 +390,7 @@ export default function NovoDocumentoCliente() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="arquivo">Arquivo</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="arquivo"
-                  type="file"
-                  onChange={handleFileChange}
-                  className="flex-1"
-                  required
-                />
-                <Button type="button" variant="outline" size="icon">
-                  <Upload className="h-4 w-4" />
-                </Button>
-              </div>
-              {arquivo && (
-                <p className="text-sm text-muted-foreground">
-                  {arquivo.name} ({Math.round(arquivo.size / 1024)} KB)
-                </p>
-              )}
-            </div>
+            <ArquivoUpload />
           </CardContent>
           <CardFooter className="flex justify-between">
             {visitaId ? (

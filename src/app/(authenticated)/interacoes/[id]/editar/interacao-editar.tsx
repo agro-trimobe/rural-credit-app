@@ -75,11 +75,21 @@ function InteracaoEditarConteudo({ interacaoId }: { interacaoId: string }) {
             const ano = dataObj.getFullYear();
             setData(`${dia}/${mes}/${ano}`);
           } else {
-            setData('');
+            // Fallback para a data atual se a data da interação for inválida
+            const hoje = new Date();
+            const dia = hoje.getDate().toString().padStart(2, '0');
+            const mes = (hoje.getMonth() + 1).toString().padStart(2, '0');
+            const ano = hoje.getFullYear();
+            setData(`${dia}/${mes}/${ano}`);
             console.error('Data inválida na interação:', interacao.data);
           }
         } catch (error) {
-          setData('');
+          // Fallback para a data atual em caso de erro
+          const hoje = new Date();
+          const dia = hoje.getDate().toString().padStart(2, '0');
+          const mes = (hoje.getMonth() + 1).toString().padStart(2, '0');
+          const ano = hoje.getFullYear();
+          setData(`${dia}/${mes}/${ano}`);
           console.error('Erro ao converter data:', error);
         }
         
@@ -144,17 +154,24 @@ function InteracaoEditarConteudo({ interacaoId }: { interacaoId: string }) {
         return
       }
       
+      // Converter a data para ISO
+      const dataISO = converterDataParaISO(data);
+      
       // Atualizar interação
-      const dadosAtualizados: Interacao = {
-        ...interacao,
+      const dadosAtualizados: Partial<Interacao> = {
         tipo,
         assunto,
         descricao,
-        data: converterDataParaISO(data),
+        data: dataISO,
         status,
         observacoes: observacoes || undefined,
-        dataAtualizacao: new Date().toISOString()
+        dataAtualizacao: dataISO // Usar a data informada pelo usuário em vez da data atual
       }
+      
+      // Log para debug
+      console.log('Data original:', data);
+      console.log('Data convertida para ISO:', dataISO);
+      console.log('Dados atualizados:', dadosAtualizados);
       
       await interacoesApi.atualizarInteracao(interacaoId, dadosAtualizados)
       toast({
@@ -335,15 +352,20 @@ function converterDataParaISO(data: string) {
     const mes = parseInt(partes[1], 10) - 1; // Mês em JavaScript é 0-indexed
     const ano = parseInt(partes[2], 10);
     
-    // Validar se os componentes da data são válidos
-    if (isNaN(dia) || isNaN(mes) || isNaN(ano) || 
-        dia < 1 || dia > 31 || mes < 0 || mes > 11 || ano < 1900) {
-      console.error('Componentes de data inválidos:', { dia, mes, ano });
+    // Verificar se algum dos valores é NaN antes de fazer as comparações
+    if (isNaN(dia) || isNaN(mes) || isNaN(ano)) {
+      console.error('Componentes de data inválidos (NaN):', { dia, mes, ano });
+      return new Date().toISOString();
+    }
+    
+    // Validar se os componentes da data estão dentro dos limites válidos
+    if (dia < 1 || dia > 31 || mes < 0 || mes > 11 || ano < 1000) {
+      console.error('Componentes de data fora dos limites válidos:', { dia, mes, ano });
       return new Date().toISOString();
     }
     
     // Criar uma data no fuso horário local
-    const dataObj = new Date(ano, mes, dia, 12, 0, 0); // Meio-dia para evitar problemas de fuso horário
+    const dataObj = new Date(ano, mes, dia);
     
     // Verificar se a data é válida
     if (isNaN(dataObj.getTime())) {

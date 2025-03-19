@@ -121,19 +121,28 @@ function NovaInteracaoConteudo({ clienteId }: { clienteId: string }) {
         return
       }
       
+      // Converter a data para ISO
+      const dataISO = converterDataParaISO(data);
+      
+      // Log para debug
+      console.log('Data original:', data);
+      console.log('Data convertida para ISO:', dataISO);
+      
       // Criar nova interação
       const novaInteracao: Omit<Interacao, 'id'> = {
         clienteId,
         tipo,
         assunto,
         descricao,
-        data: converterDataParaISO(data),
+        data: dataISO,
         responsavel,
         status,
         observacoes: observacoes || undefined,
-        dataCriacao: new Date().toISOString(),
-        dataAtualizacao: new Date().toISOString()
+        dataCriacao: dataISO, // Usar a data informada pelo usuário
+        dataAtualizacao: dataISO // Usar a data informada pelo usuário
       }
+      
+      console.log('Nova interação a ser criada:', novaInteracao);
       
       const interacaoCriada = await interacoesApi.criarInteracao(novaInteracao)
       toast({
@@ -149,6 +158,7 @@ function NovaInteracaoConteudo({ clienteId }: { clienteId: string }) {
         description: 'Não foi possível registrar a interação',
         variant: 'destructive',
       })
+    } finally {
       setSalvando(false)
     }
   }
@@ -172,15 +182,20 @@ function NovaInteracaoConteudo({ clienteId }: { clienteId: string }) {
       const mes = parseInt(partes[1], 10) - 1; // Mês em JavaScript é 0-indexed
       const ano = parseInt(partes[2], 10);
       
-      // Validar se os componentes da data são válidos
-      if (isNaN(dia) || isNaN(mes) || isNaN(ano) || 
-          dia < 1 || dia > 31 || mes < 0 || mes > 11 || ano < 1900) {
-        console.error('Componentes de data inválidos:', { dia, mes, ano });
+      // Verificar se algum dos valores é NaN antes de fazer as comparações
+      if (isNaN(dia) || isNaN(mes) || isNaN(ano)) {
+        console.error('Componentes de data inválidos (NaN):', { dia, mes, ano });
+        return new Date().toISOString();
+      }
+      
+      // Validar se os componentes da data estão dentro dos limites válidos
+      if (dia < 1 || dia > 31 || mes < 0 || mes > 11 || ano < 1000) {
+        console.error('Componentes de data fora dos limites válidos:', { dia, mes, ano });
         return new Date().toISOString();
       }
       
       // Criar uma data no fuso horário local
-      const dataObj = new Date(ano, mes, dia, 12, 0, 0); // Meio-dia para evitar problemas de fuso horário
+      const dataObj = new Date(ano, mes, dia);
       
       // Verificar se a data é válida
       if (isNaN(dataObj.getTime())) {
