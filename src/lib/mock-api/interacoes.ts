@@ -5,7 +5,7 @@ import { gerarIdAleatorio, gerarDataAleatoria } from '../crm-utils'
 const interacoesMock: Interacao[] = [
   {
     id: 'int-001',
-    clienteId: 'cli-001',
+    clienteId: '1',
     tipo: 'Ligação',
     data: '2024-12-15T10:00:00Z',
     assunto: 'Apresentação de proposta',
@@ -18,7 +18,7 @@ const interacoesMock: Interacao[] = [
   },
   {
     id: 'int-002',
-    clienteId: 'cli-001',
+    clienteId: '1',
     tipo: 'Email',
     data: '2024-12-16T14:30:00Z',
     assunto: 'Envio de documentação',
@@ -30,7 +30,7 @@ const interacoesMock: Interacao[] = [
   },
   {
     id: 'int-003',
-    clienteId: 'cli-001',
+    clienteId: '1',
     tipo: 'Reunião',
     data: '2024-12-20T09:00:00Z',
     assunto: 'Assinatura de contrato',
@@ -43,7 +43,7 @@ const interacoesMock: Interacao[] = [
   },
   {
     id: 'int-004',
-    clienteId: 'cli-002',
+    clienteId: '2',
     tipo: 'Visita',
     data: '2024-12-18T14:00:00Z',
     assunto: 'Visita técnica à propriedade',
@@ -56,7 +56,7 @@ const interacoesMock: Interacao[] = [
   },
   {
     id: 'int-005',
-    clienteId: 'cli-003',
+    clienteId: '3',
     tipo: 'Ligação',
     data: '2024-12-19T11:00:00Z',
     assunto: 'Acompanhamento de proposta',
@@ -68,7 +68,7 @@ const interacoesMock: Interacao[] = [
   },
   {
     id: 'int-006',
-    clienteId: 'cli-004',
+    clienteId: '4',
     tipo: 'Email',
     data: '2024-12-14T09:45:00Z',
     assunto: 'Solicitação de documentos adicionais',
@@ -80,7 +80,7 @@ const interacoesMock: Interacao[] = [
   },
   {
     id: 'int-007',
-    clienteId: 'cli-005',
+    clienteId: '5',
     tipo: 'Reunião',
     data: '2024-12-21T10:00:00Z',
     assunto: 'Apresentação de linhas de crédito',
@@ -92,7 +92,7 @@ const interacoesMock: Interacao[] = [
   },
   {
     id: 'int-008',
-    clienteId: 'cli-002',
+    clienteId: '2',
     tipo: 'Outro',
     data: '2024-12-13T13:30:00Z',
     assunto: 'Análise de documentação',

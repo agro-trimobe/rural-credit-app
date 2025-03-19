@@ -127,17 +127,17 @@ function InteracaoDetalhesConteudo({ interacaoId }: { interacaoId: string }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <p className="text-sm font-medium">Tipo</p>
-              <p className="text-sm text-muted-foreground">
+              <div className="text-sm text-muted-foreground">
                 <Badge variant="outline">{interacao.tipo}</Badge>
-              </p>
+              </div>
             </div>
             
             <div className="space-y-1">
               <p className="text-sm font-medium">Data</p>
-              <p className="text-sm text-muted-foreground">
+              <div className="text-sm text-muted-foreground">
                 <Calendar className="inline-block mr-1 h-3 w-3" />
                 {formatarData(interacao.data)}
-              </p>
+              </div>
             </div>
             
             <div className="space-y-1 col-span-2">
@@ -151,7 +151,7 @@ function InteracaoDetalhesConteudo({ interacaoId }: { interacaoId: string }) {
                   {cliente.nome}
                 </Link>
               ) : (
-                <p className="text-sm text-muted-foreground">Cliente não encontrado</p>
+                <div className="text-sm text-muted-foreground">Cliente não encontrado</div>
               )}
             </div>
           </div>
@@ -162,7 +162,7 @@ function InteracaoDetalhesConteudo({ interacaoId }: { interacaoId: string }) {
             <div className="space-y-2">
               <h3 className="text-sm font-medium">Descrição</h3>
               <div className="bg-muted/50 p-4 rounded-md">
-                <p className="text-sm whitespace-pre-line">{interacao.descricao}</p>
+                <div className="text-sm whitespace-pre-line">{interacao.descricao}</div>
               </div>
             </div>
             
@@ -170,7 +170,7 @@ function InteracaoDetalhesConteudo({ interacaoId }: { interacaoId: string }) {
               <div className="space-y-2">
                 <h3 className="text-sm font-medium">Observações Adicionais</h3>
                 <div className="bg-muted/50 p-4 rounded-md">
-                  <p className="text-sm whitespace-pre-line">{interacao.observacoes}</p>
+                  <div className="text-sm whitespace-pre-line">{interacao.observacoes}</div>
                 </div>
               </div>
             )}
@@ -181,12 +181,12 @@ function InteracaoDetalhesConteudo({ interacaoId }: { interacaoId: string }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <p className="font-medium">Data de Criação</p>
-              <p className="text-muted-foreground">{formatarData(interacao.dataCriacao)}</p>
+              <div className="text-muted-foreground">{formatarData(interacao.dataCriacao)}</div>
             </div>
             
             <div>
               <p className="font-medium">Última Atualização</p>
-              <p className="text-muted-foreground">{formatarData(interacao.dataAtualizacao)}</p>
+              <div className="text-muted-foreground">{formatarData(interacao.dataAtualizacao)}</div>
             </div>
           </div>
         </CardContent>

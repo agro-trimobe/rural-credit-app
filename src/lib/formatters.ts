@@ -31,7 +31,13 @@ export function formatarData(dataISO?: string): string {
   if (!dataISO) return 'N/A';
   
   try {
+    // Verificar se a data é válida antes de tentar formatá-la
     const data = new Date(dataISO);
+    if (isNaN(data.getTime())) {
+      console.error('Data inválida:', dataISO);
+      return 'Data inválida';
+    }
+    
     return new Intl.DateTimeFormat('pt-BR', {
       day: '2-digit',
       month: '2-digit',
@@ -50,7 +56,13 @@ export function formatarDataHora(dataISO?: string): string {
   if (!dataISO) return 'N/A';
   
   try {
+    // Verificar se a data é válida antes de tentar formatá-la
     const data = new Date(dataISO);
+    if (isNaN(data.getTime())) {
+      console.error('Data inválida:', dataISO);
+      return 'Data inválida';
+    }
+    
     return new Intl.DateTimeFormat('pt-BR', {
       day: '2-digit',
       month: '2-digit',

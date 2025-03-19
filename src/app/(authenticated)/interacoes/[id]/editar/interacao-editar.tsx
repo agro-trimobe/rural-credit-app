@@ -27,6 +27,7 @@ import { ArrowLeft } from 'lucide-react'
 import { Interacao, Cliente } from '@/lib/crm-utils'
 import { interacoesApi, clientesApi } from '@/lib/mock-api'
 import { toast } from '@/hooks/use-toast'
+import { formatarData } from '@/lib/formatters'
 
 function InteracaoEditarConteudo({ interacaoId }: { interacaoId: string }) {
   const router = useRouter()
@@ -64,7 +65,24 @@ function InteracaoEditarConteudo({ interacaoId }: { interacaoId: string }) {
         setTipo(interacao.tipo as any)
         setAssunto(interacao.assunto)
         setDescricao(interacao.descricao)
-        setData(interacao.data)
+        
+        // Converter a data ISO para o formato brasileiro (DD/MM/AAAA)
+        try {
+          const dataObj = new Date(interacao.data);
+          if (!isNaN(dataObj.getTime())) {
+            const dia = dataObj.getDate().toString().padStart(2, '0');
+            const mes = (dataObj.getMonth() + 1).toString().padStart(2, '0');
+            const ano = dataObj.getFullYear();
+            setData(`${dia}/${mes}/${ano}`);
+          } else {
+            setData('');
+            console.error('Data inválida na interação:', interacao.data);
+          }
+        } catch (error) {
+          setData('');
+          console.error('Erro ao converter data:', error);
+        }
+        
         setStatus(interacao.status as any)
         setObservacoes(interacao.observacoes || '')
         
@@ -300,11 +318,45 @@ function InteracaoEditarConteudo({ interacaoId }: { interacaoId: string }) {
 }
 
 function converterDataParaISO(data: string) {
-  const partes = data.split('/');
-  const dia = partes[0];
-  const mes = partes[1];
-  const ano = partes[2];
-  return `${ano}-${mes}-${dia}T00:00:00.000Z`;
+  // Verificar se a data está no formato brasileiro (DD/MM/AAAA)
+  if (!data || !data.includes('/')) {
+    console.error('Formato de data inválido:', data);
+    return new Date().toISOString(); // Retorna a data atual como fallback
+  }
+
+  try {
+    const partes = data.split('/');
+    if (partes.length !== 3) {
+      console.error('Formato de data inválido:', data);
+      return new Date().toISOString();
+    }
+
+    const dia = parseInt(partes[0], 10);
+    const mes = parseInt(partes[1], 10) - 1; // Mês em JavaScript é 0-indexed
+    const ano = parseInt(partes[2], 10);
+    
+    // Validar se os componentes da data são válidos
+    if (isNaN(dia) || isNaN(mes) || isNaN(ano) || 
+        dia < 1 || dia > 31 || mes < 0 || mes > 11 || ano < 1900) {
+      console.error('Componentes de data inválidos:', { dia, mes, ano });
+      return new Date().toISOString();
+    }
+    
+    // Criar uma data no fuso horário local
+    const dataObj = new Date(ano, mes, dia, 12, 0, 0); // Meio-dia para evitar problemas de fuso horário
+    
+    // Verificar se a data é válida
+    if (isNaN(dataObj.getTime())) {
+      console.error('Data inválida após conversão:', dataObj);
+      return new Date().toISOString();
+    }
+    
+    // Retornar no formato ISO
+    return dataObj.toISOString();
+  } catch (error) {
+    console.error('Erro ao converter data para ISO:', error);
+    return new Date().toISOString();
+  }
 }
 
 export default InteracaoEditarConteudo

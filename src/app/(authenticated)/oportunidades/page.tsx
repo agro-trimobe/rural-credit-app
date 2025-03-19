@@ -26,6 +26,16 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { 
   ChevronDown, 
   Plus, 
@@ -47,6 +57,11 @@ export default function OportunidadesPage() {
   const [carregando, setCarregando] = useState(true)
   const [busca, setBusca] = useState('')
   const [filtro, setFiltro] = useState<'Todos' | 'Prospecção' | 'Contato Inicial' | 'Proposta' | 'Negociação' | 'Fechado' | 'Perdido'>('Todos')
+  const [excluindo, setExcluindo] = useState(false)
+  
+  // Estado para controlar o diálogo de confirmação de exclusão
+  const [dialogoExclusaoAberto, setDialogoExclusaoAberto] = useState(false)
+  const [oportunidadeParaExcluir, setOportunidadeParaExcluir] = useState<string | null>(null)
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -74,6 +89,38 @@ export default function OportunidadesPage() {
 
     carregarDados()
   }, [])
+
+  // Função para abrir o diálogo de confirmação de exclusão
+  const confirmarExclusao = (id: string) => {
+    setOportunidadeParaExcluir(id)
+    setDialogoExclusaoAberto(true)
+  }
+
+  // Função para excluir uma oportunidade
+  const excluirOportunidade = async () => {
+    if (excluindo || !oportunidadeParaExcluir) return;
+    
+    try {
+      setExcluindo(true);
+      
+      // Chamar API para excluir
+      const sucesso = await oportunidadesApi.excluirOportunidade(oportunidadeParaExcluir);
+      
+      if (sucesso) {
+        // Atualizar lista de oportunidades removendo a excluída
+        setOportunidades(oportunidades.filter(oportunidade => oportunidade.id !== oportunidadeParaExcluir));
+      } else {
+        alert('Erro ao excluir oportunidade. Tente novamente.');
+      }
+    } catch (error) {
+      console.error('Erro ao excluir oportunidade:', error);
+      alert('Erro ao excluir oportunidade. Tente novamente.');
+    } finally {
+      setExcluindo(false);
+      setDialogoExclusaoAberto(false);
+      setOportunidadeParaExcluir(null);
+    }
+  };
 
   // Filtrar oportunidades com base na busca e no filtro
   const oportunidadesFiltradas = oportunidades.filter(oportunidade => {
@@ -270,7 +317,11 @@ export default function OportunidadesPage() {
                                 </Link>
                               </DropdownMenuItem>
                             )}
-                            <DropdownMenuItem className="text-destructive">
+                            <DropdownMenuItem 
+                              className="text-destructive"
+                              onClick={() => confirmarExclusao(oportunidade.id)}
+                              disabled={excluindo}
+                            >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Excluir
                             </DropdownMenuItem>
@@ -285,6 +336,29 @@ export default function OportunidadesPage() {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Diálogo de confirmação de exclusão */}
+      <AlertDialog open={dialogoExclusaoAberto} onOpenChange={setDialogoExclusaoAberto}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta oportunidade?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={excluirOportunidade}
+              disabled={excluindo}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {excluindo ? 'Excluindo...' : 'Excluir'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

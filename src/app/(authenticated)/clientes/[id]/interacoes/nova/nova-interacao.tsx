@@ -38,7 +38,14 @@ function NovaInteracaoConteudo({ clienteId }: { clienteId: string }) {
   const [tipo, setTipo] = useState<'Ligação' | 'Email' | 'Reunião' | 'Visita' | 'Outro'>('Ligação')
   const [assunto, setAssunto] = useState('')
   const [descricao, setDescricao] = useState('')
-  const [data, setData] = useState(new Date().toISOString().split('T')[0])
+  
+  // Inicializar a data no formato brasileiro (DD/MM/AAAA)
+  const dataAtual = new Date()
+  const dia = dataAtual.getDate().toString().padStart(2, '0')
+  const mes = (dataAtual.getMonth() + 1).toString().padStart(2, '0')
+  const ano = dataAtual.getFullYear()
+  const [data, setData] = useState(`${dia}/${mes}/${ano}`)
+  
   const [status, setStatus] = useState<'Pendente' | 'Em andamento' | 'Concluída'>('Pendente')
   const [observacoes, setObservacoes] = useState('')
   const [responsavel, setResponsavel] = useState('Usuário Atual')
@@ -146,9 +153,47 @@ function NovaInteracaoConteudo({ clienteId }: { clienteId: string }) {
     }
   }
 
-  const converterDataParaISO = (data: string) => {
-    const partes = data.split('/')
-    return `${partes[2]}-${partes[1]}-${partes[0]}T00:00:00.000Z`
+  // Função para converter data no formato DD/MM/AAAA para ISO
+  function converterDataParaISO(data: string) {
+    // Verificar se a data está no formato brasileiro (DD/MM/AAAA)
+    if (!data || !data.includes('/')) {
+      console.error('Formato de data inválido:', data);
+      return new Date().toISOString(); // Retorna a data atual como fallback
+    }
+
+    try {
+      const partes = data.split('/');
+      if (partes.length !== 3) {
+        console.error('Formato de data inválido:', data);
+        return new Date().toISOString();
+      }
+
+      const dia = parseInt(partes[0], 10);
+      const mes = parseInt(partes[1], 10) - 1; // Mês em JavaScript é 0-indexed
+      const ano = parseInt(partes[2], 10);
+      
+      // Validar se os componentes da data são válidos
+      if (isNaN(dia) || isNaN(mes) || isNaN(ano) || 
+          dia < 1 || dia > 31 || mes < 0 || mes > 11 || ano < 1900) {
+        console.error('Componentes de data inválidos:', { dia, mes, ano });
+        return new Date().toISOString();
+      }
+      
+      // Criar uma data no fuso horário local
+      const dataObj = new Date(ano, mes, dia, 12, 0, 0); // Meio-dia para evitar problemas de fuso horário
+      
+      // Verificar se a data é válida
+      if (isNaN(dataObj.getTime())) {
+        console.error('Data inválida após conversão:', dataObj);
+        return new Date().toISOString();
+      }
+      
+      // Retornar no formato ISO
+      return dataObj.toISOString();
+    } catch (error) {
+      console.error('Erro ao converter data para ISO:', error);
+      return new Date().toISOString();
+    }
   }
 
   if (carregando) {

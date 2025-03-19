@@ -95,13 +95,28 @@ export default function EditarOportunidadePage() {
         setOportunidade(dadosOportunidade)
         setClientes(dadosClientes)
         
-        // Formatar data do próximo contato para o formato esperado pelo input
+        // Formatar data do próximo contato para o formato brasileiro
         let proximoContatoFormatado = ''
         if (dadosOportunidade.proximoContato) {
-          const data = new Date(dadosOportunidade.proximoContato)
-          proximoContatoFormatado = new Date(data.getTime() - data.getTimezoneOffset() * 60000)
-            .toISOString()
-            .slice(0, 16)
+          try {
+            const data = new Date(dadosOportunidade.proximoContato)
+            
+            // Verificar se a data é válida
+            if (isNaN(data.getTime())) {
+              console.error('Data inválida ao carregar oportunidade:', dadosOportunidade.proximoContato)
+            } else {
+              // Formatar para o formato brasileiro DD/MM/AAAA HH:MM
+              const dia = data.getDate().toString().padStart(2, '0')
+              const mes = (data.getMonth() + 1).toString().padStart(2, '0')
+              const ano = data.getFullYear()
+              const hora = data.getHours().toString().padStart(2, '0')
+              const minuto = data.getMinutes().toString().padStart(2, '0')
+              
+              proximoContatoFormatado = `${dia}/${mes}/${ano} ${hora}:${minuto}`
+            }
+          } catch (error) {
+            console.error('Erro ao formatar data do próximo contato:', error)
+          }
         }
         
         // Preencher formulário com dados da oportunidade
@@ -132,11 +147,56 @@ export default function EditarOportunidadePage() {
       // Converter data do formato DD/MM/YYYY HH:MM para ISO
       let proximoContato;
       if (data.proximoContato) {
-        const dataPartes = data.proximoContato.split(' ');
-        const dataFormatada = dataPartes[0].split('/').reverse().join('-');
-        proximoContato = dataPartes.length > 1 
-          ? `${dataFormatada}T${dataPartes[1]}:00` 
-          : `${dataFormatada}T00:00:00`;
+        try {
+          // Verificar se a data está no formato brasileiro
+          if (data.proximoContato.includes('/')) {
+            const dataPartes = data.proximoContato.split(' ');
+            const [dia, mes, ano] = dataPartes[0].split('/');
+            
+            // Validar os componentes da data
+            const diaNum = parseInt(dia, 10);
+            const mesNum = parseInt(mes, 10);
+            const anoNum = parseInt(ano, 10);
+            
+            if (isNaN(diaNum) || isNaN(mesNum) || isNaN(anoNum) || 
+                diaNum < 1 || diaNum > 31 || 
+                mesNum < 1 || mesNum > 12 || 
+                anoNum < 2000 || anoNum > 2100) {
+              throw new Error('Data inválida');
+            }
+            
+            const dataFormatada = `${anoNum}-${mesNum.toString().padStart(2, '0')}-${diaNum.toString().padStart(2, '0')}`;
+            
+            if (dataPartes.length > 1) {
+              // Tem hora e minuto
+              const [hora, minuto] = dataPartes[1].split(':');
+              const horaNum = parseInt(hora, 10);
+              const minutoNum = parseInt(minuto, 10);
+              
+              if (isNaN(horaNum) || isNaN(minutoNum) || 
+                  horaNum < 0 || horaNum > 23 || 
+                  minutoNum < 0 || minutoNum > 59) {
+                throw new Error('Hora inválida');
+              }
+              
+              proximoContato = `${dataFormatada}T${horaNum.toString().padStart(2, '0')}:${minutoNum.toString().padStart(2, '0')}:00`;
+            } else {
+              // Só tem data
+              proximoContato = `${dataFormatada}T00:00:00`;
+            }
+          } else if (data.proximoContato.includes('-') && data.proximoContato.includes('T')) {
+            // Já está no formato ISO
+            proximoContato = data.proximoContato;
+          } else {
+            // Formato desconhecido
+            throw new Error('Formato de data desconhecido');
+          }
+        } catch (error) {
+          console.error('Erro ao processar data:', error);
+          setErro('Data inválida. Use o formato DD/MM/AAAA HH:MM');
+          setSalvando(false);
+          return;
+        }
       }
       
       const oportunidadeAtualizada = await oportunidadesApi.atualizarOportunidade(id, {
