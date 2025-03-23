@@ -4,8 +4,13 @@ import { S3Client } from '@aws-sdk/client-s3';
 
 // Usar variáveis de ambiente com prefixo NEXT_PUBLIC_ e fornecer valores padrão
 const REGION = process.env.NEXT_PUBLIC_COGNITO_REGION || process.env.COGNITO_REGION || 'us-east-1';
-const ACCESS_KEY = process.env.NEXT_PUBLIC_ACCESS_KEY_ID_AWS || process.env.ACCESS_KEY_ID_AWS || 'CHAVE_REMOVIDA';
-const SECRET_KEY = process.env.NEXT_PUBLIC_SECRET_ACCESS_KEY_AWS || process.env.SECRET_ACCESS_KEY_AWS || 'SEGREDO_REMOVIDO';
+const ACCESS_KEY = process.env.NEXT_PUBLIC_ACCESS_KEY_ID_AWS || process.env.ACCESS_KEY_ID_AWS || '';
+const SECRET_KEY = process.env.NEXT_PUBLIC_SECRET_ACCESS_KEY_AWS || process.env.SECRET_ACCESS_KEY_AWS || '';
+
+// Verificar se as credenciais estão configuradas
+if (!ACCESS_KEY || !SECRET_KEY) {
+  console.warn(' Credenciais AWS não configuradas. Configure as variáveis de ambiente ACCESS_KEY_ID_AWS e SECRET_ACCESS_KEY_AWS.');
+}
 
 // Adicionar logs para depuração
 console.log('Configuração AWS inicializada:');
