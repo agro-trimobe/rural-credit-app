@@ -37,7 +37,7 @@ import {
 } from 'lucide-react'
 import { Cliente } from '@/lib/crm-utils'
 import { formatarCpfCnpj, formatarTelefone, formatarData } from '@/lib/formatters'
-import { clientesApi } from '@/lib/mock-api'
+import { clientesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 import {
   AlertDialog,

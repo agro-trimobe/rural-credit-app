@@ -23,7 +23,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Calendar, MessageSquare, Eye, Search, Filter, Plus } from 'lucide-react'
 import { Interacao, Cliente } from '@/lib/crm-utils'
-import { interacoesApi, clientesApi } from '@/lib/mock-api'
+import { interacoesApi, clientesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 import { formatarData } from '@/lib/formatters'
 

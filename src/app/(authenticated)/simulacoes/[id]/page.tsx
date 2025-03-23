@@ -30,11 +30,10 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table'
+import { Simulacao, Cliente } from '@/lib/crm-utils'
+import { formatarData, formatarMoeda, formatarValor } from '@/lib/formatters'
+import { simulacoesApi, clientesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
-import { Simulacao } from '@/lib/crm-utils'
-import { formatarMoeda, formatarData, formatarValor } from '@/lib/formatters'
-import { simulacoesApi } from '@/lib/mock-api/simulacoes'
-import { clientesApi } from '@/lib/mock-api/clientes'
 
 export default function SimulacaoDetalhesPage() {
   const params = useParams()
@@ -45,72 +44,56 @@ export default function SimulacaoDetalhesPage() {
   const [nomeCliente, setNomeCliente] = useState('')
   const [carregando, setCarregando] = useState(true)
   const [excluindo, setExcluindo] = useState(false)
+  const [erro, setErro] = useState('')
+  const [cliente, setCliente] = useState<Cliente | null>(null)
   
   useEffect(() => {
-    const carregarDados = async () => {
+    const carregarSimulacao = async () => {
       try {
         setCarregando(true)
+        const simulacao = await simulacoesApi.buscarSimulacaoPorId(simulacaoId)
         
-        // Carregar dados da simulação
-        const dadosSimulacao = await simulacoesApi.getById(simulacaoId)
-        
-        if (!dadosSimulacao) {
-          toast({
-            title: 'Erro',
-            description: 'Simulação não encontrada.',
-            variant: 'destructive',
-          })
-          router.push('/simulacoes')
-          return
+        if (simulacao) {
+          setSimulacao(simulacao)
+          
+          // Carregar dados do cliente
+          if (simulacao.clienteId) {
+            const cliente = await clientesApi.buscarClientePorId(simulacao.clienteId)
+            if (cliente) {
+              setNomeCliente(cliente.nome)
+            }
+          }
+        } else {
+          setErro('Simulação não encontrada')
         }
-        
-        setSimulacao(dadosSimulacao)
-        
-        // Carregar dados do cliente
-        const cliente = await clientesApi.buscarClientePorId(dadosSimulacao.clienteId)
-        if (cliente) {
-          setNomeCliente(cliente.nome)
-        }
-        
       } catch (error) {
-        console.error('Erro ao carregar dados:', error)
-        toast({
-          title: 'Erro',
-          description: 'Não foi possível carregar os dados da simulação.',
-          variant: 'destructive',
-        })
+        console.error('Erro ao carregar simulação:', error)
+        setErro('Erro ao carregar dados da simulação')
       } finally {
         setCarregando(false)
       }
     }
     
-    carregarDados()
-  }, [simulacaoId, router])
-  
+    carregarSimulacao()
+  }, [simulacaoId])
+
   const handleExcluir = async () => {
-    if (!simulacao) return
-    
     try {
       setExcluindo(true)
-      
-      const sucesso = await simulacoesApi.delete(simulacao.id)
+      const sucesso = await simulacoesApi.excluirSimulacao(simulacaoId)
       
       if (sucesso) {
         toast({
-          title: 'Sucesso',
-          description: 'Simulação excluída com sucesso.',
+          title: 'Simulação excluída',
+          description: 'A simulação foi excluída com sucesso',
         })
         router.push('/simulacoes')
       } else {
-        throw new Error('Falha ao excluir')
+        setErro('Não foi possível excluir a simulação')
       }
     } catch (error) {
       console.error('Erro ao excluir simulação:', error)
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível excluir a simulação.',
-        variant: 'destructive',
-      })
+      setErro('Erro ao excluir a simulação')
     } finally {
       setExcluindo(false)
     }

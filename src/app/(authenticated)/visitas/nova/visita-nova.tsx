@@ -43,12 +43,9 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
-import { Visita } from '@/lib/crm-utils'
-import { visitasApi } from '@/lib/mock-api/visitas'
-import { clientesApi } from '@/lib/mock-api/clientes'
-import { propriedadesApi } from '@/lib/mock-api/propriedades'
-import { projetosApi } from '@/lib/mock-api/projetos'
-import { documentosApi } from '@/lib/mock-api/documentos'
+import { Visita, Cliente, Propriedade, Projeto } from '@/lib/crm-utils'
+import { formatarData, formatarEndereco, formatarTelefone, formatarCpfCnpj } from '@/lib/formatters'
+import { visitasApi, clientesApi, propriedadesApi, projetosApi, documentosApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 // Esquema de validação para o formulário

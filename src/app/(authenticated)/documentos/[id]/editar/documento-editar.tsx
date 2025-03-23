@@ -24,7 +24,8 @@ import {
 } from '@/components/ui/select'
 import { ArrowLeft } from 'lucide-react'
 import { Documento, Cliente, Projeto } from '@/lib/crm-utils'
-import { documentosApi, clientesApi, projetosApi } from '@/lib/mock-api'
+import { formatarData } from '@/lib/formatters'
+import { documentosApi, clientesApi, projetosApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 function DocumentoEditarConteudo({ documentoId }: { documentoId: string }) {

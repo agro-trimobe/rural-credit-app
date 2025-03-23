@@ -16,7 +16,8 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, X, Plus } from 'lucide-react'
 import { Documento } from '@/lib/crm-utils'
-import { documentosApi } from '@/lib/mock-api'
+import { formatarData } from '@/lib/formatters'
+import { documentosApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 function DocumentoTagsConteudo({ documentoId }: { documentoId: string }) {

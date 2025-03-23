@@ -23,8 +23,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ArrowLeft, Save } from 'lucide-react'
-import { Propriedade, Cliente } from '@/lib/crm-utils'
-import { propriedadesApi, clientesApi } from '@/lib/mock-api'
+import { Cliente, Propriedade } from '@/lib/crm-utils'
+import { propriedadesApi, clientesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 export default function PropriedadeEditarConteudo({ propriedadeId }: { propriedadeId: string }) {

@@ -34,8 +34,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ArrowLeft, Upload, File, FileText } from 'lucide-react'
-import { Projeto } from '@/lib/crm-utils'
-import { projetosApi, documentosApi } from '@/lib/mock-api'
+import { Projeto, Documento } from '@/lib/crm-utils'
+import { projetosApi, documentosApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 const formSchema = z.object({

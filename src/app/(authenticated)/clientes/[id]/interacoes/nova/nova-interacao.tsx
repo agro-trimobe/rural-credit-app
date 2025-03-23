@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/select'
 import { ArrowLeft } from 'lucide-react'
 import { Cliente, Interacao } from '@/lib/crm-utils'
-import { clientesApi, interacoesApi } from '@/lib/mock-api'
+import { clientesApi, interacoesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 function NovaInteracaoConteudo({ clienteId }: { clienteId: string }) {

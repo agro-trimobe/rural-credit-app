@@ -40,9 +40,9 @@ import {
   Link as LinkIcon
 } from 'lucide-react'
 import { Documento, Cliente, Projeto } from '@/lib/crm-utils'
-import { documentosApi, clientesApi, projetosApi } from '@/lib/mock-api'
+import { formatarData, formatarDataHora, formatarTamanhoArquivo, coresStatus } from '@/lib/formatters'
+import { documentosApi, clientesApi, projetosApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
-import { formatarData } from '@/lib/formatters'
 
 function DocumentoDetalhesConteudo({ documentoId }: { documentoId: string }) {
   const router = useRouter()

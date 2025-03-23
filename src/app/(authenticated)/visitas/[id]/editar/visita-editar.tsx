@@ -35,11 +35,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ArrowLeft, Calendar } from 'lucide-react'
-import { Visita } from '@/lib/crm-utils'
-import { visitasApi } from '@/lib/mock-api/visitas'
-import { clientesApi } from '@/lib/mock-api/clientes'
-import { propriedadesApi } from '@/lib/mock-api/propriedades'
-import { projetosApi } from '@/lib/mock-api/projetos'
+import { Visita, Cliente, Propriedade, Projeto } from '@/lib/crm-utils'
+import { visitasApi, clientesApi, propriedadesApi, projetosApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 const formSchema = z.object({

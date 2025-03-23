@@ -34,9 +34,9 @@ import {
 } from '@/components/ui/select'
 import { ArrowLeft, ArrowUpRight, CheckCircle2, XCircle } from 'lucide-react'
 import { Oportunidade } from '@/lib/crm-utils'
-import { oportunidadesApi } from '@/lib/mock-api/oportunidades'
-import { Badge } from '@/components/ui/badge'
+import { oportunidadesApi } from '@/lib/api'
 import { coresStatus } from '@/lib/formatters'
+import { Badge } from '@/components/ui/badge'
 
 // Schema de validação
 const avancarStatusSchema = z.object({
@@ -128,9 +128,9 @@ export default function AvancarStatusOportunidadePage() {
       setSalvando(true)
       
       // Atualizar status da oportunidade
-      const oportunidadeAtualizada = await oportunidadesApi.atualizarStatusOportunidade(
+      const oportunidadeAtualizada = await oportunidadesApi.atualizarOportunidade(
         id, 
-        data.status as any
+        { status: data.status as any }
       )
       
       if (oportunidadeAtualizada) {

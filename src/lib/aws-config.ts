@@ -2,46 +2,29 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import { S3Client } from '@aws-sdk/client-s3';
 
-// Verificar variáveis de ambiente necessárias
-if (!process.env.COGNITO_REGION) {
-  console.error('COGNITO_REGION não está definido');
-  throw new Error('COGNITO_REGION is not defined');
-}
-
-if (!process.env.ACCESS_KEY_ID_AWS) {
-  console.error('ACCESS_KEY_ID_AWS não está definido');
-  throw new Error('ACCESS_KEY_ID_AWS is not defined');
-}
-
-if (!process.env.SECRET_ACCESS_KEY_AWS) {
-  console.error('SECRET_ACCESS_KEY_AWS não está definido');
-  throw new Error('SECRET_ACCESS_KEY_AWS is not defined');
-}
+// Usar variáveis de ambiente com prefixo NEXT_PUBLIC_ e fornecer valores padrão
+const REGION = process.env.NEXT_PUBLIC_COGNITO_REGION || process.env.COGNITO_REGION || 'us-east-1';
+const ACCESS_KEY = process.env.NEXT_PUBLIC_ACCESS_KEY_ID_AWS || process.env.ACCESS_KEY_ID_AWS || 'CHAVE_REMOVIDA';
+const SECRET_KEY = process.env.NEXT_PUBLIC_SECRET_ACCESS_KEY_AWS || process.env.SECRET_ACCESS_KEY_AWS || 'SEGREDO_REMOVIDO';
 
 // Adicionar logs para depuração
 console.log('Configuração AWS inicializada:');
-console.log('Região:', process.env.COGNITO_REGION);
-console.log('Access Key ID:', process.env.ACCESS_KEY_ID_AWS ? 'Configurado' : 'Não configurado');
-console.log('Secret Access Key:', process.env.SECRET_ACCESS_KEY_AWS ? 'Configurado' : 'Não configurado');
+console.log('Região:', REGION);
+console.log('Access Key ID:', ACCESS_KEY ? 'Configurado' : 'Não configurado');
+console.log('Secret Access Key:', SECRET_KEY ? 'Configurado' : 'Não configurado');
 
 // Inicializar as variáveis fora do bloco try/catch
 let dynamodb: DynamoDBDocumentClient;
 let s3: S3Client;
 
 try {
-  // Configuração para ambiente serverless
-  const awsConfig = {
-    region: process.env.COGNITO_REGION,
-    credentials: {
-      accessKeyId: process.env.ACCESS_KEY_ID_AWS || "",
-      secretAccessKey: process.env.SECRET_ACCESS_KEY_AWS || ""
-    }
-  };
-
-  console.log('Inicializando cliente DynamoDB...');
-  // Inicializar clientes com configuração otimizada
+  // Configurar o cliente DynamoDB
   const dynamoClient = new DynamoDBClient({
-    ...awsConfig,
+    region: REGION,
+    credentials: {
+      accessKeyId: ACCESS_KEY,
+      secretAccessKey: SECRET_KEY,
+    },
     // Configurações específicas para DynamoDB em ambiente serverless
     requestHandler: {
       abortController: {
@@ -49,12 +32,17 @@ try {
       },
     },
   });
-  dynamodb = DynamoDBDocumentClient.from(dynamoClient);
-  console.log('Cliente DynamoDB inicializado com sucesso');
 
-  console.log('Inicializando cliente S3...');
+  // Configurar o cliente DynamoDB Document
+  dynamodb = DynamoDBDocumentClient.from(dynamoClient);
+
+  // Configurar o cliente S3
   s3 = new S3Client({
-    ...awsConfig,
+    region: REGION,
+    credentials: {
+      accessKeyId: ACCESS_KEY,
+      secretAccessKey: SECRET_KEY,
+    },
     // Configurações específicas para S3 em ambiente serverless
     requestHandler: {
       abortController: {
@@ -62,7 +50,8 @@ try {
       },
     },
   });
-  console.log('Cliente S3 inicializado com sucesso');
+
+  console.log('Clientes AWS inicializados com sucesso');
 } catch (error: unknown) {
   console.error('Erro ao inicializar clientes AWS:', error);
   
@@ -91,5 +80,4 @@ try {
   throw error; // Re-throw para garantir que a aplicação falhe se os clientes não puderem ser inicializados
 }
 
-// Exportar os clientes fora do bloco try/catch
 export { dynamodb, s3 };

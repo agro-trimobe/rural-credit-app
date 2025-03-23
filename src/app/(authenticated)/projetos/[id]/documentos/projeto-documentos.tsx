@@ -46,9 +46,9 @@ import {
   User,
   BarChart
 } from 'lucide-react'
-import { Documento, Projeto } from '@/lib/crm-utils'
-import { formatarData, formatarTamanho } from '@/lib/formatters'
-import { documentosApi, projetosApi } from '@/lib/mock-api'
+import { Projeto, Documento } from '@/lib/crm-utils'
+import { formatarData, formatarTamanhoArquivo, coresStatus } from '@/lib/formatters'
+import { documentosApi, projetosApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 export default function ProjetoDocumentosConteudo({ projetoId }: { projetoId: string }) {
@@ -241,7 +241,7 @@ export default function ProjetoDocumentosConteudo({ projetoId }: { projetoId: st
                       <Badge variant="outline">{documento.status}</Badge>
                     </TableCell>
                     <TableCell>{formatarData(documento.dataCriacao)}</TableCell>
-                    <TableCell>{formatarTamanho(documento.tamanho)}</TableCell>
+                    <TableCell>{formatarTamanhoArquivo(documento.tamanho)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-1">
                         <Button variant="ghost" size="icon" asChild>

@@ -50,11 +50,9 @@ import {
   Plus,
   Tag
 } from 'lucide-react'
-import { Documento, Visita } from '@/lib/crm-utils'
+import { Visita, Documento, Cliente } from '@/lib/crm-utils'
 import { formatarDataHora, formatarTamanhoArquivo } from '@/lib/formatters'
-import { visitasApi } from '@/lib/mock-api/visitas'
-import { documentosApi } from '@/lib/mock-api/documentos'
-import { clientesApi } from '@/lib/mock-api/clientes'
+import { visitasApi, documentosApi, clientesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 export default function VisitaDocumentosConteudo({ visitaId }: { visitaId: string }) {

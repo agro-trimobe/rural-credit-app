@@ -50,8 +50,7 @@ import {
 } from 'lucide-react'
 import { Visita } from '@/lib/crm-utils'
 import { formatarData, coresStatus } from '@/lib/formatters'
-import { visitasApi } from '@/lib/mock-api/visitas'
-import { clientesApi } from '@/lib/mock-api/clientes'
+import { visitasApi, clientesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 export default function VisitasPage() {

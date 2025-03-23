@@ -37,13 +37,9 @@ import {
   FileCheck,
   Plus
 } from 'lucide-react'
-import { Visita, Documento } from '@/lib/crm-utils'
-import { formatarData, formatarDataHora, coresStatus } from '@/lib/formatters'
-import { visitasApi } from '@/lib/mock-api/visitas'
-import { clientesApi } from '@/lib/mock-api/clientes'
-import { propriedadesApi } from '@/lib/mock-api/propriedades'
-import { projetosApi } from '@/lib/mock-api/projetos'
-import { documentosApi } from '@/lib/mock-api/documentos'
+import { Visita, Cliente, Propriedade, Projeto, Documento } from '@/lib/crm-utils'
+import { formatarData, formatarDataHora, formatarEndereco, formatarTelefone, formatarCpfCnpj, coresStatus } from '@/lib/formatters'
+import { visitasApi, clientesApi, propriedadesApi, projetosApi, documentosApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 // Componente cliente que implementa a lógica com hooks

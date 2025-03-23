@@ -48,7 +48,7 @@ import {
 } from 'lucide-react'
 import { Projeto } from '@/lib/crm-utils'
 import { formatarMoeda, formatarData, coresStatus } from '@/lib/formatters'
-import { projetosApi, clientesApi } from '@/lib/mock-api'
+import { projetosApi, clientesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 export default function ProjetosPage() {

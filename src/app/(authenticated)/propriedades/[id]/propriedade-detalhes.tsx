@@ -35,9 +35,9 @@ import {
   Home,
   Map
 } from 'lucide-react'
-import { Cliente, Propriedade, Projeto } from '@/lib/crm-utils'
-import { formatarData, formatarMoeda } from '@/lib/formatters'
-import { clientesApi, propriedadesApi, projetosApi } from '@/lib/mock-api'
+import { Propriedade, Cliente, Projeto } from '@/lib/crm-utils'
+import { formatarData, formatarDataHora, formatarMoeda } from '@/lib/formatters'
+import { clientesApi, propriedadesApi, projetosApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 import {
   AlertDialog,

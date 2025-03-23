@@ -35,8 +35,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ArrowLeft, Plus } from 'lucide-react'
-import { oportunidadesApi } from '@/lib/mock-api/oportunidades'
-import { clientesApi } from '@/lib/mock-api/clientes'
+import { Separator } from '@/components/ui/separator'
+import { Oportunidade, Cliente } from '@/lib/crm-utils'
+import { formatarData } from '@/lib/formatters'
+import { oportunidadesApi, clientesApi } from '@/lib/api'
+import { toast } from '@/hooks/use-toast'
 
 // Schema de validação
 const oportunidadeSchema = z.object({

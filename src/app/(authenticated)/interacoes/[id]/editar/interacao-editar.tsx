@@ -25,9 +25,9 @@ import {
 } from '@/components/ui/select'
 import { ArrowLeft } from 'lucide-react'
 import { Interacao, Cliente } from '@/lib/crm-utils'
-import { interacoesApi, clientesApi } from '@/lib/mock-api'
-import { toast } from '@/hooks/use-toast'
 import { formatarData } from '@/lib/formatters'
+import { interacoesApi, clientesApi } from '@/lib/api'
+import { toast } from '@/hooks/use-toast'
 
 function InteracaoEditarConteudo({ interacaoId }: { interacaoId: string }) {
   const router = useRouter()

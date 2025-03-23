@@ -31,7 +31,7 @@ import {
   User
 } from 'lucide-react'
 import { Propriedade } from '@/lib/crm-utils'
-import { propriedadesApi, clientesApi } from '@/lib/mock-api'
+import { propriedadesApi, clientesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 export default function PropriedadesConteudo() {

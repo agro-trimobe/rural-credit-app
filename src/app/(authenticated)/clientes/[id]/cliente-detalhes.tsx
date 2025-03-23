@@ -35,9 +35,9 @@ import {
   Trash2,
   MessageCircle
 } from 'lucide-react'
-import { Cliente, Interacao, Propriedade, Projeto } from '@/lib/crm-utils'
-import { formatarCpfCnpj, formatarTelefone, formatarData, formatarMoeda } from '@/lib/formatters'
-import { clientesApi, propriedadesApi, projetosApi, interacoesApi } from '@/lib/mock-api'
+import { Cliente, Propriedade, Projeto, Interacao } from '@/lib/crm-utils'
+import { formatarData, formatarCpfCnpj, formatarTelefone, formatarEndereco, formatarMoeda } from '@/lib/formatters'
+import { clientesApi, propriedadesApi, projetosApi, interacoesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 import {
   AlertDialog,

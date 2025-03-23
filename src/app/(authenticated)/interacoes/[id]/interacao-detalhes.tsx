@@ -16,9 +16,9 @@ import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Pencil, Calendar, User, MessageSquare } from 'lucide-react'
 import { Interacao, Cliente } from '@/lib/crm-utils'
-import { interacoesApi, clientesApi } from '@/lib/mock-api'
+import { formatarData, formatarDataHora } from '@/lib/formatters'
+import { interacoesApi, clientesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
-import { formatarData } from '@/lib/formatters'
 
 function InteracaoDetalhesConteudo({ interacaoId }: { interacaoId: string }) {
   const router = useRouter()

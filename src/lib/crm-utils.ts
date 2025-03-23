@@ -65,6 +65,8 @@ export interface Documento {
   visitaId?: string
   dataCriacao: string
   dataAtualizacao?: string
+  s3Path?: string
+  extensao?: string
 }
 
 export interface Interacao {

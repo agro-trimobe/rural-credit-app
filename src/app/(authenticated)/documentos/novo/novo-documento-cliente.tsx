@@ -22,10 +22,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ArrowLeft, Save, Upload } from 'lucide-react'
-import { Documento } from '@/lib/crm-utils'
-import { documentosApi } from '@/lib/mock-api/documentos'
-import { clientesApi } from '@/lib/mock-api/clientes'
-import { visitasApi } from '@/lib/mock-api/visitas'
+import { Cliente, Documento, Visita } from '@/lib/crm-utils'
+import { formatarData } from '@/lib/formatters'
+import { documentosApi, clientesApi, visitasApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 // Componente cliente que implementa toda a lógica com hooks

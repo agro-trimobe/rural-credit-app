@@ -23,7 +23,8 @@ import {
 } from '@/components/ui/select'
 import { ArrowLeft, Save } from 'lucide-react'
 import { Cliente } from '@/lib/crm-utils'
-import { clientesApi } from '@/lib/mock-api'
+import { formatarData } from '@/lib/formatters'
+import { clientesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 export default function NovoClientePage() {

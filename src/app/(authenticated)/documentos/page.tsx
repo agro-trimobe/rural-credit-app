@@ -54,7 +54,7 @@ import {
 } from 'lucide-react'
 import { Documento } from '@/lib/crm-utils'
 import { formatarData, coresStatus, formatarTamanhoArquivo } from '@/lib/formatters'
-import { documentosApi, clientesApi } from '@/lib/mock-api'
+import { documentosApi, clientesApi } from '@/lib/api'
 import { useState, useEffect } from 'react'
 import { useToast } from '@/hooks/use-toast'
 

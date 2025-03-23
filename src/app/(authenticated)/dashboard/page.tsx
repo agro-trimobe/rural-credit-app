@@ -4,11 +4,8 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { BarChart, LineChart } from '@/components/ui/charts'
 import { DoughnutChart } from '@/components/ui/doughnut-chart'
-import { formatarMoeda } from '@/lib/formatters'
-import { clientesApi } from '@/lib/mock-api/clientes'
-import { projetosApi } from '@/lib/mock-api/projetos'
-import { visitasApi } from '@/lib/mock-api/visitas'
-import { oportunidadesApi } from '@/lib/mock-api/oportunidades'
+import { formatarData, formatarMoeda, coresStatus } from '@/lib/formatters'
+import { clientesApi, projetosApi, visitasApi, oportunidadesApi } from '@/lib/api'
 import { 
   CalendarIcon, 
   ClipboardList, 
@@ -16,6 +13,20 @@ import {
   TrendingUp
 } from 'lucide-react'
 import Link from 'next/link'
+
+interface Projeto {
+  status: string
+  valorTotal: number
+}
+
+interface Visita {
+  status: string
+}
+
+interface OportunidadeStatus {
+  quantidade: number
+  valor: number
+}
 
 export default function Dashboard() {
   const [estatisticas, setEstatisticas] = useState({
@@ -26,7 +37,7 @@ export default function Dashboard() {
     valorOportunidades: 0,
     projetosStatus: {} as Record<string, number>,
     visitasStatus: {} as Record<string, number>,
-    oportunidadesStatus: {} as Record<string, { quantidade: number, valor: number }>
+    oportunidadesStatus: {} as Record<string, OportunidadeStatus>
   })
   
   const [carregando, setCarregando] = useState(true)
@@ -44,7 +55,7 @@ export default function Dashboard() {
         
         // Calcular estatísticas de projetos por status
         const projetosStatus: Record<string, number> = {}
-        projetos.forEach(projeto => {
+        projetos.forEach((projeto: Projeto) => {
           if (!projetosStatus[projeto.status]) {
             projetosStatus[projeto.status] = 0
           }
@@ -53,7 +64,7 @@ export default function Dashboard() {
         
         // Calcular estatísticas de visitas por status
         const visitasStatus: Record<string, number> = {}
-        visitas.forEach(visita => {
+        visitas.forEach((visita: Visita) => {
           if (!visitasStatus[visita.status]) {
             visitasStatus[visita.status] = 0
           }
@@ -61,7 +72,7 @@ export default function Dashboard() {
         })
         
         // Calcular valor total de projetos
-        const valorProjetos = projetos.reduce((total, projeto) => {
+        const valorProjetos = projetos.reduce((total: number, projeto: Projeto) => {
           if (projeto.status !== 'Cancelado') {
             return total + projeto.valorTotal
           }
@@ -73,10 +84,18 @@ export default function Dashboard() {
           totalProjetos: projetos.length,
           totalVisitas: visitas.length,
           valorProjetos,
-          valorOportunidades: estatisticasOportunidades.valorTotal,
+          valorOportunidades: estatisticasOportunidades?.valorTotal || 0,
           projetosStatus,
           visitasStatus,
-          oportunidadesStatus: estatisticasOportunidades.porStatus
+          oportunidadesStatus: estatisticasOportunidades?.porStatus 
+            ? Object.entries(estatisticasOportunidades.porStatus).reduce((acc, [status, quantidade]) => {
+                acc[status] = { 
+                  quantidade, 
+                  valor: 0 // Valor padrão, poderia ser calculado se tivéssemos essa informação
+                };
+                return acc;
+              }, {} as Record<string, OportunidadeStatus>)
+            : {}
         })
       } catch (error) {
         console.error('Erro ao carregar dados do dashboard:', error)

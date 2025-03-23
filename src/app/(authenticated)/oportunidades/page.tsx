@@ -48,8 +48,8 @@ import {
 } from 'lucide-react'
 import { Oportunidade } from '@/lib/crm-utils'
 import { formatarMoeda, formatarData, formatarDataHora, coresStatus } from '@/lib/formatters'
-import { oportunidadesApi } from '@/lib/mock-api/oportunidades'
-import { clientesApi } from '@/lib/mock-api/clientes'
+import { oportunidadesApi, clientesApi } from '@/lib/api'
+import { toast } from '@/hooks/use-toast'
 
 export default function OportunidadesPage() {
   const [oportunidades, setOportunidades] = useState<Oportunidade[]>([])

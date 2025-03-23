@@ -24,7 +24,8 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Search, User, Phone, MapPin, Eye } from 'lucide-react'
 import { Cliente } from '@/lib/crm-utils'
-import { clientesApi } from '@/lib/mock-api'
+import { formatarData, formatarTelefone, formatarCpfCnpj } from '@/lib/formatters'
+import { clientesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 export default function NovaInteracaoSelecionarClienteConteudo() {

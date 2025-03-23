@@ -35,7 +35,7 @@ import { Separator } from '@/components/ui/separator'
 import { toast } from '@/hooks/use-toast'
 import { Simulacao } from '@/lib/crm-utils'
 import { formatarMoeda, formatarData } from '@/lib/formatters'
-import { simulacoesApi } from '@/lib/mock-api/simulacoes'
+import { simulacoesApi } from '@/lib/api'
 
 export default function SimulacoesPage() {
   const router = useRouter()
@@ -46,15 +46,15 @@ export default function SimulacoesPage() {
   useEffect(() => {
     const carregarSimulacoes = async () => {
       try {
-        const dados = await simulacoesApi.getAll()
+        const dados = await simulacoesApi.listarSimulacoes()
         setSimulacoes(dados)
         setCarregando(false)
-      } catch (erro) {
-        console.error('Erro ao carregar simulações:', erro)
+      } catch (error) {
+        console.error('Erro ao carregar simulações:', error)
         toast({
-          title: 'Erro ao carregar dados',
-          description: 'Não foi possível carregar as simulações. Tente novamente mais tarde.',
-          variant: 'destructive',
+          title: 'Erro',
+          description: 'Não foi possível carregar as simulações.',
+          variant: 'destructive'
         })
         setCarregando(false)
       }
@@ -67,20 +67,20 @@ export default function SimulacoesPage() {
     simulacao.linhaCredito.toLowerCase().includes(filtro.toLowerCase())
   )
 
-  const excluirSimulacao = async (id: string) => {
+  const handleExcluirSimulacao = async (id: string) => {
     try {
-      await simulacoesApi.delete(id)
-      setSimulacoes(simulacoes.filter(simulacao => simulacao.id !== id))
+      await simulacoesApi.excluirSimulacao(id)
+      setSimulacoes(simulacoes.filter(s => s.id !== id))
       toast({
-        title: 'Simulação excluída',
-        description: 'A simulação foi excluída com sucesso.',
+        title: 'Sucesso',
+        description: 'Simulação excluída com sucesso.',
       })
-    } catch (erro) {
-      console.error('Erro ao excluir simulação:', erro)
+    } catch (error) {
+      console.error('Erro ao excluir simulação:', error)
       toast({
-        title: 'Erro ao excluir',
-        description: 'Não foi possível excluir a simulação. Tente novamente mais tarde.',
-        variant: 'destructive',
+        title: 'Erro',
+        description: 'Não foi possível excluir a simulação.',
+        variant: 'destructive'
       })
     }
   }
@@ -179,7 +179,7 @@ export default function SimulacoesPage() {
                             <FileText className="mr-2 h-4 w-4" />
                             Ver detalhes
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => excluirSimulacao(simulacao.id)}>
+                          <DropdownMenuItem onClick={() => handleExcluirSimulacao(simulacao.id)}>
                             <Trash2 className="mr-2 h-4 w-4" />
                             Excluir
                           </DropdownMenuItem>

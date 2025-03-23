@@ -25,7 +25,8 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { ArrowLeft } from 'lucide-react'
 import { Projeto, Cliente, Propriedade } from '@/lib/crm-utils'
-import { projetosApi, clientesApi, propriedadesApi } from '@/lib/mock-api'
+import { formatarData, formatarMoeda } from '@/lib/formatters'
+import { projetosApi, clientesApi, propriedadesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 // Interface estendida para incluir campos adicionais que não existem no tipo Projeto

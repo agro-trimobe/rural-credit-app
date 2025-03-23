@@ -23,9 +23,9 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Plus, Calendar, MessageSquare, Eye } from 'lucide-react'
 import { Cliente, Interacao } from '@/lib/crm-utils'
-import { clientesApi, interacoesApi } from '@/lib/mock-api'
-import { toast } from '@/hooks/use-toast'
 import { formatarData } from '@/lib/formatters'
+import { clientesApi, interacoesApi } from '@/lib/api'
+import { toast } from '@/hooks/use-toast'
 
 function InteracoesClienteConteudo({ clienteId }: { clienteId: string }) {
   const router = useRouter()

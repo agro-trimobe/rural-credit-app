@@ -50,7 +50,7 @@ export function formatarData(dataISO?: string): string {
 }
 
 /**
- * Formata uma data e hora ISO para o formato brasileiro (DD/MM/YYYY HH:MM)
+ * Formata uma data ISO para o formato brasileiro com hora (DD/MM/YYYY HH:MM)
  */
 export function formatarDataHora(dataISO?: string): string {
   if (!dataISO) return 'N/A';
@@ -123,18 +123,46 @@ export function formatarCpfCnpj(valor: string): string {
 export function formatarTelefone(valor: string): string {
   if (!valor) return '';
   
-  // Remove caracteres não numéricos
-  const apenasNumeros = valor.replace(/\D/g, '');
+  // Remover todos os caracteres não numéricos
+  const numeros = valor.replace(/\D/g, '');
   
-  if (apenasNumeros.length === 11) {
-    // Celular: (00) 00000-0000
-    return apenasNumeros.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-  } else if (apenasNumeros.length === 10) {
-    // Fixo: (00) 0000-0000
-    return apenasNumeros.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+  // Verificar se é um número de telefone válido
+  if (numeros.length < 10 || numeros.length > 11) {
+    return valor; // Retorna o valor original se não for um formato válido
   }
   
-  return valor;
+  // Formatar como (XX) XXXXX-XXXX ou (XX) XXXX-XXXX
+  if (numeros.length === 11) {
+    return `(${numeros.substring(0, 2)}) ${numeros.substring(2, 7)}-${numeros.substring(7)}`;
+  } else {
+    return `(${numeros.substring(0, 2)}) ${numeros.substring(2, 6)}-${numeros.substring(6)}`;
+  }
+}
+
+/**
+ * Formata um endereço completo a partir de componentes individuais
+ */
+export function formatarEndereco(
+  endereco?: string,
+  cidade?: string,
+  estado?: string,
+  cep?: string
+): string {
+  const partes = [];
+  
+  if (endereco) partes.push(endereco);
+  
+  const cidadeEstado = [];
+  if (cidade) cidadeEstado.push(cidade);
+  if (estado) cidadeEstado.push(estado);
+  
+  if (cidadeEstado.length > 0) {
+    partes.push(cidadeEstado.join(' - '));
+  }
+  
+  if (cep) partes.push(`CEP: ${cep}`);
+  
+  return partes.length > 0 ? partes.join(', ') : 'Endereço não informado';
 }
 
 /**

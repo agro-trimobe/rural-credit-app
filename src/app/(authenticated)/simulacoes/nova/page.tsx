@@ -42,11 +42,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
+import { Simulacao, Cliente } from '@/lib/crm-utils'
+import { formatarData, formatarMoeda } from '@/lib/formatters'
+import { simulacoesApi, clientesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
-import { Simulacao } from '@/lib/crm-utils'
-import { formatarMoeda, formatarData, formatarValor } from '@/lib/formatters'
-import { simulacoesApi, linhasCredito } from '@/lib/mock-api/simulacoes'
-import { clientesApi } from '@/lib/mock-api/clientes'
 
 // Esquema de validação para o formulário
 const formSchema = z.object({
@@ -124,11 +123,9 @@ function NovaSimulacaoForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       clienteId: '',
-      linhaCredito: linhaId ? linhasCredito.find(l => l.id === linhaId)?.nome || '' : '',
+      linhaCredito: linhaId ? 'Linha de Crédito' : '',
       valorFinanciamento: 100000,
-      taxaJuros: linhaId ? 
-        linhasCredito.find(l => l.id === linhaId)?.taxaMin || 5.0 : 
-        5.0,
+      taxaJuros: 5.0,
       prazoTotal: 60,
       carencia: 12,
     },
@@ -150,10 +147,10 @@ function NovaSimulacaoForm() {
     const carregarClientes = async () => {
       try {
         setCarregando(true)
-        const dadosClientes = await clientesApi.listarClientes()
-        setClientes(dadosClientes.map(cliente => ({ 
-          id: cliente.id, 
-          nome: cliente.nome 
+        const listaClientes = await clientesApi.listarClientes()
+        setClientes(listaClientes.map((cliente: Cliente) => ({
+          id: cliente.id,
+          nome: cliente.nome
         })))
       } catch (error) {
         console.error('Erro ao carregar clientes:', error)
@@ -219,7 +216,7 @@ function NovaSimulacaoForm() {
       }
       
       // Criar nova simulação
-      const novaSimulacao = await simulacoesApi.create({
+      const novaSimulacao = await simulacoesApi.criarSimulacao({
         ...values,
         valorParcela,
       })
@@ -311,11 +308,7 @@ function NovaSimulacaoForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {linhasCredito.map((linha) => (
-                            <SelectItem key={linha.id} value={linha.nome}>
-                              {linha.nome} ({linha.taxaMin}% a {linha.taxaMax}% a.a.)
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="Linha de Crédito">Linha de Crédito</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

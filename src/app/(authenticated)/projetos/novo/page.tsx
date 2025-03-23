@@ -23,7 +23,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ArrowLeft, Save } from 'lucide-react'
-import { projetosApi, clientesApi, propriedadesApi } from '@/lib/mock-api'
+import { Separator } from '@/components/ui/separator'
+import { Cliente, Propriedade, Projeto } from '@/lib/crm-utils'
+import { formatarData } from '@/lib/formatters'
+import { projetosApi, clientesApi, propriedadesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 export default function ProjetoNovoPage() {
@@ -208,7 +211,8 @@ export default function ProjetoNovoPage() {
       const novoProjeto = {
         ...formData,
         dataPrevisaoTermino: dataISO,
-        valorTotal: valorNumerico
+        valorTotal: valorNumerico,
+        documentos: [] // Adicionar array vazio de documentos
       }
       
       await projetosApi.criarProjeto(novoProjeto)
