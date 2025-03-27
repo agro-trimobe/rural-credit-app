@@ -1,48 +1,79 @@
 import { Propriedade } from '@/lib/crm-utils';
-import { propriedadeRepository } from '@/lib/repositories';
 
-// Obter o tenant ID da sessão (temporariamente fixo para testes)
-const TENANT_ID = process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID || 'default-tenant';
-
+/**
+ * API de propriedades para o lado do cliente
+ * Usa as APIs REST para acessar os dados em vez de acessar o DynamoDB diretamente
+ */
 export const propriedadesApi = {
   listarPropriedades: async (): Promise<Propriedade[]> => {
     try {
-      console.log('API: Listando propriedades do DynamoDB');
-      const propriedades = await propriedadeRepository.listarPropriedades(TENANT_ID);
-      return propriedades;
+      const response = await fetch('/api/propriedades');
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error('Erro ao listar propriedades:', data.message);
+        return [];
+      }
+      
+      return data.data;
     } catch (error) {
       console.error('Erro ao listar propriedades:', error);
-      throw new Error(`Falha ao listar propriedades: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return [];
     }
   },
 
   buscarPropriedadePorId: async (id: string): Promise<Propriedade | null> => {
     try {
-      console.log(`API: Buscando propriedade ${id} do DynamoDB`);
-      const propriedade = await propriedadeRepository.buscarPropriedadePorId(TENANT_ID, id);
-      return propriedade;
+      const response = await fetch(`/api/propriedades/${id}`);
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao buscar propriedade ${id}:`, data.message);
+        return null;
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao buscar propriedade ${id}:`, error);
-      throw new Error(`Falha ao buscar propriedade: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return null;
     }
   },
 
   listarPropriedadesPorCliente: async (clienteId: string): Promise<Propriedade[]> => {
     try {
-      console.log(`API: Listando propriedades do cliente ${clienteId} do DynamoDB`);
-      const propriedades = await propriedadeRepository.listarPropriedadesPorCliente(TENANT_ID, clienteId);
-      return propriedades;
+      const response = await fetch(`/api/propriedades/cliente/${clienteId}`);
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao listar propriedades do cliente ${clienteId}:`, data.message);
+        return [];
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao listar propriedades do cliente ${clienteId}:`, error);
-      throw new Error(`Falha ao listar propriedades do cliente: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return [];
     }
   },
 
   criarPropriedade: async (propriedade: Omit<Propriedade, 'id' | 'dataCriacao' | 'dataAtualizacao'>): Promise<Propriedade> => {
     try {
-      console.log('API: Criando propriedade no DynamoDB');
-      const novaPropriedade = await propriedadeRepository.criarPropriedade(TENANT_ID, propriedade);
-      return novaPropriedade;
+      const response = await fetch('/api/propriedades', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(propriedade)
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error('Erro ao criar propriedade:', data.message);
+        throw new Error(data.message);
+      }
+      
+      return data.data;
     } catch (error) {
       console.error('Erro ao criar propriedade:', error);
       throw new Error(`Falha ao criar propriedade: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
@@ -51,23 +82,45 @@ export const propriedadesApi = {
 
   atualizarPropriedade: async (id: string, propriedade: Partial<Omit<Propriedade, 'id' | 'dataCriacao'>>): Promise<Propriedade | null> => {
     try {
-      console.log(`API: Atualizando propriedade ${id} no DynamoDB`);
-      const propriedadeAtualizada = await propriedadeRepository.atualizarPropriedade(TENANT_ID, id, propriedade);
-      return propriedadeAtualizada;
+      const response = await fetch(`/api/propriedades/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(propriedade)
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao atualizar propriedade ${id}:`, data.message);
+        return null;
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao atualizar propriedade ${id}:`, error);
-      throw new Error(`Falha ao atualizar propriedade: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return null;
     }
   },
 
   excluirPropriedade: async (id: string): Promise<boolean> => {
     try {
-      console.log(`API: Excluindo propriedade ${id} do DynamoDB`);
-      const resultado = await propriedadeRepository.excluirPropriedade(TENANT_ID, id);
-      return resultado;
+      const response = await fetch(`/api/propriedades/${id}`, {
+        method: 'DELETE'
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao excluir propriedade ${id}:`, data.message);
+        return false;
+      }
+      
+      return true;
     } catch (error) {
       console.error(`Erro ao excluir propriedade ${id}:`, error);
-      throw new Error(`Falha ao excluir propriedade: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return false;
     }
   }
 };

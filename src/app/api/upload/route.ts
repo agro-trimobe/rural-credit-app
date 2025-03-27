@@ -4,7 +4,8 @@ import {
   PutObjectCommand, 
   CreateBucketCommand, 
   HeadBucketCommand,
-  PutBucketCorsCommand
+  PutBucketCorsCommand,
+  ListBucketsCommand
 } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -58,6 +59,15 @@ async function configureBucketCors(bucketName: string): Promise<void> {
  */
 async function ensureBucketExists(): Promise<void> {
   try {
+    console.log('[S3] Verificando buckets disponíveis...');
+    
+    // Listar todos os buckets para diagnóstico
+    const listBucketsCommand = new ListBucketsCommand({});
+    const listBucketsResponse = await s3.send(listBucketsCommand);
+    
+    console.log('[S3] Buckets disponíveis:', 
+      listBucketsResponse.Buckets?.map(bucket => bucket.Name).join(', ') || 'Nenhum bucket encontrado');
+    
     // Verificar se o bucket existe
     const headBucketCommand = new HeadBucketCommand({
       Bucket: BUCKET_NAME
@@ -65,15 +75,16 @@ async function ensureBucketExists(): Promise<void> {
 
     try {
       await s3.send(headBucketCommand);
-      console.log(`Bucket ${BUCKET_NAME} já existe.`);
+      console.log(`[S3] Bucket ${BUCKET_NAME} já existe.`);
       return;
     } catch (error: any) {
       // Se o erro for diferente de "NoSuchBucket", propagar o erro
       if (error.name !== 'NoSuchBucket' && error.$metadata?.httpStatusCode !== 404 && error.Code !== 'NotFound' && error.Code !== 'NoSuchBucket') {
+        console.error('[S3] Erro ao verificar bucket:', error);
         throw error;
       }
       
-      console.log(`Bucket ${BUCKET_NAME} não existe. Criando...`);
+      console.log(`[S3] Bucket ${BUCKET_NAME} não existe. Criando...`);
       
       // Criar o bucket
       const createBucketCommand = new CreateBucketCommand({
@@ -87,13 +98,13 @@ async function ensureBucketExists(): Promise<void> {
       });
       
       await s3.send(createBucketCommand);
-      console.log(`Bucket ${BUCKET_NAME} criado com sucesso.`);
+      console.log(`[S3] Bucket ${BUCKET_NAME} criado com sucesso.`);
       
       // Configurar o CORS para o bucket
       await configureBucketCors(BUCKET_NAME);
     }
   } catch (error) {
-    console.error('Erro ao verificar/criar bucket S3:', error);
+    console.error('[S3] Erro ao verificar/criar bucket S3:', error);
     throw new Error(`Falha ao verificar/criar bucket S3: ${error instanceof Error ? error.message : JSON.stringify(error)}`);
   }
 }
@@ -114,8 +125,35 @@ function generateS3Path(
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('[API Upload] Iniciando processo de upload...');
+    
+    // Verificar configurações do AWS S3
+    console.log('[API Upload] Configurações S3:', {
+      region: REGION,
+      bucketName: BUCKET_NAME,
+      accessKeyConfigured: !!ACCESS_KEY,
+      secretKeyConfigured: !!SECRET_KEY
+    });
+    
+    // Verificar credenciais AWS
+    if (!ACCESS_KEY || !SECRET_KEY) {
+      console.error('[API Upload] Erro: Credenciais AWS não configuradas');
+      return NextResponse.json(
+        { error: 'Credenciais AWS não configuradas. Verifique as variáveis de ambiente ACCESS_KEY_ID_AWS e SECRET_ACCESS_KEY_AWS.' },
+        { status: 500 }
+      );
+    }
+    
     // Garantir que o bucket exista
-    await ensureBucketExists();
+    try {
+      await ensureBucketExists();
+    } catch (bucketError) {
+      console.error('[API Upload] Erro ao verificar/criar bucket:', bucketError);
+      return NextResponse.json(
+        { error: `Erro ao verificar/criar bucket: ${bucketError instanceof Error ? bucketError.message : JSON.stringify(bucketError)}` },
+        { status: 500 }
+      );
+    }
     
     // Verificar se a requisição é multipart/form-data
     const formData = await request.formData();
@@ -128,7 +166,20 @@ export async function POST(request: NextRequest) {
     const tipoArquivo = formData.get('tipoArquivo') as 'documentos' | 'fotos' || 'documentos';
     const arquivoId = formData.get('arquivoId') as string || uuidv4();
     
+    console.log('[API Upload] Dados recebidos:', {
+      fileName,
+      contentType,
+      tenantId,
+      tipoEntidade,
+      entidadeId,
+      tipoArquivo,
+      arquivoId,
+      fileReceived: !!file,
+      fileSize: file ? file.size : 0
+    });
+    
     if (!file) {
+      console.error('[API Upload] Erro: Nenhum arquivo enviado');
       return NextResponse.json(
         { error: 'Nenhum arquivo enviado' },
         { status: 400 }
@@ -174,10 +225,11 @@ export async function POST(request: NextRequest) {
       extensao
     );
     
-    console.log(`Fazendo upload para o caminho: ${s3Key}`);
+    console.log(`[API Upload] Fazendo upload para o caminho: ${s3Key}`);
     
     // Converter o arquivo para buffer
     const buffer = Buffer.from(await file.arrayBuffer());
+    console.log(`[API Upload] Arquivo convertido para buffer. Tamanho: ${buffer.length} bytes`);
     
     // Configurar o comando de upload
     const command = new PutObjectCommand({
@@ -189,10 +241,20 @@ export async function POST(request: NextRequest) {
     });
     
     // Enviar o comando para o S3
-    await s3.send(command);
+    try {
+      const result = await s3.send(command);
+      console.log(`[API Upload] Upload concluído com sucesso:`, result);
+    } catch (uploadError) {
+      console.error('[API Upload] Erro ao enviar arquivo para o S3:', uploadError);
+      return NextResponse.json(
+        { error: `Falha ao enviar arquivo para o S3: ${uploadError instanceof Error ? uploadError.message : JSON.stringify(uploadError)}` },
+        { status: 500 }
+      );
+    }
     
     // Retornar a URL do arquivo no S3
     const fileUrl = `https://${BUCKET_NAME}.s3.amazonaws.com/${s3Key}`;
+    console.log(`[API Upload] URL do arquivo: ${fileUrl}`);
     
     // Adicionar instruções para o usuário sobre como configurar o acesso público
     console.log(`

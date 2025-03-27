@@ -1,133 +1,207 @@
 import { Visita } from '@/lib/crm-utils';
-import { visitaRepository } from '@/lib/repositories';
 
-// Obter o tenant ID da sessão (temporariamente fixo para testes)
-const TENANT_ID = process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID || 'default-tenant';
-
+/**
+ * API de visitas para o lado do cliente
+ * Usa as APIs REST para acessar os dados em vez de acessar o DynamoDB diretamente
+ */
 export const visitasApi = {
   listarVisitas: async (): Promise<Visita[]> => {
     try {
-      console.log('API: Listando visitas do DynamoDB');
-      const visitas = await visitaRepository.listarVisitas(TENANT_ID);
-      return visitas;
+      const response = await fetch('/api/visitas');
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error('Erro ao listar visitas:', data.message);
+        return [];
+      }
+      
+      return data.data;
     } catch (error) {
       console.error('Erro ao listar visitas:', error);
-      throw new Error(`Falha ao listar visitas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return [];
     }
   },
 
   buscarVisitaPorId: async (id: string): Promise<Visita | null> => {
     try {
-      console.log(`API: Buscando visita ${id} do DynamoDB`);
-      const visita = await visitaRepository.buscarVisitaPorId(TENANT_ID, id);
-      return visita;
+      const response = await fetch(`/api/visitas/${id}`);
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao buscar visita ${id}:`, data.message);
+        return null;
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao buscar visita ${id}:`, error);
-      throw new Error(`Falha ao buscar visita: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return null;
     }
   },
 
   listarVisitasPorCliente: async (clienteId: string): Promise<Visita[]> => {
     try {
-      console.log(`API: Listando visitas do cliente ${clienteId} do DynamoDB`);
-      const visitas = await visitaRepository.listarVisitasPorCliente(TENANT_ID, clienteId);
-      return visitas;
+      const response = await fetch(`/api/visitas/cliente/${clienteId}`);
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao listar visitas do cliente ${clienteId}:`, data.message);
+        return [];
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao listar visitas do cliente ${clienteId}:`, error);
-      throw new Error(`Falha ao listar visitas do cliente: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return [];
     }
   },
 
   listarVisitasPorPropriedade: async (propriedadeId: string): Promise<Visita[]> => {
     try {
-      console.log(`API: Listando visitas da propriedade ${propriedadeId} do DynamoDB`);
-      const visitas = await visitaRepository.listarVisitasPorPropriedade(TENANT_ID, propriedadeId);
-      return visitas;
+      const response = await fetch(`/api/visitas/propriedade/${propriedadeId}`);
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao listar visitas da propriedade ${propriedadeId}:`, data.message);
+        return [];
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao listar visitas da propriedade ${propriedadeId}:`, error);
-      throw new Error(`Falha ao listar visitas da propriedade: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return [];
     }
   },
 
   listarVisitasPorProjeto: async (projetoId: string): Promise<Visita[]> => {
     try {
-      console.log(`API: Listando visitas do projeto ${projetoId} do DynamoDB`);
-      const visitas = await visitaRepository.listarVisitasPorProjeto(TENANT_ID, projetoId);
-      return visitas;
+      const response = await fetch(`/api/visitas/projeto/${projetoId}`);
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao listar visitas do projeto ${projetoId}:`, data.message);
+        return [];
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao listar visitas do projeto ${projetoId}:`, error);
-      throw new Error(`Falha ao listar visitas do projeto: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return [];
     }
   },
 
   criarVisita: async (visita: Omit<Visita, 'id' | 'dataCriacao' | 'dataAtualizacao'>): Promise<Visita> => {
     try {
-      console.log('API: Criando visita no DynamoDB');
-      const novaVisita = await visitaRepository.criarVisita(TENANT_ID, visita);
-      return novaVisita;
+      const response = await fetch('/api/visitas', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(visita),
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        throw new Error(data.message);
+      }
+      
+      return data.data;
     } catch (error) {
       console.error('Erro ao criar visita:', error);
-      throw new Error(`Falha ao criar visita: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw error;
     }
   },
 
   atualizarVisita: async (id: string, visita: Partial<Omit<Visita, 'id' | 'dataCriacao'>>): Promise<Visita | null> => {
     try {
-      console.log(`API: Atualizando visita ${id} no DynamoDB`);
-      const visitaAtualizada = await visitaRepository.atualizarVisita(TENANT_ID, id, visita);
-      return visitaAtualizada;
+      const response = await fetch(`/api/visitas/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(visita),
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao atualizar visita ${id}:`, data.message);
+        return null;
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao atualizar visita ${id}:`, error);
-      throw new Error(`Falha ao atualizar visita: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return null;
     }
   },
 
   excluirVisita: async (id: string): Promise<boolean> => {
     try {
-      console.log(`API: Excluindo visita ${id} do DynamoDB`);
-      const resultado = await visitaRepository.excluirVisita(TENANT_ID, id);
-      return resultado;
+      const response = await fetch(`/api/visitas/${id}`, {
+        method: 'DELETE',
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao excluir visita ${id}:`, data.message);
+        return false;
+      }
+      
+      return true;
     } catch (error) {
       console.error(`Erro ao excluir visita ${id}:`, error);
-      throw new Error(`Falha ao excluir visita: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return false;
     }
   },
 
   adicionarFotos: async (id: string, fotos: string[]): Promise<Visita | null> => {
     try {
-      console.log(`API: Adicionando fotos à visita ${id} no DynamoDB`);
-      // Primeiro, buscar a visita atual para obter as fotos existentes
-      const visita = await visitaRepository.buscarVisitaPorId(TENANT_ID, id);
+      const response = await fetch(`/api/visitas/${id}/fotos`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ fotos }),
+      });
       
-      if (!visita) {
-        console.error(`Visita ${id} não encontrada`);
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao adicionar fotos à visita ${id}:`, data.message);
         return null;
       }
       
-      // Combinar as fotos existentes com as novas fotos
-      const fotosAtualizadas = [...(visita.fotos || []), ...fotos];
-      
-      // Atualizar a visita com as novas fotos
-      const visitaAtualizada = await visitaRepository.atualizarVisita(TENANT_ID, id, {
-        fotos: fotosAtualizadas
-      });
-      
-      return visitaAtualizada;
+      return data.data;
     } catch (error) {
       console.error(`Erro ao adicionar fotos à visita ${id}:`, error);
-      throw new Error(`Falha ao adicionar fotos à visita: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return null;
     }
   },
 
   atualizarStatusVisita: async (id: string, status: 'Agendada' | 'Realizada' | 'Cancelada'): Promise<Visita | null> => {
     try {
-      console.log(`API: Atualizando status da visita ${id} para ${status} no DynamoDB`);
-      // Utilizamos o método atualizarVisita existente, mas passando apenas o campo status
-      const visitaAtualizada = await visitaRepository.atualizarVisita(TENANT_ID, id, { status });
-      return visitaAtualizada;
+      const response = await fetch(`/api/visitas/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao atualizar status da visita ${id}:`, data.message);
+        return null;
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao atualizar status da visita ${id}:`, error);
-      throw new Error(`Falha ao atualizar status da visita: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return null;
     }
   }
 };

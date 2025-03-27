@@ -90,7 +90,7 @@ export default function Dashboard() {
           oportunidadesStatus: estatisticasOportunidades?.porStatus 
             ? Object.entries(estatisticasOportunidades.porStatus).reduce((acc, [status, quantidade]) => {
                 acc[status] = { 
-                  quantidade, 
+                  quantidade: quantidade as number, 
                   valor: 0 // Valor padrão, poderia ser calculado se tivéssemos essa informação
                 };
                 return acc;

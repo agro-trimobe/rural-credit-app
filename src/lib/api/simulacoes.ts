@@ -1,70 +1,113 @@
 import { Simulacao } from '@/lib/crm-utils';
-import { simulacaoRepository } from '@/lib/repositories';
 
-// Obter o tenant ID da sessão (temporariamente fixo para testes)
-const TENANT_ID = process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID || 'default-tenant';
-
+/**
+ * API de simulações para o lado do cliente
+ * Usa as APIs REST para acessar os dados em vez de acessar o DynamoDB diretamente
+ */
 export const simulacoesApi = {
   listarSimulacoes: async (): Promise<Simulacao[]> => {
     try {
-      console.log('API: Listando simulações do DynamoDB');
-      const simulacoes = await simulacaoRepository.listarSimulacoes(TENANT_ID);
-      return simulacoes;
+      const response = await fetch('/api/simulacoes');
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error('Erro ao listar simulações:', data.message);
+        return [];
+      }
+      
+      return data.data;
     } catch (error) {
       console.error('Erro ao listar simulações:', error);
-      throw new Error(`Falha ao listar simulações: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return [];
     }
   },
 
   buscarSimulacaoPorId: async (id: string): Promise<Simulacao | null> => {
     try {
-      console.log(`API: Buscando simulação ${id} do DynamoDB`);
-      const simulacao = await simulacaoRepository.buscarSimulacaoPorId(TENANT_ID, id);
-      return simulacao;
+      const response = await fetch(`/api/simulacoes/${id}`);
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao buscar simulação ${id}:`, data.message);
+        return null;
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao buscar simulação ${id}:`, error);
-      throw new Error(`Falha ao buscar simulação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return null;
     }
   },
 
   listarSimulacoesPorCliente: async (clienteId: string): Promise<Simulacao[]> => {
     try {
-      console.log(`API: Listando simulações do cliente ${clienteId} do DynamoDB`);
-      const simulacoes = await simulacaoRepository.listarSimulacoesPorCliente(TENANT_ID, clienteId);
-      return simulacoes;
+      const response = await fetch(`/api/simulacoes/cliente/${clienteId}`);
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao listar simulações do cliente ${clienteId}:`, data.message);
+        return [];
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao listar simulações do cliente ${clienteId}:`, error);
-      throw new Error(`Falha ao listar simulações do cliente: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return [];
     }
   },
 
   listarSimulacoesPorProjeto: async (projetoId: string): Promise<Simulacao[]> => {
     try {
-      console.log(`API: Listando simulações do projeto ${projetoId} do DynamoDB`);
-      const simulacoes = await simulacaoRepository.listarSimulacoesPorProjeto(TENANT_ID, projetoId);
-      return simulacoes;
+      const response = await fetch(`/api/simulacoes/projeto/${projetoId}`);
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao listar simulações do projeto ${projetoId}:`, data.message);
+        return [];
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao listar simulações do projeto ${projetoId}:`, error);
-      throw new Error(`Falha ao listar simulações do projeto: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return [];
     }
   },
 
   listarSimulacoesPorLinha: async (linhaCredito: string): Promise<Simulacao[]> => {
     try {
-      console.log(`API: Listando simulações da linha de crédito ${linhaCredito} do DynamoDB`);
-      const simulacoes = await simulacaoRepository.listarSimulacoesPorLinha(TENANT_ID, linhaCredito);
-      return simulacoes;
+      const response = await fetch(`/api/simulacoes/linha/${linhaCredito}`);
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao listar simulações da linha de crédito ${linhaCredito}:`, data.message);
+        return [];
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao listar simulações da linha de crédito ${linhaCredito}:`, error);
-      throw new Error(`Falha ao listar simulações da linha de crédito: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return [];
     }
   },
 
   criarSimulacao: async (simulacao: Omit<Simulacao, 'id' | 'dataCriacao' | 'dataAtualizacao'>): Promise<Simulacao> => {
     try {
-      console.log('API: Criando simulação no DynamoDB');
-      const novaSimulacao = await simulacaoRepository.criarSimulacao(TENANT_ID, simulacao);
-      return novaSimulacao;
+      const response = await fetch('/api/simulacoes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(simulacao)
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error('Erro ao criar simulação:', data.message);
+        throw new Error(data.message);
+      }
+      
+      return data.data;
     } catch (error) {
       console.error('Erro ao criar simulação:', error);
       throw new Error(`Falha ao criar simulação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
@@ -73,23 +116,45 @@ export const simulacoesApi = {
 
   atualizarSimulacao: async (id: string, simulacao: Partial<Omit<Simulacao, 'id' | 'dataCriacao'>>): Promise<Simulacao | null> => {
     try {
-      console.log(`API: Atualizando simulação ${id} no DynamoDB`);
-      const simulacaoAtualizada = await simulacaoRepository.atualizarSimulacao(TENANT_ID, id, simulacao);
-      return simulacaoAtualizada;
+      const response = await fetch(`/api/simulacoes/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(simulacao)
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao atualizar simulação ${id}:`, data.message);
+        return null;
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao atualizar simulação ${id}:`, error);
-      throw new Error(`Falha ao atualizar simulação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return null;
     }
   },
 
   excluirSimulacao: async (id: string): Promise<boolean> => {
     try {
-      console.log(`API: Excluindo simulação ${id} do DynamoDB`);
-      const resultado = await simulacaoRepository.excluirSimulacao(TENANT_ID, id);
-      return resultado;
+      const response = await fetch(`/api/simulacoes/${id}`, {
+        method: 'DELETE'
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao excluir simulação ${id}:`, data.message);
+        return false;
+      }
+      
+      return true;
     } catch (error) {
       console.error(`Erro ao excluir simulação ${id}:`, error);
-      throw new Error(`Falha ao excluir simulação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return false;
     }
   },
 
@@ -100,24 +165,44 @@ export const simulacoesApi = {
     carencia: number
   ): Promise<number> => {
     try {
-      console.log('API: Calculando parcela de financiamento');
+      const response = await fetch('/api/simulacoes/calcular-parcela', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          valorFinanciamento,
+          taxaJuros,
+          prazoTotal,
+          carencia
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error('Erro ao calcular parcela:', data.message);
+        throw new Error(data.message);
+      }
+      
+      return data.data.parcela;
+    } catch (error) {
+      console.error('Erro ao calcular parcela:', error);
+      // Cálculo de fallback no cliente em caso de falha na API
+      console.log('Usando cálculo de fallback para parcela');
       
       // Converter taxa anual para mensal
       const taxaMensal = Math.pow(1 + taxaJuros / 100, 1 / 12) - 1;
       
-      // Número de parcelas (prazo total menos carência)
-      const numParcelas = prazoTotal - carencia;
+      // Número de parcelas após carência
+      const numeroParcelas = prazoTotal - carencia;
       
       // Cálculo da parcela usando a fórmula de amortização
-      // P = VP * [r * (1 + r)^n] / [(1 + r)^n - 1]
       const parcela = valorFinanciamento * 
-        (taxaMensal * Math.pow(1 + taxaMensal, numParcelas)) / 
-        (Math.pow(1 + taxaMensal, numParcelas) - 1);
+        (taxaMensal * Math.pow(1 + taxaMensal, numeroParcelas)) / 
+        (Math.pow(1 + taxaMensal, numeroParcelas) - 1);
       
-      return Math.round(parcela * 100) / 100; // Arredondar para 2 casas decimais
-    } catch (error) {
-      console.error('Erro ao calcular parcela:', error);
-      throw new Error(`Falha ao calcular parcela: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return Math.round(parcela * 100) / 100; // Arredonda para 2 casas decimais
     }
   }
 };

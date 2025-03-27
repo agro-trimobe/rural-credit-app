@@ -1,121 +1,167 @@
 import { Oportunidade } from '@/lib/crm-utils';
-import { oportunidadeRepository } from '@/lib/repositories';
 
-// Obter o tenant ID da sessão (temporariamente fixo para testes)
-const TENANT_ID = process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID || 'default-tenant';
-
+/**
+ * API de oportunidades para o lado do cliente
+ * Usa as APIs REST para acessar os dados em vez de acessar o DynamoDB diretamente
+ */
 export const oportunidadesApi = {
   listarOportunidades: async (): Promise<Oportunidade[]> => {
     try {
-      console.log('API: Listando oportunidades do DynamoDB');
-      const oportunidades = await oportunidadeRepository.listarOportunidades(TENANT_ID);
-      return oportunidades;
+      const response = await fetch('/api/oportunidades');
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error('Erro ao listar oportunidades:', data.message);
+        return [];
+      }
+      
+      return data.data;
     } catch (error) {
       console.error('Erro ao listar oportunidades:', error);
-      throw new Error(`Falha ao listar oportunidades: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return [];
     }
   },
 
   buscarOportunidadePorId: async (id: string): Promise<Oportunidade | null> => {
     try {
-      console.log(`API: Buscando oportunidade ${id} do DynamoDB`);
-      const oportunidade = await oportunidadeRepository.buscarOportunidadePorId(TENANT_ID, id);
-      return oportunidade;
+      const response = await fetch(`/api/oportunidades/${id}`);
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao buscar oportunidade ${id}:`, data.message);
+        return null;
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao buscar oportunidade ${id}:`, error);
-      throw new Error(`Falha ao buscar oportunidade: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return null;
     }
   },
 
   listarOportunidadesPorCliente: async (clienteId: string): Promise<Oportunidade[]> => {
     try {
-      console.log(`API: Listando oportunidades do cliente ${clienteId} do DynamoDB`);
-      const oportunidades = await oportunidadeRepository.listarOportunidadesPorCliente(TENANT_ID, clienteId);
-      return oportunidades;
+      const response = await fetch(`/api/oportunidades/cliente/${clienteId}`);
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao listar oportunidades do cliente ${clienteId}:`, data.message);
+        return [];
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao listar oportunidades do cliente ${clienteId}:`, error);
-      throw new Error(`Falha ao listar oportunidades do cliente: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return [];
     }
   },
 
   listarOportunidadesPorStatus: async (status: string): Promise<Oportunidade[]> => {
     try {
-      console.log(`API: Listando oportunidades com status ${status} do DynamoDB`);
-      const oportunidades = await oportunidadeRepository.listarOportunidadesPorStatus(TENANT_ID, status);
-      return oportunidades;
+      const response = await fetch(`/api/oportunidades/status/${status}`);
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao listar oportunidades com status ${status}:`, data.message);
+        return [];
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao listar oportunidades com status ${status}:`, error);
-      throw new Error(`Falha ao listar oportunidades por status: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return [];
     }
   },
 
   criarOportunidade: async (oportunidade: Omit<Oportunidade, 'id' | 'dataCriacao' | 'dataAtualizacao'>): Promise<Oportunidade> => {
     try {
-      console.log('API: Criando oportunidade no DynamoDB');
-      const novaOportunidade = await oportunidadeRepository.criarOportunidade(TENANT_ID, oportunidade);
-      return novaOportunidade;
+      const response = await fetch('/api/oportunidades', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(oportunidade),
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        throw new Error(data.message);
+      }
+      
+      return data.data;
     } catch (error) {
       console.error('Erro ao criar oportunidade:', error);
-      throw new Error(`Falha ao criar oportunidade: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw error;
     }
   },
 
   atualizarOportunidade: async (id: string, oportunidade: Partial<Omit<Oportunidade, 'id' | 'dataCriacao'>>): Promise<Oportunidade | null> => {
     try {
-      console.log(`API: Atualizando oportunidade ${id} no DynamoDB`);
-      const oportunidadeAtualizada = await oportunidadeRepository.atualizarOportunidade(TENANT_ID, id, oportunidade);
-      return oportunidadeAtualizada;
+      const response = await fetch(`/api/oportunidades/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(oportunidade),
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao atualizar oportunidade ${id}:`, data.message);
+        return null;
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao atualizar oportunidade ${id}:`, error);
-      throw new Error(`Falha ao atualizar oportunidade: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return null;
     }
   },
 
   excluirOportunidade: async (id: string): Promise<boolean> => {
     try {
-      console.log(`API: Excluindo oportunidade ${id} do DynamoDB`);
-      const resultado = await oportunidadeRepository.excluirOportunidade(TENANT_ID, id);
-      return resultado;
+      const response = await fetch(`/api/oportunidades/${id}`, {
+        method: 'DELETE',
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao excluir oportunidade ${id}:`, data.message);
+        return false;
+      }
+      
+      return true;
     } catch (error) {
       console.error(`Erro ao excluir oportunidade ${id}:`, error);
-      throw new Error(`Falha ao excluir oportunidade: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return false;
     }
   },
 
   obterEstatisticas: async () => {
     try {
-      console.log('API: Obtendo estatísticas de oportunidades do DynamoDB');
-      const oportunidades = await oportunidadeRepository.listarOportunidades(TENANT_ID);
+      const response = await fetch('/api/oportunidades/estatisticas');
+      const data = await response.json();
       
-      // Calcular estatísticas por status
-      const porStatus: Record<string, number> = {};
-      oportunidades.forEach(oportunidade => {
-        if (!porStatus[oportunidade.status]) {
-          porStatus[oportunidade.status] = 0;
-        }
-        porStatus[oportunidade.status]++;
-      });
+      if (data.status === 'error') {
+        console.error('Erro ao obter estatísticas de oportunidades:', data.message);
+        return {
+          total: 0,
+          valorTotal: 0,
+          porStatus: {}
+        };
+      }
       
-      // Calcular valor total das oportunidades
-      const valorTotal = oportunidades.reduce((total, oportunidade) => {
-        if (oportunidade.status !== 'Perdido' && oportunidade.status !== 'Contato Inicial') {
-          return total + (oportunidade.valor || 0);
-        }
-        return total;
-      }, 0);
-      
-      return {
-        total: oportunidades.length,
-        porStatus,
-        valorTotal,
-        abertas: oportunidades.filter(o => o.status === 'Contato Inicial').length,
-        emNegociacao: oportunidades.filter(o => o.status === 'Negociação').length,
-        ganhas: oportunidades.filter(o => o.status === 'Ganho').length,
-        perdidas: oportunidades.filter(o => o.status === 'Perdido').length
-      };
+      return data.data;
     } catch (error) {
       console.error('Erro ao obter estatísticas de oportunidades:', error);
-      throw new Error(`Falha ao obter estatísticas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return {
+        total: 0,
+        valorTotal: 0,
+        porStatus: {}
+      };
     }
   }
 };

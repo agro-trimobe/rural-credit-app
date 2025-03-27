@@ -7,3 +7,6 @@ export { interacoesApi } from './interacoes';
 export { oportunidadesApi } from './oportunidades';
 export { visitasApi } from './visitas';
 export { simulacoesApi } from './simulacoes';
+
+// Exportar funções utilitárias
+export { getTenantId } from './tenant-utils';

@@ -27,7 +27,7 @@ export function formatarValor(valor: number, casasDecimais: number = 2): string 
 /**
  * Formata uma data ISO para o formato brasileiro (DD/MM/YYYY)
  */
-export function formatarData(dataISO?: string): string {
+export function formatarData(dataISO?: string | null): string {
   if (!dataISO) return 'N/A';
   
   try {
@@ -52,7 +52,7 @@ export function formatarData(dataISO?: string): string {
 /**
  * Formata uma data ISO para o formato brasileiro com hora (DD/MM/YYYY HH:MM)
  */
-export function formatarDataHora(dataISO?: string): string {
+export function formatarDataHora(dataISO?: string | null): string {
   if (!dataISO) return 'N/A';
   
   try {

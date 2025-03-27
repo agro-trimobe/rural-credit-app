@@ -1,84 +1,142 @@
 import { Projeto } from '@/lib/crm-utils';
-import { projetoRepository } from '@/lib/repositories';
 
-// Obter o tenant ID da sessão (temporariamente fixo para testes)
-const TENANT_ID = process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID || 'default-tenant';
-
+/**
+ * API de projetos para o lado do cliente
+ * Usa as APIs REST para acessar os dados em vez de acessar o DynamoDB diretamente
+ */
 export const projetosApi = {
   listarProjetos: async (): Promise<Projeto[]> => {
     try {
-      console.log('API: Listando projetos do DynamoDB');
-      const projetos = await projetoRepository.listarProjetos(TENANT_ID);
-      return projetos;
+      const response = await fetch('/api/projetos');
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error('Erro ao listar projetos:', data.message);
+        return [];
+      }
+      
+      return data.data;
     } catch (error) {
       console.error('Erro ao listar projetos:', error);
-      throw new Error(`Falha ao listar projetos: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return [];
     }
   },
 
   buscarProjetoPorId: async (id: string): Promise<Projeto | null> => {
     try {
-      console.log(`API: Buscando projeto ${id} do DynamoDB`);
-      const projeto = await projetoRepository.buscarProjetoPorId(TENANT_ID, id);
-      return projeto;
+      const response = await fetch(`/api/projetos/${id}`);
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao buscar projeto ${id}:`, data.message);
+        return null;
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao buscar projeto ${id}:`, error);
-      throw new Error(`Falha ao buscar projeto: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return null;
     }
   },
 
   listarProjetosPorCliente: async (clienteId: string): Promise<Projeto[]> => {
     try {
-      console.log(`API: Listando projetos do cliente ${clienteId} do DynamoDB`);
-      const projetos = await projetoRepository.listarProjetosPorCliente(TENANT_ID, clienteId);
-      return projetos;
+      const response = await fetch(`/api/projetos/cliente/${clienteId}`);
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao listar projetos do cliente ${clienteId}:`, data.message);
+        return [];
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao listar projetos do cliente ${clienteId}:`, error);
-      throw new Error(`Falha ao listar projetos do cliente: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return [];
     }
   },
 
   listarProjetosPorPropriedade: async (propriedadeId: string): Promise<Projeto[]> => {
     try {
-      console.log(`API: Listando projetos da propriedade ${propriedadeId} do DynamoDB`);
-      const projetos = await projetoRepository.listarProjetosPorPropriedade(TENANT_ID, propriedadeId);
-      return projetos;
+      const response = await fetch(`/api/projetos/propriedade/${propriedadeId}`);
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao listar projetos da propriedade ${propriedadeId}:`, data.message);
+        return [];
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao listar projetos da propriedade ${propriedadeId}:`, error);
-      throw new Error(`Falha ao listar projetos da propriedade: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return [];
     }
   },
 
   criarProjeto: async (projeto: Omit<Projeto, 'id' | 'dataCriacao' | 'dataAtualizacao'>): Promise<Projeto> => {
     try {
-      console.log('API: Criando projeto no DynamoDB');
-      const novoProjeto = await projetoRepository.criarProjeto(TENANT_ID, projeto);
-      return novoProjeto;
+      const response = await fetch('/api/projetos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(projeto),
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        throw new Error(data.message);
+      }
+      
+      return data.data;
     } catch (error) {
       console.error('Erro ao criar projeto:', error);
-      throw new Error(`Falha ao criar projeto: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw error;
     }
   },
 
   atualizarProjeto: async (id: string, projeto: Partial<Omit<Projeto, 'id' | 'dataCriacao'>>): Promise<Projeto | null> => {
     try {
-      console.log(`API: Atualizando projeto ${id} no DynamoDB`);
-      const projetoAtualizado = await projetoRepository.atualizarProjeto(TENANT_ID, id, projeto);
-      return projetoAtualizado;
+      const response = await fetch(`/api/projetos/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(projeto),
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao atualizar projeto ${id}:`, data.message);
+        return null;
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao atualizar projeto ${id}:`, error);
-      throw new Error(`Falha ao atualizar projeto: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return null;
     }
   },
 
   excluirProjeto: async (id: string): Promise<boolean> => {
     try {
-      console.log(`API: Excluindo projeto ${id} do DynamoDB`);
-      const resultado = await projetoRepository.excluirProjeto(TENANT_ID, id);
-      return resultado;
+      const response = await fetch(`/api/projetos/${id}`, {
+        method: 'DELETE',
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao excluir projeto ${id}:`, data.message);
+        return false;
+      }
+      
+      return true;
     } catch (error) {
       console.error(`Erro ao excluir projeto ${id}:`, error);
-      throw new Error(`Falha ao excluir projeto: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return false;
     }
   }
 };

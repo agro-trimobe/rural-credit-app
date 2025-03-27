@@ -1,62 +1,108 @@
 import { Cliente } from '@/lib/crm-utils';
-import { clienteRepository } from '@/lib/repositories';
 
-// Obter o tenant ID da sessão (temporariamente fixo para testes)
-const TENANT_ID = process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID || 'default-tenant';
-
+/**
+ * API de clientes para o lado do cliente
+ * Usa as APIs REST para acessar os dados em vez de acessar o DynamoDB diretamente
+ */
 export const clientesApi = {
   listarClientes: async (): Promise<Cliente[]> => {
     try {
-      console.log('API: Listando clientes do DynamoDB');
-      const clientes = await clienteRepository.listarClientes(TENANT_ID);
-      return clientes;
+      const response = await fetch('/api/clientes');
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error('Erro ao listar clientes:', data.message);
+        return [];
+      }
+      
+      return data.data;
     } catch (error) {
       console.error('Erro ao listar clientes:', error);
-      throw new Error(`Falha ao listar clientes: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return [];
     }
   },
 
   buscarClientePorId: async (id: string): Promise<Cliente | null> => {
     try {
-      console.log(`API: Buscando cliente ${id} do DynamoDB`);
-      const cliente = await clienteRepository.buscarClientePorId(TENANT_ID, id);
-      return cliente;
+      const response = await fetch(`/api/clientes/${id}`);
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao obter cliente ${id}:`, data.message);
+        return null;
+      }
+      
+      return data.data;
     } catch (error) {
-      console.error(`Erro ao buscar cliente ${id}:`, error);
-      throw new Error(`Falha ao buscar cliente: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      console.error(`Erro ao obter cliente ${id}:`, error);
+      return null;
     }
   },
 
   criarCliente: async (cliente: Omit<Cliente, 'id' | 'dataCriacao' | 'dataAtualizacao'>): Promise<Cliente> => {
     try {
-      console.log('API: Criando cliente no DynamoDB');
-      const novoCliente = await clienteRepository.criarCliente(TENANT_ID, cliente);
-      return novoCliente;
+      const response = await fetch('/api/clientes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(cliente),
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        throw new Error(data.message);
+      }
+      
+      return data.data;
     } catch (error) {
       console.error('Erro ao criar cliente:', error);
-      throw new Error(`Falha ao criar cliente: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw error;
     }
   },
 
   atualizarCliente: async (id: string, cliente: Partial<Omit<Cliente, 'id' | 'dataCriacao'>>): Promise<Cliente | null> => {
     try {
-      console.log(`API: Atualizando cliente ${id} no DynamoDB`);
-      const clienteAtualizado = await clienteRepository.atualizarCliente(TENANT_ID, id, cliente);
-      return clienteAtualizado;
+      const response = await fetch(`/api/clientes/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(cliente),
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao atualizar cliente ${id}:`, data.message);
+        return null;
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao atualizar cliente ${id}:`, error);
-      throw new Error(`Falha ao atualizar cliente: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return null;
     }
   },
 
   excluirCliente: async (id: string): Promise<boolean> => {
     try {
-      console.log(`API: Excluindo cliente ${id} do DynamoDB`);
-      const resultado = await clienteRepository.excluirCliente(TENANT_ID, id);
-      return resultado;
+      const response = await fetch(`/api/clientes/${id}`, {
+        method: 'DELETE',
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao excluir cliente ${id}:`, data.message);
+        return false;
+      }
+      
+      return true;
     } catch (error) {
       console.error(`Erro ao excluir cliente ${id}:`, error);
-      throw new Error(`Falha ao excluir cliente: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return false;
     }
   }
 };

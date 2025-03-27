@@ -1,59 +1,96 @@
 import { Interacao } from '@/lib/crm-utils';
-import { interacaoRepository } from '@/lib/repositories';
 
-// Obter o tenant ID da sessão (temporariamente fixo para testes)
-const TENANT_ID = process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID || 'default-tenant';
-
+/**
+ * API de interações para o lado do cliente
+ * Usa as APIs REST para acessar os dados em vez de acessar o DynamoDB diretamente
+ */
 export const interacoesApi = {
   listarInteracoes: async (): Promise<Interacao[]> => {
     try {
-      console.log('API: Listando interações do DynamoDB');
-      const interacoes = await interacaoRepository.listarInteracoes(TENANT_ID);
-      return interacoes;
+      const response = await fetch('/api/interacoes');
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error('Erro ao listar interações:', data.message);
+        return [];
+      }
+      
+      return data.data;
     } catch (error) {
       console.error('Erro ao listar interações:', error);
-      throw new Error(`Falha ao listar interações: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return [];
     }
   },
 
   buscarInteracaoPorId: async (id: string): Promise<Interacao | null> => {
     try {
-      console.log(`API: Buscando interação ${id} do DynamoDB`);
-      const interacao = await interacaoRepository.buscarInteracaoPorId(TENANT_ID, id);
-      return interacao;
+      const response = await fetch(`/api/interacoes/${id}`);
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao buscar interação ${id}:`, data.message);
+        return null;
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao buscar interação ${id}:`, error);
-      throw new Error(`Falha ao buscar interação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return null;
     }
   },
 
   listarInteracoesPorCliente: async (clienteId: string): Promise<Interacao[]> => {
     try {
-      console.log(`API: Listando interações do cliente ${clienteId} do DynamoDB`);
-      const interacoes = await interacaoRepository.listarInteracoesPorCliente(TENANT_ID, clienteId);
-      return interacoes;
+      const response = await fetch(`/api/interacoes/cliente/${clienteId}`);
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao listar interações do cliente ${clienteId}:`, data.message);
+        return [];
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao listar interações do cliente ${clienteId}:`, error);
-      throw new Error(`Falha ao listar interações do cliente: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return [];
     }
   },
 
   listarInteracoesPorData: async (data: string): Promise<Interacao[]> => {
     try {
-      console.log(`API: Listando interações da data ${data} do DynamoDB`);
-      const interacoes = await interacaoRepository.listarInteracoesPorData(TENANT_ID, data);
-      return interacoes;
+      const response = await fetch(`/api/interacoes/data/${data}`);
+      const responseData = await response.json();
+      
+      if (responseData.status === 'error') {
+        console.error(`Erro ao listar interações por data:`, responseData.message);
+        return [];
+      }
+      
+      return responseData.data;
     } catch (error) {
       console.error(`Erro ao listar interações por data:`, error);
-      throw new Error(`Falha ao listar interações por data: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return [];
     }
   },
 
   criarInteracao: async (interacao: Omit<Interacao, 'id' | 'dataCriacao' | 'dataAtualizacao'>): Promise<Interacao> => {
     try {
-      console.log('API: Criando interação no DynamoDB');
-      const novaInteracao = await interacaoRepository.criarInteracao(TENANT_ID, interacao);
-      return novaInteracao;
+      const response = await fetch('/api/interacoes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(interacao)
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error('Erro ao criar interação:', data.message);
+        throw new Error(data.message);
+      }
+      
+      return data.data;
     } catch (error) {
       console.error('Erro ao criar interação:', error);
       throw new Error(`Falha ao criar interação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
@@ -62,23 +99,45 @@ export const interacoesApi = {
 
   atualizarInteracao: async (id: string, interacao: Partial<Omit<Interacao, 'id' | 'dataCriacao'>>): Promise<Interacao | null> => {
     try {
-      console.log(`API: Atualizando interação ${id} no DynamoDB`);
-      const interacaoAtualizada = await interacaoRepository.atualizarInteracao(TENANT_ID, id, interacao);
-      return interacaoAtualizada;
+      const response = await fetch(`/api/interacoes/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(interacao)
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao atualizar interação ${id}:`, data.message);
+        return null;
+      }
+      
+      return data.data;
     } catch (error) {
       console.error(`Erro ao atualizar interação ${id}:`, error);
-      throw new Error(`Falha ao atualizar interação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return null;
     }
   },
 
   excluirInteracao: async (id: string): Promise<boolean> => {
     try {
-      console.log(`API: Excluindo interação ${id} do DynamoDB`);
-      const resultado = await interacaoRepository.excluirInteracao(TENANT_ID, id);
-      return resultado;
+      const response = await fetch(`/api/interacoes/${id}`, {
+        method: 'DELETE'
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        console.error(`Erro ao excluir interação ${id}:`, data.message);
+        return false;
+      }
+      
+      return true;
     } catch (error) {
       console.error(`Erro ao excluir interação ${id}:`, error);
-      throw new Error(`Falha ao excluir interação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      return false;
     }
   }
 };
