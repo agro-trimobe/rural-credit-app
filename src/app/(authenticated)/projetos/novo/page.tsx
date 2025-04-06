@@ -22,10 +22,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ArrowLeft, Save } from 'lucide-react'
+import { 
+  ArrowLeft, 
+  Save, 
+  X, 
+  FileText, 
+  Building2, 
+  CalendarIcon, 
+  DollarSign,
+  CreditCard,
+  BarChart2,
+  User
+} from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
+import { Badge } from '@/components/ui/badge'
 import { Cliente, Propriedade, Projeto } from '@/lib/crm-utils'
-import { formatarData } from '@/lib/formatters'
+import { formatarData, coresStatus } from '@/lib/formatters'
 import { projetosApi, clientesApi, propriedadesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
@@ -244,170 +256,287 @@ export default function ProjetoNovoPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="icon" asChild>
-            <Link href="/projetos">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <h1 className="text-2xl font-bold tracking-tight">Novo Projeto</h1>
-        </div>
+    <div className="container max-w-5xl mx-auto py-4">
+      {/* Breadcrumbs e título */}
+      <div className="flex items-center mb-4 text-sm">
+        <Link href="/projetos" className="text-muted-foreground hover:text-primary flex items-center">
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Voltar para Projetos
+        </Link>
       </div>
 
       <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <CardTitle>Informações do Projeto</CardTitle>
+        <Card className="shadow-sm">
+          <CardHeader className="pb-4 border-b">
+            <CardTitle className="text-xl font-medium flex items-center">
+              <FileText className="h-5 w-5 mr-2 text-primary" />
+              Novo Projeto
+            </CardTitle>
             <CardDescription>
               Preencha os dados para criar um novo projeto
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="titulo">
-                  Título <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="titulo"
-                  name="titulo"
-                  value={formData.titulo}
-                  onChange={handleChange}
-                  required
-                />
+          
+          <CardContent className="p-6 space-y-6">
+            {/* Seção 1: Informações Básicas */}
+            <div>
+              <h3 className="text-base font-medium mb-3 flex items-center">
+                <FileText className="h-4 w-4 mr-2 text-primary" />
+                Informações Básicas
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="titulo" className="flex items-center">
+                    Título <span className="text-destructive ml-1">*</span>
+                  </Label>
+                  <Input
+                    id="titulo"
+                    name="titulo"
+                    value={formData.titulo}
+                    onChange={handleChange}
+                    required
+                    className="focus-visible:ring-primary"
+                  />
+                </div>
+                
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="descricao">Descrição</Label>
+                  <Textarea
+                    id="descricao"
+                    name="descricao"
+                    value={formData.descricao}
+                    onChange={handleChange}
+                    rows={3}
+                    className="resize-none focus-visible:ring-primary"
+                    placeholder="Descreva o projeto em detalhes"
+                  />
+                </div>
               </div>
+            </div>
+            
+            {/* Seção 2: Cliente e Propriedade */}
+            <div className="pt-2 border-t">
+              <h3 className="text-base font-medium mb-3 flex items-center">
+                <User className="h-4 w-4 mr-2 text-primary" />
+                Cliente e Propriedade
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="clienteId" className="flex items-center">
+                    Cliente <span className="text-destructive ml-1">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Select
+                      value={formData.clienteId}
+                      onValueChange={(value) => handleSelectChange('clienteId', value)}
+                    >
+                      <SelectTrigger id="clienteId" className="pl-8 focus-visible:ring-primary">
+                        <User className="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <SelectValue placeholder="Selecione o cliente" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clientes.map((cliente) => (
+                          <SelectItem key={cliente.id} value={cliente.id}>
+                            {cliente.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
 
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="descricao">Descrição</Label>
-                <Textarea
-                  id="descricao"
-                  name="descricao"
-                  value={formData.descricao}
-                  onChange={handleChange}
-                  rows={4}
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="propriedadeId" className="flex items-center">
+                    Propriedade <span className="text-destructive ml-1">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Select
+                      value={formData.propriedadeId}
+                      onValueChange={(value) => handleSelectChange('propriedadeId', value)}
+                      disabled={!formData.clienteId || propriedades.length === 0}
+                    >
+                      <SelectTrigger id="propriedadeId" className="pl-8 focus-visible:ring-primary">
+                        <Building2 className="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <SelectValue placeholder={
+                          !formData.clienteId 
+                            ? "Selecione um cliente primeiro" 
+                            : propriedades.length === 0 
+                              ? "Nenhuma propriedade disponível" 
+                              : "Selecione a propriedade"
+                        } />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {propriedades.map((propriedade) => (
+                          <SelectItem key={propriedade.id} value={propriedade.id}>
+                            {propriedade.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
+            </div>
+            
+            {/* Seção 3: Dados Financeiros */}
+            <div className="pt-2 border-t">
+              <h3 className="text-base font-medium mb-3 flex items-center">
+                <DollarSign className="h-4 w-4 mr-2 text-primary" />
+                Dados Financeiros
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="valorTotal" className="flex items-center">
+                    Valor Total <span className="text-destructive ml-1">*</span>
+                  </Label>
+                  <div className="relative">
+                    <DollarSign className="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="valorTotal"
+                      name="valorTotal"
+                      placeholder="R$ 0,00"
+                      value={formData.valorTotal}
+                      onChange={handleValorChange}
+                      required
+                      className="pl-8 focus-visible:ring-primary"
+                    />
+                  </div>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="clienteId">
-                  Cliente <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={formData.clienteId}
-                  onValueChange={(value) => handleSelectChange('clienteId', value)}
-                >
-                  <SelectTrigger id="clienteId">
-                    <SelectValue placeholder="Selecione o cliente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clientes.map((cliente) => (
-                      <SelectItem key={cliente.id} value={cliente.id}>
-                        {cliente.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  <Label htmlFor="linhaCredito" className="flex items-center">
+                    Linha de Crédito <span className="text-destructive ml-1">*</span>
+                  </Label>
+                  <div className="relative">
+                    <CreditCard className="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="linhaCredito"
+                      name="linhaCredito"
+                      value={formData.linhaCredito}
+                      onChange={handleChange}
+                      required
+                      className="pl-8 focus-visible:ring-primary"
+                      placeholder="Ex: PRONAF Mais Alimentos"
+                    />
+                  </div>
+                </div>
               </div>
+            </div>
+            
+            {/* Seção 4: Status e Prazos */}
+            <div className="pt-2 border-t">
+              <h3 className="text-base font-medium mb-3 flex items-center">
+                <BarChart2 className="h-4 w-4 mr-2 text-primary" />
+                Status e Prazos
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <div className="space-y-3">
+                    <Select
+                      value={formData.status}
+                      onValueChange={(value) => handleSelectChange('status', value)}
+                    >
+                      <SelectTrigger id="status" className="focus-visible:ring-primary">
+                        <SelectValue placeholder="Selecione o status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Em Elaboração">
+                          <div className="flex items-center">
+                            <Badge className={coresStatus.projeto['Em Elaboração']}>
+                              Em Elaboração
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Em Análise">
+                          <div className="flex items-center">
+                            <Badge className={coresStatus.projeto['Em Análise']}>
+                              Em Análise
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Aprovado">
+                          <div className="flex items-center">
+                            <Badge className={coresStatus.projeto['Aprovado']}>
+                              Aprovado
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Contratado">
+                          <div className="flex items-center">
+                            <Badge className={coresStatus.projeto['Contratado']}>
+                              Contratado
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Cancelado">
+                          <div className="flex items-center">
+                            <Badge className={coresStatus.projeto['Cancelado']}>
+                              Cancelado
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    {/* Barra de progresso baseada no status */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span>Progresso</span>
+                        <span>{formData.status === 'Em Elaboração' ? '20%' : 
+                               formData.status === 'Em Análise' ? '40%' : 
+                               formData.status === 'Aprovado' ? '60%' : 
+                               formData.status === 'Contratado' ? '100%' : 
+                               formData.status === 'Cancelado' ? '0%' : '0%'}</span>
+                      </div>
+                      <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-primary" 
+                          style={{ width: formData.status === 'Em Elaboração' ? '20%' : 
+                                         formData.status === 'Em Análise' ? '40%' : 
+                                         formData.status === 'Aprovado' ? '60%' : 
+                                         formData.status === 'Contratado' ? '100%' : 
+                                         formData.status === 'Cancelado' ? '0%' : '0%' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="propriedadeId">
-                  Propriedade <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={formData.propriedadeId}
-                  onValueChange={(value) => handleSelectChange('propriedadeId', value)}
-                  disabled={!formData.clienteId || propriedades.length === 0}
-                >
-                  <SelectTrigger id="propriedadeId">
-                    <SelectValue placeholder={
-                      !formData.clienteId 
-                        ? "Selecione um cliente primeiro" 
-                        : propriedades.length === 0 
-                          ? "Nenhuma propriedade disponível" 
-                          : "Selecione a propriedade"
-                    } />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {propriedades.map((propriedade) => (
-                      <SelectItem key={propriedade.id} value={propriedade.id}>
-                        {propriedade.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="valorTotal">
-                  Valor Total <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="valorTotal"
-                  name="valorTotal"
-                  placeholder="R$ 0,00"
-                  value={formData.valorTotal}
-                  onChange={handleValorChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="linhaCredito">
-                  Linha de Crédito <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="linhaCredito"
-                  name="linhaCredito"
-                  value={formData.linhaCredito}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value) => handleSelectChange('status', value)}
-                >
-                  <SelectTrigger id="status">
-                    <SelectValue placeholder="Selecione o status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Em Elaboração">Em Elaboração</SelectItem>
-                    <SelectItem value="Em Análise">Em Análise</SelectItem>
-                    <SelectItem value="Aprovado">Aprovado</SelectItem>
-                    <SelectItem value="Contratado">Contratado</SelectItem>
-                    <SelectItem value="Cancelado">Cancelado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="dataPrevisaoTermino">
-                  Previsão de Término <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="dataPrevisaoTermino"
-                  name="dataPrevisaoTermino"
-                  placeholder="DD/MM/AAAA"
-                  value={formData.dataPrevisaoTermino}
-                  onChange={handleDataChange}
-                  maxLength={10}
-                  required
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="dataPrevisaoTermino" className="flex items-center">
+                    Previsão de Término <span className="text-destructive ml-1">*</span>
+                  </Label>
+                  <div className="relative">
+                    <CalendarIcon className="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="dataPrevisaoTermino"
+                      name="dataPrevisaoTermino"
+                      placeholder="DD/MM/AAAA"
+                      value={formData.dataPrevisaoTermino}
+                      onChange={handleDataChange}
+                      maxLength={10}
+                      required
+                      className="pl-8 focus-visible:ring-primary"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </CardContent>
-          <CardFooter className="border-t bg-muted/50 flex justify-between">
-            <Button variant="outline" asChild>
+          
+          <CardFooter className="border-t px-6 py-4 flex justify-between bg-muted/20">
+            <Button variant="outline" asChild className="flex items-center">
               <Link href="/projetos">
+                <X className="h-4 w-4 mr-2" />
                 Cancelar
               </Link>
             </Button>
-            <Button type="submit" disabled={salvando}>
+            <Button type="submit" disabled={salvando} className="flex items-center">
               {salvando ? (
                 <>
                   <div className="animate-spin mr-2 h-4 w-4 border-2 border-background border-t-transparent rounded-full" />
@@ -415,7 +544,7 @@ export default function ProjetoNovoPage() {
                 </>
               ) : (
                 <>
-                  <Save className="mr-2 h-4 w-4" />
+                  <Save className="h-4 w-4 mr-2" />
                   Criar Projeto
                 </>
               )}

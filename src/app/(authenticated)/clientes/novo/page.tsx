@@ -36,12 +36,14 @@ import {
 } from "@/components/ui/radio-group"
 import { Separator } from "@/components/ui/separator"
 import { MaskedInput } from '@/components/ui/masked-input'
+import { DatePicker } from '@/components/ui/date-picker'
 import { ArrowLeft, Save, User, Mail, Phone, CreditCard, MapPin, Building, Calendar, CheckCircle } from 'lucide-react'
 import { Cliente } from '@/lib/crm-utils'
 import { formatarData } from '@/lib/formatters'
 import { clientesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
+import { format, parse } from 'date-fns'
 
 export default function NovoClientePage() {
   const router = useRouter()
@@ -55,6 +57,7 @@ export default function NovoClientePage() {
   const [tipoCliente, setTipoCliente] = useState<'PF' | 'PJ'>('PF')
   const [perfil, setPerfil] = useState<'pequeno' | 'medio' | 'grande'>('pequeno')
   const [dataNascimento, setDataNascimento] = useState('')
+  const [dataNascimentoDate, setDataNascimentoDate] = useState<Date | undefined>(undefined)
   const [endereco, setEndereco] = useState('')
   const [cidade, setCidade] = useState('')
   const [estado, setEstado] = useState('')
@@ -63,17 +66,10 @@ export default function NovoClientePage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     
-    // Aplicar máscara de data para o campo dataNascimento
+    // O campo dataNascimento agora é gerenciado pelo componente DatePicker
     if (name === 'dataNascimento') {
-      const numerosFiltrados = value.replace(/\D/g, '')
-      
-      if (numerosFiltrados.length <= 2) {
-        setDataNascimento(numerosFiltrados)
-      } else if (numerosFiltrados.length <= 4) {
-        setDataNascimento(`${numerosFiltrados.slice(0, 2)}/${numerosFiltrados.slice(2)}`)
-      } else if (numerosFiltrados.length <= 8) {
-        setDataNascimento(`${numerosFiltrados.slice(0, 2)}/${numerosFiltrados.slice(2, 4)}/${numerosFiltrados.slice(4)}`)
-      }
+      // Mantemos essa verificação para compatibilidade, mas o campo
+      // agora é gerenciado pelo DatePicker
       return
     }
     
@@ -380,18 +376,19 @@ export default function NovoClientePage() {
                   
                   <div className="space-y-2">
                     <Label htmlFor="dataNascimento" className="font-medium">Data de Nascimento</Label>
-                    <div className="relative">
-                      <Input
-                        id="dataNascimento"
-                        name="dataNascimento"
-                        placeholder="DD/MM/AAAA"
-                        value={dataNascimento}
-                        onChange={handleChange}
-                        maxLength={10}
-                        className="pl-9"
-                      />
-                      <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    </div>
+                    <DatePicker
+                      date={dataNascimentoDate}
+                      setDate={(date) => {
+                        setDataNascimentoDate(date);
+                        if (date) {
+                          // Formato para armazenamento: YYYY-MM-DD
+                          setDataNascimento(format(date, 'yyyy-MM-dd'));
+                        } else {
+                          setDataNascimento('');
+                        }
+                      }}
+                      placeholder="Selecione a data de nascimento"
+                    />
                   </div>
                 </div>
               </div>

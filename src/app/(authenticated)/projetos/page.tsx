@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { 
   Table, 
@@ -15,7 +15,8 @@ import {
   CardContent, 
   CardDescription, 
   CardHeader, 
-  CardTitle 
+  CardTitle,
+  CardFooter
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -32,10 +33,14 @@ import {
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
-  DropdownMenuItem, 
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
   ChevronDown, 
   Plus, 
@@ -44,12 +49,32 @@ import {
   FileEdit, 
   Trash2, 
   Eye,
-  FileText
+  FileText,
+  Filter,
+  LayoutGrid,
+  List,
+  DollarSign,
+  ClipboardCheck,
+  Calendar,
+  Copy,
+  Edit
 } from 'lucide-react'
 import { Projeto } from '@/lib/crm-utils'
 import { formatarMoeda, formatarData, coresStatus } from '@/lib/formatters'
 import { projetosApi, clientesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
+
+// Função auxiliar para calcular o progresso com base no status
+function getProgressoStatus(status: string): number {
+  switch(status) {
+    case 'Em Elaboração': return 25;
+    case 'Em Análise': return 50;
+    case 'Aprovado': return 75;
+    case 'Contratado': return 100;
+    case 'Cancelado': return 0;
+    default: return 0;
+  }
+}
 
 export default function ProjetosPage() {
   const [projetos, setProjetos] = useState<Projeto[]>([])
@@ -60,6 +85,7 @@ export default function ProjetosPage() {
   const [excluindo, setExcluindo] = useState(false)
   const [projetoParaExcluir, setProjetoParaExcluir] = useState<string | null>(null)
   const [dialogoExclusaoAberto, setDialogoExclusaoAberto] = useState(false)
+  const [visualizacao, setVisualizacao] = useState<'tabela' | 'cards'>('tabela')
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -87,6 +113,19 @@ export default function ProjetosPage() {
 
     carregarDados()
   }, [])
+
+  // Estatísticas calculadas com base nos projetos
+  const estatisticas = useMemo(() => {
+    if (!projetos.length) return { total: 0, valorTotal: 0, emAnalise: 0, emElaboracao: 0, contratados: 0 };
+    
+    return {
+      total: projetos.length,
+      valorTotal: projetos.reduce((acc, projeto) => acc + projeto.valorTotal, 0),
+      emAnalise: projetos.filter(p => p.status === 'Em Análise').length,
+      emElaboracao: projetos.filter(p => p.status === 'Em Elaboração').length,
+      contratados: projetos.filter(p => p.status === 'Contratado').length
+    };
+  }, [projetos]);
 
   // Filtrar projetos com base na busca e no filtro
   const projetosFiltrados = projetos.filter(projeto => {
@@ -151,6 +190,7 @@ export default function ProjetosPage() {
 
   return (
     <div className="space-y-4">
+      {/* Cabeçalho com título e botão de novo projeto */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Projetos</h1>
@@ -166,130 +206,290 @@ export default function ProjetosPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader className="py-3">
-          <CardTitle>Lista de Projetos</CardTitle>
-          <CardDescription>
-            Total de {projetosFiltrados.length} projetos encontrados
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
-            <div className="relative w-full md:w-72">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Buscar projetos..."
-                className="pl-8 w-full"
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-              />
+      {/* Cards de estatísticas */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Total de Projetos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="text-2xl font-bold">{estatisticas.total}</div>
+              <FileText className="h-8 w-8 text-muted-foreground opacity-50" />
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full md:w-auto">
-                  Status: {filtro}
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setFiltro('Todos')}>
-                  Todos
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFiltro('Em Elaboração')}>
-                  Em Elaboração
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFiltro('Em Análise')}>
-                  Em Análise
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFiltro('Aprovado')}>
-                  Aprovado
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFiltro('Contratado')}>
-                  Contratado
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFiltro('Cancelado')}>
-                  Cancelado
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Valor em Carteira</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="text-2xl font-bold">{formatarMoeda(estatisticas.valorTotal)}</div>
+              <DollarSign className="h-8 w-8 text-muted-foreground opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Em Elaboração</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="text-2xl font-bold">{estatisticas.emElaboracao}</div>
+              <FileEdit className="h-8 w-8 text-muted-foreground opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Em Análise</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="text-2xl font-bold">{estatisticas.emAnalise}</div>
+              <ClipboardCheck className="h-8 w-8 text-muted-foreground opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-          <div className="overflow-x-auto rounded-md border">
-            <Table>
-              <TableHeader>
+      {/* Barra de ações e filtros */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-xl font-bold">Lista de Projetos</h2>
+          <p className="text-sm text-muted-foreground">Total de {projetosFiltrados.length} projetos encontrados</p>
+        </div>
+        
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Buscar projetos..."
+              className="pl-8 w-full"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+            />
+          </div>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Filter className="h-4 w-4 mr-2" />
+                {filtro === 'Todos' ? 'Todos os Status' : filtro}
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[200px]">
+              <DropdownMenuLabel>Filtrar por Status</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setFiltro('Todos')}>
+                Todos
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFiltro('Em Elaboração')}>
+                Em Elaboração
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFiltro('Em Análise')}>
+                Em Análise
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFiltro('Aprovado')}>
+                Aprovado
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFiltro('Contratado')}>
+                Contratado
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFiltro('Cancelado')}>
+                Cancelado
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <Button variant="outline" size="sm" onClick={() => setVisualizacao(visualizacao === 'tabela' ? 'cards' : 'tabela')}>
+            {visualizacao === 'tabela' ? (
+              <>
+                <LayoutGrid className="h-4 w-4 mr-2" />
+                Cards
+              </>
+            ) : (
+              <>
+                <List className="h-4 w-4 mr-2" />
+                Tabela
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+      
+      {/* Conteúdo principal - Alternância entre visualização em cards e tabela */}
+      {/* Conteúdo principal - Alternância entre visualização em cards e tabela */}
+      {visualizacao === 'cards' ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {projetosFiltrados.length === 0 ? (
+            <div className="col-span-full text-center py-8 border rounded-md bg-muted/10">
+              <p className="text-muted-foreground">Nenhum projeto encontrado.</p>
+            </div>
+          ) : (
+            projetosFiltrados.map((projeto) => (
+              <Card key={projeto.id} className="overflow-hidden">
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-base">{projeto.titulo}</CardTitle>
+                      <CardDescription>
+                        {projeto.linhaCredito}
+                      </CardDescription>
+                    </div>
+                    <Badge className={coresStatus.projeto[projeto.status]}>
+                      {projeto.status}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="pb-2">
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Cliente:</span>
+                      <span className="text-sm font-medium">{clientesMap[projeto.clienteId] || 'Cliente não encontrado'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Valor:</span>
+                      <span className="text-sm font-medium">{formatarMoeda(projeto.valorTotal)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Data:</span>
+                      <span className="text-sm">{formatarData(projeto.dataCriacao)}</span>
+                    </div>
+                    
+                    {/* Barra de progresso */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span>Progresso</span>
+                        <span>{getProgressoStatus(projeto.status)}%</span>
+                      </div>
+                      <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-primary" 
+                          style={{ width: `${getProgressoStatus(projeto.status)}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="pt-0 flex justify-between">
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/projetos/${projeto.id}`}>
+                      Ver Detalhes
+                    </Link>
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <Link href={`/projetos/${projeto.id}/editar`}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Editar
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href={`/projetos/${projeto.id}/documentos`}>
+                          <FileText className="h-4 w-4 mr-2" />
+                          Documentos
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-destructive" onClick={() => handleExcluirProjeto(projeto.id)}>
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Excluir
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </CardFooter>
+              </Card>
+            ))
+          )}
+        </div>
+      ) : (
+        <div className="rounded-md border overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[25%]">Título</TableHead>
+                <TableHead className="w-[15%]">Cliente</TableHead>
+                <TableHead className="w-[15%]">Linha de Crédito</TableHead>
+                <TableHead className="w-[10%]">Valor</TableHead>
+                <TableHead className="w-[10%]">Status</TableHead>
+                <TableHead className="w-[15%]">Data de Criação</TableHead>
+                <TableHead className="text-right w-[10%]">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {projetosFiltrados.length === 0 ? (
                 <TableRow>
-                  <TableHead className="w-[25%]">Título</TableHead>
-                  <TableHead className="w-[15%]">Cliente</TableHead>
-                  <TableHead className="w-[15%]">Linha de Crédito</TableHead>
-                  <TableHead className="w-[10%]">Valor</TableHead>
-                  <TableHead className="w-[10%]">Status</TableHead>
-                  <TableHead className="w-[15%]">Data de Criação</TableHead>
-                  <TableHead className="text-right w-[10%]">Ações</TableHead>
+                  <TableCell colSpan={7} className="h-24 text-center">
+                    Nenhum projeto encontrado.
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {projetosFiltrados.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
-                      Nenhum projeto encontrado.
+              ) : (
+                projetosFiltrados.map((projeto) => (
+                  <TableRow key={projeto.id}>
+                    <TableCell className="font-medium">{projeto.titulo}</TableCell>
+                    <TableCell>{clientesMap[projeto.clienteId] || 'Cliente não encontrado'}</TableCell>
+                    <TableCell>{projeto.linhaCredito}</TableCell>
+                    <TableCell>{formatarMoeda(projeto.valorTotal)}</TableCell>
+                    <TableCell>
+                      <Badge className={coresStatus.projeto[projeto.status]}>
+                        {projeto.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{formatarData(projeto.dataCriacao)}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Abrir menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link href={`/projetos/${projeto.id}`}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              Visualizar
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/projetos/${projeto.id}/editar`}>
+                              <FileEdit className="mr-2 h-4 w-4" />
+                              Editar
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/projetos/${projeto.id}/documentos`}>
+                              <FileText className="mr-2 h-4 w-4" />
+                              Documentos
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => handleExcluirProjeto(projeto.id)}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                ) : (
-                  projetosFiltrados.map((projeto) => (
-                    <TableRow key={projeto.id}>
-                      <TableCell className="font-medium">{projeto.titulo}</TableCell>
-                      <TableCell>{clientesMap[projeto.clienteId] || 'Cliente não encontrado'}</TableCell>
-                      <TableCell>{projeto.linhaCredito}</TableCell>
-                      <TableCell>{formatarMoeda(projeto.valorTotal)}</TableCell>
-                      <TableCell>
-                        <Badge className={coresStatus.projeto[projeto.status]}>
-                          {projeto.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{formatarData(projeto.dataCriacao)}</TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Abrir menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                              <Link href={`/projetos/${projeto.id}`}>
-                                <Eye className="mr-2 h-4 w-4" />
-                                Visualizar
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/projetos/${projeto.id}/editar`}>
-                                <FileEdit className="mr-2 h-4 w-4" />
-                                Editar
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/projetos/${projeto.id}/documentos`}>
-                                <FileText className="mr-2 h-4 w-4" />
-                                Documentos
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => handleExcluirProjeto(projeto.id)}>
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       <AlertDialog open={dialogoExclusaoAberto} onOpenChange={setDialogoExclusaoAberto}>
         <AlertDialogContent>

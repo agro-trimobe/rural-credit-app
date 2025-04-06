@@ -15,6 +15,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Progress } from '@/components/ui/progress'
 import {
   Table,
   TableBody,
@@ -23,6 +25,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { 
   User, 
   FileText, 
@@ -33,7 +44,15 @@ import {
   Calendar,
   Edit,
   Trash2,
-  MessageCircle
+  MessageCircle,
+  MoreHorizontal,
+  PlusCircle,
+  Home,
+  FileSpreadsheet,
+  BarChart3,
+  Clock,
+  CalendarClock,
+  CheckCircle2
 } from 'lucide-react'
 import { Cliente, Propriedade, Projeto, Interacao } from '@/lib/crm-utils'
 import { formatarData, formatarCpfCnpj, formatarTelefone, formatarEndereco, formatarMoeda } from '@/lib/formatters'
@@ -156,6 +175,7 @@ function ClienteDetalhesConteudo({ clienteId }: { clienteId: string }) {
     )
   }
 
+  // Funções auxiliares
   const getCorBadge = (perfil: string) => {
     switch (perfil) {
       case 'Pequeno':
@@ -169,138 +189,311 @@ function ClienteDetalhesConteudo({ clienteId }: { clienteId: string }) {
     }
   }
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Em andamento':
+        return 'bg-amber-100 text-amber-800 hover:bg-amber-100'
+      case 'Concluído':
+        return 'bg-green-100 text-green-800 hover:bg-green-100'
+      case 'Pendente':
+        return 'bg-red-100 text-red-800 hover:bg-red-100'
+      default:
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-100'
+    }
+  }
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .substring(0, 2)
+      .toUpperCase();
+  }
+
+  const getProjetoProgress = (status: string) => {
+    switch (status) {
+      case 'Em andamento': return 60;
+      case 'Concluído': return 100;
+      case 'Pendente': return 20;
+      default: return 0;
+    }
+  }
+
+  // Estatísticas resumidas
+  const estatisticas = {
+    totalProjetos: projetos.length,
+    totalPropriedades: propriedades.length,
+    totalInteracoes: interacoes.length,
+    ultimaInteracao: interacoes.length > 0 
+      ? interacoes.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())[0]
+      : null,
+    valorTotalProjetos: projetos.reduce((acc, projeto) => acc + projeto.valorTotal, 0)
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
+      {/* Cabeçalho com navegação e ações */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="icon" asChild>
+          <Button variant="outline" size="icon" asChild className="h-8 w-8">
             <Link href="/clientes">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-          <h1 className="text-2xl font-bold tracking-tight">Detalhes do Cliente</h1>
+          <h1 className="text-xl font-bold tracking-tight">Detalhes do Cliente</h1>
         </div>
+        
         <div className="flex space-x-2">
-          <Button variant="outline" asChild>
-            <Link href={`/clientes/${cliente.id}/editar`}>
-              <Edit className="mr-2 h-4 w-4" />
-              Editar
-            </Link>
-          </Button>
-          <Button variant="destructive" onClick={handleExcluir}>
-            <Trash2 className="mr-2 h-4 w-4" />
-            Excluir
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" asChild className="h-8">
+                  <Link href={`/clientes/${cliente.id}/editar`}>
+                    <Edit className="mr-1 h-3.5 w-3.5" />
+                    Editar
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Editar informações do cliente</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8">
+                <PlusCircle className="mr-1 h-3.5 w-3.5" />
+                Ações
+                <MoreHorizontal className="ml-1 h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Ações Rápidas</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href={`/clientes/${cliente.id}/interacoes/nova`} className="flex items-center">
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  Nova Interação
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/propriedades/nova?clienteId=${cliente.id}`} className="flex items-center">
+                  <Home className="mr-2 h-4 w-4" />
+                  Adicionar Propriedade
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/projetos/novo?clienteId=${cliente.id}`} className="flex items-center">
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  Iniciar Projeto
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleExcluir} className="text-destructive flex items-center">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Excluir Cliente
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
-      <Card>
-        <CardHeader className="py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-xl">{cliente.nome}</CardTitle>
-              <CardDescription>
-                Cliente desde {cliente.dataCadastro ? formatarData(cliente.dataCadastro) : 'N/A'}
-              </CardDescription>
+      {/* Card principal com informações do cliente */}
+      <Card className="overflow-hidden">
+        <CardHeader className="py-3 px-4 flex flex-row items-center space-y-0 gap-4">
+          <Avatar className="h-16 w-16 border-2 border-primary/10">
+            <AvatarFallback className="bg-primary/10 text-primary text-lg">
+              {getInitials(cliente.nome)}
+            </AvatarFallback>
+          </Avatar>
+          
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-xl">{cliente.nome}</CardTitle>
+                <CardDescription className="text-xs">
+                  Cliente desde {cliente.dataCadastro ? formatarData(cliente.dataCadastro) : 'N/A'}
+                </CardDescription>
+              </div>
+              <Badge className={getCorBadge(cliente.perfil)}>
+                {cliente.perfil}
+              </Badge>
             </div>
-            <Badge className={getCorBadge(cliente.perfil)}>
-              {cliente.perfil}
-            </Badge>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-3">
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-1">Informações Pessoais</h3>
-                <div className="space-y-1.5">
-                  <div className="flex items-center">
-                    <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span className="text-sm">{formatarCpfCnpj(cliente.cpfCnpj)}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span className="text-sm">{formatarTelefone(cliente.telefone)}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span className="text-sm">{cliente.email}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span className="text-sm">Cadastrado em {cliente.dataCadastro ? formatarData(cliente.dataCadastro) : 'N/A'}</span>
-                  </div>
-                </div>
+        
+        {/* Cards de estatísticas */}
+        <CardContent className="p-4 pt-0">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+            <Card className="border-none shadow-sm">
+              <CardContent className="p-3 flex flex-col items-center">
+                <Home className="h-5 w-5 text-muted-foreground mb-1" />
+                <p className="text-xl font-semibold">{estatisticas.totalPropriedades}</p>
+                <p className="text-xs text-muted-foreground">Propriedades</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-none shadow-sm">
+              <CardContent className="p-3 flex flex-col items-center">
+                <FileSpreadsheet className="h-5 w-5 text-muted-foreground mb-1" />
+                <p className="text-xl font-semibold">{estatisticas.totalProjetos}</p>
+                <p className="text-xs text-muted-foreground">Projetos</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-none shadow-sm">
+              <CardContent className="p-3 flex flex-col items-center">
+                <MessageCircle className="h-5 w-5 text-muted-foreground mb-1" />
+                <p className="text-xl font-semibold">{estatisticas.totalInteracoes}</p>
+                <p className="text-xs text-muted-foreground">Interações</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-none shadow-sm">
+              <CardContent className="p-3 flex flex-col items-center">
+                <BarChart3 className="h-5 w-5 text-muted-foreground mb-1" />
+                <p className="text-xl font-semibold">{formatarMoeda(estatisticas.valorTotalProjetos)}</p>
+                <p className="text-xs text-muted-foreground">Em Projetos</p>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Informações de contato e última interação */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium text-muted-foreground">Informações de Contato</h3>
+              <div className="grid grid-cols-2 gap-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="sm" className="justify-start h-8 px-3">
+                        <Phone className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
+                        <span className="text-xs truncate">{formatarTelefone(cliente.telefone)}</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Ligar para {formatarTelefone(cliente.telefone)}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="sm" className="justify-start h-8 px-3">
+                        <Mail className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
+                        <span className="text-xs truncate">{cliente.email}</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Enviar email para {cliente.email}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="sm" className="justify-start h-8 px-3">
+                        <User className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
+                        <span className="text-xs truncate">{formatarCpfCnpj(cliente.cpfCnpj)}</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>CPF/CNPJ: {formatarCpfCnpj(cliente.cpfCnpj)}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="sm" className="justify-start h-8 px-3">
+                        <Calendar className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
+                        <span className="text-xs truncate">{cliente.dataCadastro ? formatarData(cliente.dataCadastro) : 'N/A'}</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Data de cadastro: {cliente.dataCadastro ? formatarData(cliente.dataCadastro) : 'N/A'}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
-
-            <div className="space-y-3">
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-1">Propriedades</h3>
-                {propriedades.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Nenhuma propriedade cadastrada</p>
-                ) : (
-                  <div className="space-y-1.5">
-                    {propriedades.map((propriedade) => (
-                      <div key={propriedade.id} className="flex items-start">
-                        <MapPin className="h-4 w-4 mr-2 text-muted-foreground mt-0.5" />
-                        <div>
-                          <p className="text-sm font-medium">{propriedade.nome}</p>
-                          <p className="text-xs text-muted-foreground">{propriedade.endereco}</p>
-                          <p className="text-xs text-muted-foreground">{propriedade.area} hectares</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+            
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium text-muted-foreground">Última Interação</h3>
+              {estatisticas.ultimaInteracao ? (
+                <Card className="border-none shadow-sm">
+                  <CardContent className="p-3 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className="text-xs">
+                        <Clock className="h-3 w-3 mr-1" />
+                        {formatarData(estatisticas.ultimaInteracao.data)}
+                      </Badge>
+                      <span className="text-xs font-medium">{estatisticas.ultimaInteracao.tipo}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-1">
+                      {estatisticas.ultimaInteracao.descricao}
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="text-center p-3 bg-muted/50 rounded-md">
+                  <p className="text-xs text-muted-foreground">Nenhuma interação registrada</p>
+                </div>
+              )}
             </div>
           </div>
 
-          <Separator />
+          <Separator className="my-3" />
 
-          <Tabs defaultValue="propriedades" value={abaAtiva} onValueChange={setAbaAtiva}>
-            <TabsList className="mb-2">
-              <TabsTrigger value="propriedades">Propriedades</TabsTrigger>
-              <TabsTrigger value="projetos">Projetos</TabsTrigger>
-              <TabsTrigger value="interacoes">Interações</TabsTrigger>
+          {/* Tabs para propriedades, projetos e interações */}
+          <Tabs defaultValue="propriedades" value={abaAtiva} onValueChange={setAbaAtiva} className="w-full">
+            <TabsList className="grid grid-cols-3 mb-2">
+              <TabsTrigger value="propriedades" className="text-xs">
+                Propriedades ({propriedades.length})
+              </TabsTrigger>
+              <TabsTrigger value="projetos" className="text-xs">
+                Projetos ({projetos.length})
+              </TabsTrigger>
+              <TabsTrigger value="interacoes" className="text-xs">
+                Interações ({interacoes.length})
+              </TabsTrigger>
             </TabsList>
 
+            {/* Conteúdo da aba Propriedades */}
             <TabsContent value="propriedades" className="space-y-3">
               {propriedades.length === 0 ? (
-                <div className="text-center py-3">
-                  <p className="text-muted-foreground">Este cliente não possui propriedades cadastradas.</p>
+                <div className="text-center py-6 bg-muted/30 rounded-lg">
+                  <Home className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground mb-2">Este cliente não possui propriedades cadastradas</p>
+                  <Button size="sm" asChild>
+                    <Link href={`/propriedades/nova?clienteId=${cliente.id}`}>
+                      <PlusCircle className="h-4 w-4 mr-1" />
+                      Adicionar Propriedade
+                    </Link>
+                  </Button>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {propriedades.map((propriedade) => (
-                    <Card key={propriedade.id}>
-                      <CardHeader className="py-3">
-                        <CardTitle className="text-base">{propriedade.nome}</CardTitle>
-                        <CardDescription>
-                          {propriedade.municipio}, {propriedade.estado}
-                        </CardDescription>
+                    <Card key={propriedade.id} className="overflow-hidden">
+                      <CardHeader className="py-2 px-3 bg-muted/20">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-sm">{propriedade.nome}</CardTitle>
+                          <Badge variant="outline" className="text-xs">
+                            {propriedade.area} ha
+                          </Badge>
+                        </div>
                       </CardHeader>
-                      <CardContent className="py-0">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div>
-                            <h4 className="font-medium mb-1 text-sm">Endereço</h4>
-                            <p className="text-sm text-muted-foreground">
+                      <CardContent className="py-2 px-3">
+                        <div className="flex items-start space-x-2">
+                          <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                          <div className="space-y-0.5 flex-1">
+                            <p className="text-xs text-muted-foreground line-clamp-1">
                               {propriedade.endereco}
-                              <br />
-                              {propriedade.municipio}, {propriedade.estado}
                             </p>
-                          </div>
-                          <div>
-                            <h4 className="font-medium mb-1 text-sm">Área</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {propriedade.area} hectares
+                            <p className="text-xs text-muted-foreground">
+                              {propriedade.municipio}, {propriedade.estado}
                             </p>
                           </div>
                         </div>
                       </CardContent>
-                      <CardFooter className="py-3">
-                        <Button variant="outline" size="sm" asChild>
+                      <CardFooter className="py-2 px-3 bg-muted/10 flex justify-end">
+                        <Button variant="ghost" size="sm" asChild className="h-7 text-xs">
                           <Link href={`/propriedades/${propriedade.id}`}>
                             Ver Detalhes
                           </Link>
@@ -312,39 +505,57 @@ function ClienteDetalhesConteudo({ clienteId }: { clienteId: string }) {
               )}
             </TabsContent>
             
-            <TabsContent value="projetos" className="space-y-4">
+            {/* Conteúdo da aba Projetos */}
+            <TabsContent value="projetos" className="space-y-3">
               {projetos.length === 0 ? (
-                <div className="text-center py-4">
-                  <p className="text-muted-foreground">Este cliente não possui projetos cadastrados.</p>
+                <div className="text-center py-6 bg-muted/30 rounded-lg">
+                  <FileSpreadsheet className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground mb-2">Este cliente não possui projetos cadastrados</p>
+                  <Button size="sm" asChild>
+                    <Link href={`/projetos/novo?clienteId=${cliente.id}`}>
+                      <PlusCircle className="h-4 w-4 mr-1" />
+                      Iniciar Novo Projeto
+                    </Link>
+                  </Button>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {projetos.map((projeto) => (
-                    <Card key={projeto.id}>
-                      <CardHeader>
-                        <CardTitle>{projeto.titulo}</CardTitle>
-                        <CardDescription>
-                          {projeto.linhaCredito} • {projeto.status}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
+                    <Card key={projeto.id} className="overflow-hidden">
+                      <CardHeader className="py-2 px-3">
+                        <div className="flex items-center justify-between">
                           <div>
-                            <h4 className="font-medium mb-1">Valor</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {formatarMoeda(projeto.valorTotal)}
-                            </p>
+                            <CardTitle className="text-sm">{projeto.titulo}</CardTitle>
+                            <CardDescription className="text-xs">
+                              {projeto.linhaCredito}
+                            </CardDescription>
+                          </div>
+                          <Badge className={getStatusColor(projeto.status)}>
+                            {projeto.status}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="py-2 px-3">
+                        <div className="grid grid-cols-2 gap-2 mb-2">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Valor</p>
+                            <p className="text-sm font-medium">{formatarMoeda(projeto.valorTotal)}</p>
                           </div>
                           <div>
-                            <h4 className="font-medium mb-1">Data de Criação</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {formatarData(projeto.dataCriacao)}
-                            </p>
+                            <p className="text-xs text-muted-foreground">Data</p>
+                            <p className="text-sm">{formatarData(projeto.dataCriacao)}</p>
                           </div>
                         </div>
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-xs">
+                            <span>Progresso</span>
+                            <span>{getProjetoProgress(projeto.status)}%</span>
+                          </div>
+                          <Progress value={getProjetoProgress(projeto.status)} className="h-1.5" />
+                        </div>
                       </CardContent>
-                      <CardFooter>
-                        <Button variant="outline" size="sm" asChild>
+                      <CardFooter className="py-2 px-3 bg-muted/10 flex justify-end">
+                        <Button variant="ghost" size="sm" asChild className="h-7 text-xs">
                           <Link href={`/projetos/${projeto.id}`}>
                             Ver Detalhes
                           </Link>
@@ -356,36 +567,72 @@ function ClienteDetalhesConteudo({ clienteId }: { clienteId: string }) {
               )}
             </TabsContent>
             
-            <TabsContent value="interacoes" className="space-y-4">
+            {/* Conteúdo da aba Interações */}
+            <TabsContent value="interacoes" className="space-y-3">
               {interacoes.length === 0 ? (
-                <div className="text-center py-4">
-                  <p className="text-muted-foreground">Este cliente não possui interações registradas.</p>
+                <div className="text-center py-6 bg-muted/30 rounded-lg">
+                  <MessageCircle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground mb-2">Este cliente não possui interações registradas</p>
+                  <Button size="sm" asChild>
+                    <Link href={`/clientes/${cliente.id}/interacoes/nova`}>
+                      <PlusCircle className="h-4 w-4 mr-1" />
+                      Registrar Interação
+                    </Link>
+                  </Button>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {interacoes.map((interacao) => (
-                    <Card key={interacao.id}>
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-base">{interacao.tipo}</CardTitle>
-                          <Badge variant="outline">
-                            {formatarData(interacao.data)}
-                          </Badge>
-                        </div>
-                        <CardDescription>
-                          Responsável: {interacao.responsavel}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-start">
-                          <MessageCircle className="h-4 w-4 mr-2 text-muted-foreground mt-0.5" />
-                          <p className="text-sm text-muted-foreground">
-                            {interacao.descricao}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-sm font-medium">Histórico de Interações</h3>
+                    <Button size="sm" variant="outline" asChild className="h-7">
+                      <Link href={`/clientes/${cliente.id}/interacoes/nova`}>
+                        <PlusCircle className="h-3.5 w-3.5 mr-1" />
+                        <span className="text-xs">Nova Interação</span>
+                      </Link>
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {interacoes
+                      .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
+                      .map((interacao) => (
+                        <Card key={interacao.id} className="overflow-hidden">
+                          <CardHeader className="py-2 px-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <div className="p-1.5 rounded-full bg-primary/10">
+                                  <MessageCircle className="h-3.5 w-3.5 text-primary" />
+                                </div>
+                                <div>
+                                  <CardTitle className="text-sm">{interacao.tipo}</CardTitle>
+                                  <CardDescription className="text-xs">
+                                    Responsável: {interacao.responsavel}
+                                  </CardDescription>
+                                </div>
+                              </div>
+                              <div className="flex flex-col items-end">
+                                <Badge variant="outline" className="text-xs mb-1">
+                                  <CalendarClock className="h-3 w-3 mr-1" />
+                                  {formatarData(interacao.data)}
+                                </Badge>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="py-2 px-3">
+                            <p className="text-xs text-muted-foreground">
+                              {interacao.descricao}
+                            </p>
+                          </CardContent>
+                          <CardFooter className="py-2 px-3 bg-muted/10 flex justify-end">
+                            <Button variant="ghost" size="sm" asChild className="h-7 text-xs">
+                              <Link href={`/interacoes/${interacao.id}`}>
+                                Ver Detalhes
+                              </Link>
+                            </Button>
+                          </CardFooter>
+                        </Card>
+                      ))}
+                  </div>
                 </div>
               )}
             </TabsContent>
@@ -410,7 +657,7 @@ function ClienteDetalhesConteudo({ clienteId }: { clienteId: string }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+      </div>
   )
 }
 

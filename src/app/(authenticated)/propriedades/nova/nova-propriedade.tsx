@@ -22,16 +22,53 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ArrowLeft, Save } from 'lucide-react'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { 
+  ArrowLeft, 
+  Save, 
+  MapPin, 
+  Ruler, 
+  Info, 
+  ChevronDown, 
+  ChevronUp,
+  Home,
+  Map,
+  Building,
+  FileText
+} from 'lucide-react'
 import { Propriedade, Cliente } from '@/lib/crm-utils'
 import { propriedadesApi, clientesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
+
+// Lista de estados brasileiros em ordem alfabética
+const estadosBrasileiros = [
+  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 
+  'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+]
+
+// Função para classificar o tamanho da propriedade
+const classificarTamanho = (area: number) => {
+  if (area < 20) return { texto: 'Pequena', cor: 'bg-blue-100 text-blue-800 hover:bg-blue-100/80' }
+  if (area < 100) return { texto: 'Média', cor: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80' }
+  return { texto: 'Grande', cor: 'bg-green-100 text-green-800 hover:bg-green-100/80' }
+}
 
 export default function NovaPropriedadeConteudo() {
   const router = useRouter()
   const [carregando, setCarregando] = useState(true)
   const [enviando, setEnviando] = useState(false)
   const [clientes, setClientes] = useState<Cliente[]>([])
+  const [mostrarAvancado, setMostrarAvancado] = useState(false)
   const [formData, setFormData] = useState<Partial<Propriedade>>({
     nome: '',
     clienteId: '',
@@ -140,156 +177,348 @@ export default function NovaPropriedadeConteudo() {
     )
   }
 
+  // Obter a classificação de tamanho para o preview
+  const tamanhoPropriedade = classificarTamanho(formData.area || 0)
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pb-2 border-b">
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="icon" asChild>
             <Link href="/propriedades">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-          <h1 className="text-2xl font-bold tracking-tight">Nova Propriedade</h1>
+          <h1 className="text-xl font-bold tracking-tight">Nova Propriedade</h1>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <CardTitle>Informações da Propriedade</CardTitle>
-            <CardDescription>
-              Preencha os dados da nova propriedade rural
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Card de Informações Básicas */}
+          <Card className="lg:col-span-2">
+            <CardHeader className="pb-3">
+              <div className="flex items-center">
+                <FileText className="h-5 w-5 mr-2 text-primary" />
+                <CardTitle className="text-lg">Informações Básicas</CardTitle>
+              </div>
+              <CardDescription>
+                Dados principais da propriedade rural
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="nome" className="flex items-center">
+                      <Home className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                      Nome da Propriedade *
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent side="right">
+                          <p className="w-[200px]">Nome pelo qual a propriedade é conhecida</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <Input
+                    id="nome"
+                    name="nome"
+                    value={formData.nome}
+                    onChange={handleChange}
+                    placeholder="Nome da propriedade"
+                    required
+                    className="border-input"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="clienteId" className="flex items-center">
+                      <Building className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                      Proprietário *
+                    </Label>
+                  </div>
+                  <Select
+                    value={formData.clienteId}
+                    onValueChange={(value) => handleSelectChange('clienteId', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o proprietário" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clientes.map((cliente) => (
+                        <SelectItem key={cliente.id} value={cliente.id}>
+                          {cliente.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <Label htmlFor="nome">Nome da Propriedade *</Label>
+                <div className="flex items-center">
+                  <Label htmlFor="endereco" className="flex items-center">
+                    <MapPin className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                    Endereço *
+                  </Label>
+                </div>
                 <Input
-                  id="nome"
-                  name="nome"
-                  value={formData.nome}
+                  id="endereco"
+                  name="endereco"
+                  value={formData.endereco}
                   onChange={handleChange}
-                  placeholder="Nome da propriedade"
+                  placeholder="Endereço completo"
                   required
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="clienteId">Proprietário *</Label>
-                <Select
-                  value={formData.clienteId}
-                  onValueChange={(value) => handleSelectChange('clienteId', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o proprietário" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clientes.map((cliente) => (
-                      <SelectItem key={cliente.id} value={cliente.id}>
-                        {cliente.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="municipio" className="flex items-center">
+                    <Building className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                    Município *
+                  </Label>
+                  <Input
+                    id="municipio"
+                    name="municipio"
+                    value={formData.municipio}
+                    onChange={handleChange}
+                    placeholder="Município"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="estado">
+                    Estado *
+                  </Label>
+                  <Select
+                    value={formData.estado}
+                    onValueChange={(value) => handleSelectChange('estado', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {estadosBrasileiros.map((estado) => (
+                        <SelectItem key={estado} value={estado}>
+                          {estado}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="area" className="flex items-center">
+                      <Ruler className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                      Área (hectares) *
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent side="right">
+                          <p className="w-[200px]">
+                            Pequena: até 20 ha<br />
+                            Média: 20 a 100 ha<br />
+                            Grande: mais de 100 ha
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      id="area"
+                      name="area"
+                      type="number"
+                      value={formData.area}
+                      onChange={handleChange}
+                      placeholder="Área em hectares"
+                      className="pr-8"
+                      required
+                    />
+                    <span className="absolute right-3 top-2.5 text-muted-foreground text-sm">ha</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Card de Preview */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center">
+                <Map className="h-5 w-5 mr-2 text-primary" />
+                <CardTitle className="text-lg">Preview</CardTitle>
+              </div>
+              <CardDescription>
+                Visualização da propriedade
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="space-y-4">
+                {formData.nome ? (
+                  <div className="rounded-md border p-4 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <h3 className="font-medium">{formData.nome || 'Nome da Propriedade'}</h3>
+                      {formData.area !== undefined && formData.area > 0 && (
+                        <div className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${tamanhoPropriedade.cor}`}>
+                          {tamanhoPropriedade.texto}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {formData.endereco && (
+                      <div className="flex items-start">
+                        <MapPin className="h-4 w-4 mr-1.5 text-muted-foreground mt-0.5 shrink-0" />
+                        <span className="text-sm text-muted-foreground">{formData.endereco}</span>
+                      </div>
+                    )}
+                    
+                    {(formData.municipio || formData.estado) && (
+                      <div className="flex items-center">
+                        <Building className="h-4 w-4 mr-1.5 text-muted-foreground shrink-0" />
+                        <span className="text-sm text-muted-foreground">
+                          {[formData.municipio, formData.estado].filter(Boolean).join(', ')}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {formData.area !== undefined && formData.area > 0 && (
+                      <div className="flex items-center">
+                        <Ruler className="h-4 w-4 mr-1.5 text-muted-foreground shrink-0" />
+                        <span className="text-sm text-muted-foreground">
+                          {formData.area !== undefined ? formData.area.toLocaleString('pt-BR') : '0'} hectares
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="rounded-md border border-dashed p-6">
+                    <div className="text-center">
+                      <Home className="h-8 w-8 mx-auto text-muted-foreground/60" />
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Preencha os dados para visualizar a propriedade
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Seção Avançada Colapsável */}
+        <Collapsible
+          open={mostrarAvancado}
+          onOpenChange={setMostrarAvancado}
+          className="border rounded-md"
+        >
+          <div className="flex items-center justify-between p-4">
+            <h3 className="text-sm font-medium flex items-center">
+              <Map className="h-4 w-4 mr-2 text-muted-foreground" />
+              Informações Geográficas (opcional)
+            </h3>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm">
+                {mostrarAvancado ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </Button>
+            </CollapsibleTrigger>
+          </div>
+          <CollapsibleContent>
+            <div className="p-4 pt-0 border-t">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="latitude">
+                      Latitude
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Coordenada geográfica norte-sul</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <Input
+                    id="latitude"
+                    name="latitude"
+                    type="number"
+                    step="0.0001"
+                    value={formData.coordenadas?.latitude}
+                    onChange={handleChange}
+                    placeholder="Ex: -15.7801"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="longitude">
+                      Longitude
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Coordenada geográfica leste-oeste</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <Input
+                    id="longitude"
+                    name="longitude"
+                    type="number"
+                    step="0.0001"
+                    value={formData.coordenadas?.longitude}
+                    onChange={handleChange}
+                    placeholder="Ex: -47.9292"
+                  />
+                </div>
               </div>
             </div>
+          </CollapsibleContent>
+        </Collapsible>
 
-            <div className="space-y-2">
-              <Label htmlFor="endereco">Endereço *</Label>
-              <Input
-                id="endereco"
-                name="endereco"
-                value={formData.endereco}
-                onChange={handleChange}
-                placeholder="Endereço completo"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="municipio">Município *</Label>
-                <Input
-                  id="municipio"
-                  name="municipio"
-                  value={formData.municipio}
-                  onChange={handleChange}
-                  placeholder="Município"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="estado">Estado *</Label>
-                <Input
-                  id="estado"
-                  name="estado"
-                  value={formData.estado}
-                  onChange={handleChange}
-                  placeholder="Estado"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="area">Área (hectares) *</Label>
-                <Input
-                  id="area"
-                  name="area"
-                  type="number"
-                  value={formData.area}
-                  onChange={handleChange}
-                  placeholder="Área em hectares"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="latitude">Latitude</Label>
-                <Input
-                  id="latitude"
-                  name="latitude"
-                  type="number"
-                  step="0.0001"
-                  value={formData.coordenadas?.latitude}
-                  onChange={handleChange}
-                  placeholder="Latitude"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="longitude">Longitude</Label>
-                <Input
-                  id="longitude"
-                  name="longitude"
-                  type="number"
-                  step="0.0001"
-                  value={formData.coordenadas?.longitude}
-                  onChange={handleChange}
-                  placeholder="Longitude"
-                />
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button variant="outline" asChild>
-              <Link href="/propriedades">Cancelar</Link>
-            </Button>
-            <Button type="submit" disabled={enviando}>
-              {enviando ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Criar Propriedade
-                </>
-              )}
-            </Button>
-          </CardFooter>
-        </Card>
+        {/* Botões de Ação Fixos */}
+        <div className="sticky bottom-0 bg-background border-t p-4 flex justify-between items-center mt-6 -mx-4 rounded-b-md">
+          <Button variant="outline" asChild>
+            <Link href="/propriedades">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Cancelar
+            </Link>
+          </Button>
+          <Button type="submit" disabled={enviando}>
+            {enviando ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Criar Propriedade
+              </>
+            )}
+          </Button>
+        </div>
       </form>
     </div>
   )

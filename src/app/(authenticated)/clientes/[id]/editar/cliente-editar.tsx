@@ -27,6 +27,8 @@ import { Cliente } from '@/lib/crm-utils'
 import { formatarData } from '@/lib/formatters'
 import { clientesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
+import { DatePicker } from '@/components/ui/date-picker'
+import { format, parse } from 'date-fns'
 
 // Componente cliente que implementa a lógica com hooks
 export default function ClienteEditarConteudo({ clienteId }: { clienteId: string }) {
@@ -47,6 +49,9 @@ export default function ClienteEditarConteudo({ clienteId }: { clienteId: string
     cep: '',
     tipo: '' as 'PF' | 'PJ'
   })
+  
+  // Estado para o DatePicker
+  const [dataNascimentoDate, setDataNascimentoDate] = useState<Date | undefined>(undefined)
 
   useEffect(() => {
     const carregarCliente = async () => {
@@ -71,13 +76,33 @@ export default function ClienteEditarConteudo({ clienteId }: { clienteId: string
           telefone: dadosCliente.telefone,
           email: dadosCliente.email,
           perfil: dadosCliente.perfil as 'pequeno' | 'medio' | 'grande',
-          dataNascimento: dadosCliente.dataNascimento ? formatarDataParaInput(dadosCliente.dataNascimento) : '',
+          dataNascimento: dadosCliente.dataNascimento || '',
           endereco: dadosCliente.endereco || '',
           cidade: dadosCliente.cidade || '',
           estado: dadosCliente.estado || '',
           cep: dadosCliente.cep || '',
           tipo: dadosCliente.tipo as 'PF' | 'PJ'
         })
+        
+        // Configurar a data para o DatePicker se existir
+        if (dadosCliente.dataNascimento) {
+          try {
+            // Tenta converter a string de data para um objeto Date
+            const dateParts = dadosCliente.dataNascimento.split('-');
+            if (dateParts.length === 3) {
+              // Se estiver no formato ISO (YYYY-MM-DD)
+              const year = parseInt(dateParts[0], 10);
+              const month = parseInt(dateParts[1], 10) - 1; // Mês em JS é 0-indexed
+              const day = parseInt(dateParts[2], 10);
+              const date = new Date(year, month, day);
+              if (!isNaN(date.getTime())) {
+                setDataNascimentoDate(date);
+              }
+            }
+          } catch (error) {
+            console.error('Erro ao converter data de nascimento:', error);
+          }
+        }
       } catch (error) {
         console.error('Erro ao carregar cliente:', error)
         toast({
@@ -186,7 +211,7 @@ export default function ClienteEditarConteudo({ clienteId }: { clienteId: string
         telefone: formData.telefone,
         email: formData.email,
         perfil: formData.perfil,
-        dataNascimento: converterDataParaISO(formData.dataNascimento),
+        dataNascimento: formData.dataNascimento, // Já está no formato correto (YYYY-MM-DD)
         endereco: formData.endereco,
         cidade: formData.cidade,
         estado: formData.estado,
@@ -310,13 +335,24 @@ export default function ClienteEditarConteudo({ clienteId }: { clienteId: string
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="dataNascimento">Data de Nascimento</Label>
-                <Input
-                  id="dataNascimento"
-                  name="dataNascimento"
-                  placeholder="DD/MM/AAAA"
-                  value={formData.dataNascimento}
-                  onChange={handleChange}
-                  maxLength={10}
+                <DatePicker
+                  date={dataNascimentoDate}
+                  setDate={(date) => {
+                    setDataNascimentoDate(date);
+                    if (date) {
+                      // Formato para armazenamento: YYYY-MM-DD
+                      setFormData({
+                        ...formData,
+                        dataNascimento: format(date, 'yyyy-MM-dd')
+                      });
+                    } else {
+                      setFormData({
+                        ...formData,
+                        dataNascimento: ''
+                      });
+                    }
+                  }}
+                  placeholder="Selecione a data de nascimento"
                 />
               </div>
               

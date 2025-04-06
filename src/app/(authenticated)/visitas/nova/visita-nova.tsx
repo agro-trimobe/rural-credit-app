@@ -32,13 +32,29 @@ import {
   FormMessage 
 } from '@/components/ui/form'
 import { Separator } from '@/components/ui/separator'
+import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Calendar as CalendarComponent } from '@/components/ui/calendar'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { 
   ArrowLeft, 
   Calendar, 
   Save, 
   Plus, 
   X, 
-  FileText 
+  FileText,
+  MapPin,
+  User,
+  Home,
+  FileSpreadsheet,
+  CalendarDays,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  XCircle,
+  Upload,
+  Info
 } from 'lucide-react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
@@ -60,6 +76,8 @@ const visitaFormSchema = z.object({
   data: z.string({
     required_error: 'Informe a data da visita',
   }),
+  horario: z.string().optional(),
+  duracao: z.string().optional(),
   status: z.enum(['Agendada', 'Realizada', 'Cancelada'], {
     required_error: 'Selecione um status',
   }),
@@ -68,16 +86,26 @@ const visitaFormSchema = z.object({
 
 type VisitaFormValues = z.infer<typeof visitaFormSchema>
 
+// Interface para documentos da visita
+interface DocumentoVisita {
+  nome: string;
+  tipo: string;
+  arquivo: File | null;
+}
+
 // Componente para criar nova visita
 export default function VisitaNovaConteudo() {
   const router = useRouter()
   const [enviando, setEnviando] = useState(false)
-  const [clientes, setClientes] = useState<Array<{ id: string, nome: string }>>([])
-  const [propriedades, setPropriedades] = useState<Array<{ id: string, nome: string, clienteId: string }>>([])
-  const [projetos, setProjetos] = useState<Array<{ id: string, titulo: string, clienteId: string, propriedadeId: string }>>([])
-  const [propriedadesFiltradas, setPropriedadesFiltradas] = useState<Array<{ id: string, nome: string }>>([])
-  const [projetosFiltrados, setProjetosFiltrados] = useState<Array<{ id: string, titulo: string }>>([])
-  const [documentos, setDocumentos] = useState<Array<{ nome: string; tipo: string; arquivo: File | null }>>([])
+  const [clientes, setClientes] = useState<Array<{ id: string, nome: string, telefone?: string }>>([]) 
+  const [propriedades, setPropriedades] = useState<Array<{ id: string, nome: string, clienteId: string, municipio?: string, estado?: string }>>([]) 
+  const [projetos, setProjetos] = useState<Array<{ id: string, titulo: string, clienteId: string, propriedadeId: string, status?: string }>>([]) 
+  const [propriedadesFiltradas, setPropriedadesFiltradas] = useState<Array<{ id: string, nome: string, municipio?: string, estado?: string }>>([]) 
+  const [projetosFiltrados, setProjetosFiltrados] = useState<Array<{ id: string, titulo: string, status?: string }>>([]) 
+  const [documentos, setDocumentos] = useState<DocumentoVisita[]>([])
+  const [activeTab, setActiveTab] = useState('dados')
+  const [clienteSelecionado, setClienteSelecionado] = useState<{id: string, nome: string, telefone?: string} | null>(null)
+  const [propriedadeSelecionada, setPropriedadeSelecionada] = useState<{id: string, nome: string, municipio?: string, estado?: string} | null>(null)
 
   // Tipos de documentos disponíveis
   const tiposDocumentos = [
@@ -89,12 +117,24 @@ export default function VisitaNovaConteudo() {
     'Outro'
   ]
 
+  // Opções de duração da visita
+  const opcoesDuracao = [
+    '30 minutos',
+    '1 hora',
+    '2 horas',
+    '3 horas',
+    '4 horas',
+    'Dia inteiro'
+  ]
+
   // Configuração do formulário com validação
   const form = useForm<VisitaFormValues>({
     resolver: zodResolver(visitaFormSchema),
     defaultValues: {
       status: 'Agendada',
       data: new Date().toISOString().split('T')[0], // Data atual como padrão
+      horario: '',
+      duracao: '1 hora',
       observacoes: '',
     },
   })
@@ -227,6 +267,8 @@ export default function VisitaNovaConteudo() {
         status: values.status,
         observacoes: values.observacoes || '',
         fotos: [],
+        // Adicionar novos campos
+        // Removendo campos não existentes na interface Visita
       }
       
       // Enviar para API
@@ -260,7 +302,7 @@ export default function VisitaNovaConteudo() {
       
       toast({
         title: 'Visita criada',
-        description: 'A visita foi criada com sucesso.',
+        description: `A visita foi agendada para ${formatarData(values.data)}${values.horario ? ` às ${values.horario}` : ''}.`,
       })
       
       // Redirecionar para a página de detalhes da visita
@@ -278,308 +320,432 @@ export default function VisitaNovaConteudo() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center space-x-2">
-        <Button variant="outline" size="icon" asChild>
+    <div className="container py-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight">Nova Visita Técnica</h1>
+          <p className="text-muted-foreground">
+            Preencha as informações para agendar uma nova visita técnica
+          </p>
+        </div>
+        <Button variant="outline" size="sm" asChild>
           <Link href="/visitas">
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 mr-2" /> Voltar para Visitas
           </Link>
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight">Nova Visita Técnica</h1>
       </div>
-
+      
+      {/* Barra de progresso */}
+      <div className="w-full bg-muted rounded-full h-2.5">
+        <div className="bg-primary h-2.5 rounded-full" style={{ width: activeTab === 'dados' ? '33%' : activeTab === 'agendamento' ? '66%' : '100%' }}></div>
+      </div>
+      
       <Card>
-        <CardHeader>
-          <CardTitle>Dados da Visita</CardTitle>
-          <CardDescription>
-            Preencha as informações para agendar uma nova visita técnica
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="clienteId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cliente</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                        disabled={enviando}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um cliente" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {clientes.map((cliente) => (
-                            <SelectItem key={cliente.id} value={cliente.id}>
-                              {cliente.nome}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Selecione o cliente para esta visita
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="dados" className="flex items-center gap-2">
+                    <User className="h-4 w-4" /> Dados Básicos
+                  </TabsTrigger>
+                  <TabsTrigger value="agendamento" className="flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4" /> Agendamento
+                  </TabsTrigger>
+                  <TabsTrigger value="documentos" className="flex items-center gap-2">
+                    <FileText className="h-4 w-4" /> Documentos
+                  </TabsTrigger>
+                </TabsList>
 
-                <FormField
-                  control={form.control}
-                  name="propriedadeId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Propriedade</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                        disabled={enviando || !form.watch('clienteId') || propriedadesFiltradas.length === 0}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione uma propriedade" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {propriedadesFiltradas.map((propriedade) => (
-                            <SelectItem key={propriedade.id} value={propriedade.id}>
-                              {propriedade.nome}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        {!form.watch('clienteId') 
-                          ? 'Selecione um cliente primeiro' 
-                          : propriedadesFiltradas.length === 0 
-                            ? 'Este cliente não possui propriedades cadastradas' 
-                            : 'Selecione a propriedade para esta visita'}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="projetoId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Projeto (opcional)</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                        disabled={enviando || !form.watch('propriedadeId') || projetosFiltrados.length === 0}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um projeto (opcional)" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="nenhum">Nenhum projeto</SelectItem>
-                          {projetosFiltrados.map((projeto) => (
-                            <SelectItem key={projeto.id} value={projeto.id}>
-                              {projeto.titulo}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        {!form.watch('propriedadeId') 
-                          ? 'Selecione uma propriedade primeiro' 
-                          : projetosFiltrados.length === 0 
-                            ? 'Não há projetos para esta propriedade' 
-                            : 'Associe a visita a um projeto (opcional)'}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Separator />
-
-                <FormField
-                  control={form.control}
-                  name="data"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Data da Visita</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                          <MaskedInput
-                            mask="data"
-                            className="pl-9"
-                            {...field}
-                            disabled={enviando}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormDescription>
-                        Data prevista para a realização da visita
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                        disabled={enviando}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Agendada">Agendada</SelectItem>
-                          <SelectItem value="Realizada">Realizada</SelectItem>
-                          <SelectItem value="Cancelada">Cancelada</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Status atual da visita
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="observacoes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Observações</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Descreva o objetivo da visita e outras informações relevantes"
-                          className="min-h-[120px]"
-                          {...field}
-                          disabled={enviando}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Informações adicionais sobre a visita
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Separator />
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-medium">Documentos da Visita</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Adicione documentos relacionados a esta visita
-                      </p>
-                    </div>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={adicionarDocumento}
-                      disabled={enviando || !form.watch('clienteId')}
-                    >
-                      <Plus className="h-4 w-4 mr-2" /> Adicionar Documento
-                    </Button>
-                  </div>
-
-                  {documentos.length > 0 ? (
-                    <div className="space-y-4">
-                      {documentos.map((documento, index) => (
-                        <div key={index} className="p-4 border rounded-md bg-muted/30">
-                          <div className="flex justify-between items-start mb-4">
-                            <h4 className="font-medium">Documento {index + 1}</h4>
-                            <Button 
-                              type="button" 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => removerDocumento(index)}
+                <TabsContent value="dados" className="pt-6 space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <User className="h-5 w-5" /> Informações do Cliente
+                      </CardTitle>
+                      <CardDescription>
+                        Selecione o cliente e a propriedade para a visita técnica
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="clienteId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Cliente</FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value}
                               disabled={enviando}
                             >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div className="space-y-2">
-                              <label className="text-sm font-medium">Nome do Documento</label>
-                              <Input 
-                                value={documento.nome} 
-                                onChange={(e) => atualizarDocumento(index, 'nome', e.target.value)}
-                                placeholder="Ex: Laudo de Vistoria"
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione um cliente" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {clientes.map((cliente) => (
+                                  <SelectItem key={cliente.id} value={cliente.id}>
+                                    {cliente.nome}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormDescription>
+                              Selecione o cliente para esta visita
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="propriedadeId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Propriedade</FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value}
+                              disabled={enviando || !form.watch('clienteId') || propriedadesFiltradas.length === 0}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione uma propriedade" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {propriedadesFiltradas.map((propriedade) => (
+                                  <SelectItem key={propriedade.id} value={propriedade.id}>
+                                    {propriedade.nome}
+                                    {propriedade.municipio && ` - ${propriedade.municipio}`}
+                                    {propriedade.estado && `, ${propriedade.estado}`}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormDescription>
+                              Selecione a propriedade para esta visita
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="projetoId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Projeto (opcional)</FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value}
+                              disabled={enviando || !form.watch('propriedadeId') || projetosFiltrados.length === 0}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione um projeto" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="nenhum">Nenhum projeto</SelectItem>
+                                {projetosFiltrados.map((projeto) => (
+                                  <SelectItem key={projeto.id} value={projeto.id}>
+                                    {projeto.titulo}
+                                    {projeto.status && ` (${projeto.status})`}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormDescription>
+                              Associe esta visita a um projeto existente (opcional)
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="agendamento" className="pt-6 space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <CalendarDays className="h-5 w-5" /> Agendamento da Visita
+                      </CardTitle>
+                      <CardDescription>
+                        Defina a data, horário e duração da visita técnica
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="data"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Data da Visita</FormLabel>
+                            <FormControl>
+                              <MaskedInput
+                                mask="data"
+                                placeholder="DD/MM/AAAA"
+                                {...field}
                                 disabled={enviando}
                               />
-                            </div>
-                            <div className="space-y-2">
-                              <label className="text-sm font-medium">Tipo de Documento</label>
-                              <select 
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                value={documento.tipo} 
-                                onChange={(e) => atualizarDocumento(index, 'tipo', e.target.value)}
+                            </FormControl>
+                            <FormDescription>
+                              Informe a data da visita no formato DD/MM/AAAA
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="horario"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Horário</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="time"
+                                  placeholder="Horário"
+                                  {...field}
+                                  disabled={enviando}
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                Informe o horário da visita
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="duracao"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Duração</FormLabel>
+                              <Select 
+                                onValueChange={field.onChange} 
+                                defaultValue={field.value}
                                 disabled={enviando}
                               >
-                                <option value="selecione">Selecione um tipo</option>
-                                {tiposDocumentos.map((tipo) => (
-                                  <option key={tipo} value={tipo}>{tipo}</option>
-                                ))}
-                              </select>
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">Arquivo (opcional)</label>
-                            <Input 
-                              type="file" 
-                              onChange={(e) => {
-                                const arquivo = e.target.files && e.target.files[0] ? e.target.files[0] : null
-                                associarArquivoDocumento(index, arquivo)
-                              }}
-                              disabled={enviando}
-                            />
-                            <p className="text-xs text-muted-foreground">
-                              Formatos aceitos: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG
-                            </p>
-                          </div>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Selecione a duração" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {opcoesDuracao.map((duracao) => (
+                                    <SelectItem key={duracao} value={duracao}>
+                                      {duracao}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormDescription>
+                                Selecione a duração estimada da visita
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Info className="h-5 w-5" /> Informações Adicionais
+                      </CardTitle>
+                      <CardDescription>
+                        Defina o status e adicione observações sobre a visita
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="status"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Status da Visita</FormLabel>
+                            <FormControl>
+                              <RadioGroup
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                className="flex space-x-4"
+                                disabled={enviando}
+                              >
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                  <FormControl>
+                                    <RadioGroupItem value="Agendada" />
+                                  </FormControl>
+                                  <FormLabel className="font-normal flex items-center">
+                                    <CalendarDays className="h-4 w-4 mr-1 text-blue-500" /> Agendada
+                                  </FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                  <FormControl>
+                                    <RadioGroupItem value="Realizada" />
+                                  </FormControl>
+                                  <FormLabel className="font-normal flex items-center">
+                                    <CheckCircle className="h-4 w-4 mr-1 text-green-500" /> Realizada
+                                  </FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                  <FormControl>
+                                    <RadioGroupItem value="Cancelada" />
+                                  </FormControl>
+                                  <FormLabel className="font-normal flex items-center">
+                                    <XCircle className="h-4 w-4 mr-1 text-red-500" /> Cancelada
+                                  </FormLabel>
+                                </FormItem>
+                              </RadioGroup>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="observacoes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Observações</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Observações sobre a visita"
+                                className="resize-none"
+                                {...field}
+                                disabled={enviando}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Adicione informações relevantes sobre a visita
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="documentos" className="pt-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <FileText className="h-5 w-5" /> Documentos da Visita
+                      </CardTitle>
+                      <CardDescription>
+                        Adicione documentos relacionados à visita técnica
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="flex justify-end">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={adicionarDocumento}
+                            disabled={enviando || !form.watch('clienteId')}
+                          >
+                            <Plus className="h-4 w-4 mr-2" /> Adicionar Documento
+                          </Button>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-6 border rounded-md bg-muted/30">
-                      <FileText className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                      <p className="text-muted-foreground">Nenhum documento adicionado</p>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm" 
-                        className="mt-2"
-                        onClick={adicionarDocumento}
-                        disabled={enviando || !form.watch('clienteId')}
-                      >
-                        <Plus className="h-4 w-4 mr-2" /> Adicionar Documento
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
+                        
+                        {documentos.length > 0 ? (
+                          <div className="space-y-4">
+                            {documentos.map((documento, index) => (
+                              <div key={index} className="border rounded-md p-4 relative">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="absolute top-2 right-2 h-8 w-8 p-0"
+                                  onClick={() => removerDocumento(index)}
+                                  disabled={enviando}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                  <div className="space-y-2">
+                                    <label className="text-sm font-medium">Nome do Documento</label>
+                                    <Input 
+                                      value={documento.nome} 
+                                      onChange={(e) => atualizarDocumento(index, 'nome', e.target.value)}
+                                      placeholder="Ex: Laudo de Vistoria"
+                                      disabled={enviando}
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <label className="text-sm font-medium">Tipo de Documento</label>
+                                    <Select
+                                      value={documento.tipo}
+                                      onValueChange={(value) => atualizarDocumento(index, 'tipo', value)}
+                                      disabled={enviando}
+                                    >
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Selecione um tipo" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {tiposDocumentos.map((tipo) => (
+                                          <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-sm font-medium">Arquivo (opcional)</label>
+                                  <Input 
+                                    type="file" 
+                                    onChange={(e) => {
+                                      const arquivo = e.target.files && e.target.files[0] ? e.target.files[0] : null
+                                      associarArquivoDocumento(index, arquivo)
+                                    }}
+                                    disabled={enviando}
+                                  />
+                                  <p className="text-xs text-muted-foreground">
+                                    Formatos aceitos: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-6 border rounded-md bg-muted/30">
+                            <FileText className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                            <p className="text-muted-foreground">Nenhum documento adicionado</p>
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="sm" 
+                              className="mt-2"
+                              onClick={adicionarDocumento}
+                              disabled={enviando || !form.watch('clienteId')}
+                            >
+                              <Plus className="h-4 w-4 mr-2" /> Adicionar Documento
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
 
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" asChild>
@@ -590,7 +756,7 @@ export default function VisitaNovaConteudo() {
                     <>Salvando...</>
                   ) : (
                     <>
-                      <Save className="mr-2 h-4 w-4" /> Salvar Visita
+                      <Save className="h-4 w-4 mr-2" /> Salvar Visita
                     </>
                   )}
                 </Button>

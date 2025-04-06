@@ -30,6 +30,12 @@ export function formatarValor(valor: number, casasDecimais: number = 2): string 
 export function formatarData(dataISO?: string | null): string {
   if (!dataISO) return 'N/A';
   
+  // Verificar se a string contém "undefined"
+  if (typeof dataISO === 'string' && dataISO.includes('undefined')) {
+    console.error('Data com formato inválido (contém undefined):', dataISO);
+    return 'Data inválida';
+  }
+  
   try {
     // Verificar se a data é válida antes de tentar formatá-la
     const data = new Date(dataISO);
@@ -54,6 +60,12 @@ export function formatarData(dataISO?: string | null): string {
  */
 export function formatarDataHora(dataISO?: string | null): string {
   if (!dataISO) return 'N/A';
+  
+  // Verificar se a string contém "undefined"
+  if (typeof dataISO === 'string' && dataISO.includes('undefined')) {
+    console.error('Data com formato inválido (contém undefined):', dataISO);
+    return 'Data inválida';
+  }
   
   try {
     // Verificar se a data é válida antes de tentar formatá-la
