@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { format } from 'date-fns'
 import { 
   Card, 
   CardContent, 
@@ -22,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { DatePicker } from '@/components/ui/date-picker'
 import { 
   ArrowLeft, 
   Save, 
@@ -47,6 +49,7 @@ export default function ProjetoNovoPage() {
   const [salvando, setSalvando] = useState(false)
   const [clientes, setClientes] = useState<{ id: string; nome: string }[]>([])
   const [propriedades, setPropriedades] = useState<{ id: string; nome: string }[]>([])
+  const [dataPrevisaoTerminoDate, setDataPrevisaoTerminoDate] = useState<Date | undefined>(undefined)
   const [formData, setFormData] = useState({
     titulo: '',
     descricao: '',
@@ -143,55 +146,29 @@ export default function ProjetoNovoPage() {
     }
   }
 
-  // Função para aplicar máscara de data (DD/MM/AAAA)
-  const handleDataChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = e.target
+  // Função para lidar com a mudança de data no DatePicker
+  const handleDataPrevisaoTerminoChange = (date: Date | undefined) => {
+    setDataPrevisaoTerminoDate(date)
     
-    // Remove todos os caracteres não numéricos
-    const numeros = value.replace(/\D/g, '')
-    
-    // Aplica a máscara conforme o usuário digita
-    let dataFormatada = ''
-    if (numeros.length > 0) {
-      // Adiciona o dia (até 2 dígitos)
-      dataFormatada = numeros.substring(0, Math.min(2, numeros.length))
+    if (date) {
+      // Formato para exibição: DD/MM/YYYY
+      const dataFormatada = format(date, 'dd/MM/yyyy')
+      // Formato para armazenamento: YYYY-MM-DD
+      const dataISO = format(date, 'yyyy-MM-dd')
       
-      // Adiciona o mês após o dia (se houver mais de 2 dígitos)
-      if (numeros.length > 2) {
-        dataFormatada += '/' + numeros.substring(2, Math.min(4, numeros.length))
-      }
-      
-      // Adiciona o ano após o mês (se houver mais de 4 dígitos)
-      if (numeros.length > 4) {
-        dataFormatada += '/' + numeros.substring(4, Math.min(8, numeros.length))
-      }
+      setFormData(prev => ({ ...prev, dataPrevisaoTermino: dataISO }))
+    } else {
+      setFormData(prev => ({ ...prev, dataPrevisaoTermino: '' }))
     }
-    
-    setFormData(prev => ({ ...prev, dataPrevisaoTermino: dataFormatada }))
   }
 
-  // Função para converter data de DD/MM/AAAA para formato ISO (AAAA-MM-DD)
-  const converterDataParaISO = (data: string) => {
-    if (!data) return ''
-    
-    const partes = data.split('/')
-    if (partes.length !== 3) return ''
-    
-    const dia = partes[0]
-    const mes = partes[1]
-    const ano = partes[2]
-    
-    // Verifica se a data é válida
-    if (dia.length !== 2 || mes.length !== 2 || ano.length !== 4) return ''
-    
-    return `${ano}-${mes}-${dia}`
-  }
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     // Validação básica
-    if (!formData.titulo || !formData.clienteId || !formData.propriedadeId || !formData.dataPrevisaoTermino) {
+    if (!formData.titulo || !formData.clienteId || !formData.propriedadeId || !dataPrevisaoTerminoDate) {
       toast({
         title: 'Erro',
         description: 'Por favor, preencha todos os campos obrigatórios.',
@@ -203,13 +180,11 @@ export default function ProjetoNovoPage() {
     setSalvando(true)
     
     try {
-      // Converter a data para o formato ISO antes de enviar
-      const dataISO = converterDataParaISO(formData.dataPrevisaoTermino)
-      
-      if (!dataISO) {
+      // Verificar se a data foi selecionada
+      if (!formData.dataPrevisaoTermino) {
         toast({
           title: 'Erro',
-          description: 'Data inválida. Por favor, use o formato DD/MM/AAAA.',
+          description: 'Por favor, selecione uma data de previsão de término.',
           variant: 'destructive',
         })
         setSalvando(false)
@@ -222,7 +197,7 @@ export default function ProjetoNovoPage() {
       // Criar objeto com os dados do projeto
       const novoProjeto = {
         ...formData,
-        dataPrevisaoTermino: dataISO,
+        dataPrevisaoTermino: formData.dataPrevisaoTermino,
         valorTotal: valorNumerico,
         documentos: [] // Adicionar array vazio de documentos
       }
@@ -511,19 +486,11 @@ export default function ProjetoNovoPage() {
                   <Label htmlFor="dataPrevisaoTermino" className="flex items-center">
                     Previsão de Término <span className="text-destructive ml-1">*</span>
                   </Label>
-                  <div className="relative">
-                    <CalendarIcon className="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="dataPrevisaoTermino"
-                      name="dataPrevisaoTermino"
-                      placeholder="DD/MM/AAAA"
-                      value={formData.dataPrevisaoTermino}
-                      onChange={handleDataChange}
-                      maxLength={10}
-                      required
-                      className="pl-8 focus-visible:ring-primary"
-                    />
-                  </div>
+                  <DatePicker
+                    date={dataPrevisaoTerminoDate}
+                    setDate={handleDataPrevisaoTerminoChange}
+                    placeholder="Selecione a data de previsão"
+                  />
                 </div>
               </div>
             </div>

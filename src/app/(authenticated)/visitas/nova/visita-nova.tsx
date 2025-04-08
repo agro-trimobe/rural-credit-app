@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import { 
   Card, 
   CardContent, 
@@ -15,6 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { MaskedInput } from '@/components/ui/masked-input'
 import { Textarea } from '@/components/ui/textarea'
+import { DatePicker } from '@/components/ui/date-picker'
 import { 
   Select, 
   SelectContent, 
@@ -106,6 +109,7 @@ export default function VisitaNovaConteudo() {
   const [activeTab, setActiveTab] = useState('dados')
   const [clienteSelecionado, setClienteSelecionado] = useState<{id: string, nome: string, telefone?: string} | null>(null)
   const [propriedadeSelecionada, setPropriedadeSelecionada] = useState<{id: string, nome: string, municipio?: string, estado?: string} | null>(null)
+  const [dataVisitaDate, setDataVisitaDate] = useState<Date | undefined>(new Date())
 
   // Tipos de documentos disponíveis
   const tiposDocumentos = [
@@ -132,7 +136,7 @@ export default function VisitaNovaConteudo() {
     resolver: zodResolver(visitaFormSchema),
     defaultValues: {
       status: 'Agendada',
-      data: new Date().toISOString().split('T')[0], // Data atual como padrão
+      data: format(new Date(), 'dd/MM/yyyy', { locale: ptBR }), // Data atual como padrão
       horario: '',
       duracao: '1 hora',
       observacoes: '',
@@ -249,14 +253,34 @@ export default function VisitaNovaConteudo() {
     })
   }
 
+  // Função para lidar com a mudança de data
+  const handleDataVisitaChange = (date: Date | undefined) => {
+    setDataVisitaDate(date);
+    if (date) {
+      form.setValue('data', format(date, 'dd/MM/yyyy', { locale: ptBR }));
+    } else {
+      form.setValue('data', '');
+    }
+  };
+
   // Função para criar nova visita
   const onSubmit = async (values: VisitaFormValues) => {
     try {
       setEnviando(true)
       
-      // Converter data do formato DD/MM/YYYY para ISO
-      const dataPartes = values.data.split('/');
-      const dataFormatada = `${dataPartes[2]}-${dataPartes[1]}-${dataPartes[0]}T00:00:00`;
+      // Verificar se a data foi selecionada
+      if (!dataVisitaDate) {
+        toast({
+          title: 'Erro',
+          description: 'Por favor, selecione uma data para a visita.',
+          variant: 'destructive',
+        });
+        setEnviando(false);
+        return;
+      }
+      
+      // Formatar data para ISO
+      const dataFormatada = dataVisitaDate.toISOString().split('T')[0] + 'T00:00:00';
       
       // Preparar dados da visita
       const novaVisita: Omit<Visita, 'id' | 'dataCriacao' | 'dataAtualizacao'> = {
@@ -489,15 +513,15 @@ export default function VisitaNovaConteudo() {
                           <FormItem>
                             <FormLabel>Data da Visita</FormLabel>
                             <FormControl>
-                              <MaskedInput
-                                mask="data"
-                                placeholder="DD/MM/AAAA"
-                                {...field}
+                              <DatePicker
+                                date={dataVisitaDate}
+                                setDate={handleDataVisitaChange}
+                                placeholder="Selecione a data da visita"
                                 disabled={enviando}
                               />
                             </FormControl>
                             <FormDescription>
-                              Informe a data da visita no formato DD/MM/AAAA
+                              Selecione a data da visita no calendário
                             </FormDescription>
                             <FormMessage />
                           </FormItem>

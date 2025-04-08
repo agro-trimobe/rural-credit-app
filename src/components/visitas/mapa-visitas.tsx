@@ -105,6 +105,12 @@ export function MapaVisitas({ visitas, clientesMap }: MapaVisitasProps) {
 
   // Função para obter as coordenadas de uma propriedade
   const obterCoordenadas = (propriedadeId: string): LatLngExpression | null => {
+    // Verificar se propriedadeId existe
+    if (!propriedadeId) {
+      console.warn('ID de propriedade não fornecido para obter coordenadas')
+      return centroDoBrasil // Retornar o centro do Brasil como fallback
+    }
+
     const propriedade = propriedades.find(p => p.id === propriedadeId)
     
     if (propriedade?.coordenadas) {

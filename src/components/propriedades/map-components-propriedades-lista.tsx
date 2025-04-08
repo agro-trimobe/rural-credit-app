@@ -136,7 +136,7 @@ export default function MapComponentsPropriedades({ dados }: { dados: DadosMapaP
                 </div>
                 
                 <div className="map-popup-actions">
-                  <Link href={`/propriedades/${propriedade.id}`} className="map-popup-button">
+                  <Link href={`/propriedades/${propriedade.id}`} className="map-popup-button" style={{ color: 'white' }}>
                     <Eye className="h-3 w-3" /> Ver Detalhes
                   </Link>
                 </div>

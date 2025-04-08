@@ -112,11 +112,14 @@ export default function NovaPropriedadeConteudo() {
         [name]: parseFloat(value) || 0
       })
     } else if (name === 'latitude' || name === 'longitude') {
+      // Permitir valores vazios ou negativos para coordenadas
+      const numeroProcessado = value === '' ? 0 : parseFloat(value)
+      
       setFormData({
         ...formData,
         coordenadas: {
-          latitude: name === 'latitude' ? parseFloat(value) || 0 : formData.coordenadas?.latitude || 0,
-          longitude: name === 'longitude' ? parseFloat(value) || 0 : formData.coordenadas?.longitude || 0
+          latitude: name === 'latitude' ? numeroProcessado : formData.coordenadas?.latitude || 0,
+          longitude: name === 'longitude' ? numeroProcessado : formData.coordenadas?.longitude || 0
         }
       })
     } else {
@@ -461,9 +464,10 @@ export default function NovaPropriedadeConteudo() {
                   <Input
                     id="latitude"
                     name="latitude"
-                    type="number"
-                    step="0.0001"
-                    value={formData.coordenadas?.latitude}
+                    type="text"
+                    inputMode="decimal"
+                    pattern="-?\d*\.?\d*"
+                    value={formData.coordenadas?.latitude === 0 ? '' : formData.coordenadas?.latitude}
                     onChange={handleChange}
                     placeholder="Ex: -15.7801"
                   />
@@ -488,9 +492,10 @@ export default function NovaPropriedadeConteudo() {
                   <Input
                     id="longitude"
                     name="longitude"
-                    type="number"
-                    step="0.0001"
-                    value={formData.coordenadas?.longitude}
+                    type="text"
+                    inputMode="decimal"
+                    pattern="-?\d*\.?\d*"
+                    value={formData.coordenadas?.longitude === 0 ? '' : formData.coordenadas?.longitude}
                     onChange={handleChange}
                     placeholder="Ex: -47.9292"
                   />

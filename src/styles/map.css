@@ -78,7 +78,7 @@
   font-size: 0.75rem;
   border-radius: 0.25rem;
   background-color: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
+  color: white;
   cursor: pointer;
   transition: all 0.2s;
   text-decoration: none;
@@ -87,6 +87,8 @@
 .map-popup-button:hover {
   background-color: hsl(var(--primary) / 0.9);
 }
+
+
 
 .map-legend {
   position: absolute;

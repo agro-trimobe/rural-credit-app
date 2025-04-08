@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { format } from 'date-fns'
 import { 
   Card, 
   CardContent, 
@@ -22,10 +23,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Separator } from '@/components/ui/separator'
-import { ArrowLeft } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { 
+  ArrowLeft, 
+  Save, 
+  X, 
+  FileText, 
+  Building2, 
+  CalendarIcon, 
+  DollarSign,
+  CreditCard,
+  BarChart2,
+  User
+} from 'lucide-react'
 import { Projeto, Cliente, Propriedade } from '@/lib/crm-utils'
-import { formatarData, formatarMoeda } from '@/lib/formatters'
+import { formatarData, formatarMoeda, coresStatus } from '@/lib/formatters'
 import { projetosApi, clientesApi, propriedadesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
@@ -56,6 +70,7 @@ function ProjetoEditarConteudo({ projetoId }: { projetoId: string }) {
   const [prazo, setPrazo] = useState('')
   const [carencia, setCarencia] = useState('')
   const [dataPrevisaoTermino, setDataPrevisaoTermino] = useState('')
+  const [dataPrevisaoTerminoDate, setDataPrevisaoTerminoDate] = useState<Date | undefined>(undefined)
   
   useEffect(() => {
     const carregarDados = async () => {
@@ -110,6 +125,9 @@ function ProjetoEditarConteudo({ projetoId }: { projetoId: string }) {
         // Formatar a data de previsão de término se existir
         if (projetoExtendido.dataPrevisaoTermino) {
           const data = new Date(projetoExtendido.dataPrevisaoTermino)
+          setDataPrevisaoTerminoDate(data)
+          
+          // Formato para exibição: DD/MM/YYYY
           const dia = String(data.getDate()).padStart(2, '0')
           const mes = String(data.getMonth() + 1).padStart(2, '0')
           const ano = data.getFullYear()
@@ -189,49 +207,23 @@ function ProjetoEditarConteudo({ projetoId }: { projetoId: string }) {
     return parseFloat(valorLimpo) || 0
   }
   
-  // Função para aplicar máscara de data (DD/MM/AAAA)
-  const handleDataChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = e.target
+  // Função para lidar com a mudança de data no DatePicker
+  const handleDataPrevisaoTerminoChange = (date: Date | undefined) => {
+    setDataPrevisaoTerminoDate(date)
     
-    // Remove caracteres não numéricos
-    const numeros = value.replace(/\D/g, '')
-    
-    let dataFormatada = ''
-    
-    if (numeros.length > 0) {
-      // Adiciona o dia (até 2 dígitos)
-      dataFormatada = numeros.substring(0, Math.min(2, numeros.length))
+    if (date) {
+      // Formato para exibição: DD/MM/YYYY
+      const dataFormatada = format(date, 'dd/MM/yyyy')
+      // Formato para armazenamento: YYYY-MM-DD
+      const dataISO = format(date, 'yyyy-MM-dd')
       
-      // Adiciona o mês após o dia (se houver mais de 2 dígitos)
-      if (numeros.length > 2) {
-        dataFormatada += '/' + numeros.substring(2, Math.min(4, numeros.length))
-      }
-      
-      // Adiciona o ano após o mês (se houver mais de 4 dígitos)
-      if (numeros.length > 4) {
-        dataFormatada += '/' + numeros.substring(4, Math.min(8, numeros.length))
-      }
+      setDataPrevisaoTermino(dataISO)
+    } else {
+      setDataPrevisaoTermino('')
     }
-    
-    setDataPrevisaoTermino(dataFormatada)
   }
   
-  // Função para converter data de DD/MM/AAAA para formato ISO (AAAA-MM-DD)
-  const converterDataParaISO = (data: string) => {
-    if (!data) return ''
-    
-    const partes = data.split('/')
-    if (partes.length !== 3) return ''
-    
-    const dia = partes[0]
-    const mes = partes[1]
-    const ano = partes[2]
-    
-    // Verifica se a data é válida
-    if (dia.length !== 2 || mes.length !== 2 || ano.length !== 4) return ''
-    
-    return `${ano}-${mes}-${dia}`
-  }
+  // A função converterDataParaISO não é mais necessária, pois o DatePicker já fornece a data no formato correto
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -248,12 +240,11 @@ function ProjetoEditarConteudo({ projetoId }: { projetoId: string }) {
       return
     }
     
-    // Validar formato da data
-    const dataISO = converterDataParaISO(dataPrevisaoTermino)
-    if (!dataISO) {
+    // Verificar se a data foi selecionada
+    if (!dataPrevisaoTerminoDate) {
       toast({
         title: 'Erro',
-        description: 'Por favor, informe uma data válida no formato DD/MM/AAAA',
+        description: 'Por favor, selecione uma data de previsão de término',
         variant: 'destructive',
       })
       return
@@ -282,7 +273,7 @@ function ProjetoEditarConteudo({ projetoId }: { projetoId: string }) {
         documentos: projeto.documentos,
         dataCriacao: projeto.dataCriacao,
         dataAtualizacao: new Date().toISOString(),
-        dataPrevisaoTermino: dataISO
+        dataPrevisaoTermino: dataPrevisaoTermino
       }
       
       await projetosApi.atualizarProjeto(projetoId, projetoAtualizado)
@@ -333,202 +324,332 @@ function ProjetoEditarConteudo({ projetoId }: { projetoId: string }) {
               Edite os detalhes do projeto
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="titulo">Título</Label>
-              <Input
-                id="titulo"
-                name="titulo"
-                value={titulo}
-                onChange={handleChange}
-                placeholder="Título do projeto"
-              />
+          <CardContent className="space-y-6">
+            {/* Seção 1: Informações Básicas */}
+            <div>
+              <h3 className="text-base font-medium mb-3 flex items-center">
+                <FileText className="h-4 w-4 mr-2 text-primary" />
+                Informações Básicas
+              </h3>
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="titulo" className="flex items-center">
+                    Título <span className="text-destructive ml-1">*</span>
+                  </Label>
+                  <div className="relative">
+                    <FileText className="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="titulo"
+                      name="titulo"
+                      value={titulo}
+                      onChange={handleChange}
+                      placeholder="Título do projeto"
+                      className="pl-8 focus-visible:ring-primary"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="descricao">Descrição</Label>
+                  <Textarea
+                    id="descricao"
+                    name="descricao"
+                    value={descricao}
+                    onChange={handleChange}
+                    placeholder="Descrição do projeto"
+                    rows={3}
+                    className="focus-visible:ring-primary"
+                  />
+                </div>
+              </div>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="descricao">Descrição</Label>
-              <Textarea
-                id="descricao"
-                name="descricao"
-                value={descricao}
-                onChange={handleChange}
-                placeholder="Descrição do projeto"
-                rows={3}
-              />
+            {/* Seção 2: Cliente e Propriedade */}
+            <div className="pt-2 border-t">
+              <h3 className="text-base font-medium mb-3 flex items-center">
+                <User className="h-4 w-4 mr-2 text-primary" />
+                Cliente e Propriedade
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cliente" className="flex items-center">
+                    Cliente <span className="text-destructive ml-1">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Select 
+                      value={clienteId} 
+                      onValueChange={setClienteId}
+                      defaultValue={clientes.length > 0 ? clientes[0].id : undefined}
+                    >
+                      <SelectTrigger id="cliente" className="pl-8 focus-visible:ring-primary">
+                        <User className="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <SelectValue placeholder="Selecione um cliente" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clientes.map((cliente) => (
+                          <SelectItem key={cliente.id} value={cliente.id}>
+                            {cliente.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="propriedade" className="flex items-center">
+                    Propriedade
+                  </Label>
+                  <div className="relative">
+                    <Select 
+                      value={propriedadeId} 
+                      onValueChange={setPropriedadeId}
+                      defaultValue={propriedades.length > 0 ? propriedades[0].id : undefined}
+                    >
+                      <SelectTrigger id="propriedade" className="pl-8 focus-visible:ring-primary">
+                        <Building2 className="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <SelectValue placeholder="Selecione uma propriedade" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {propriedades.map((propriedade) => (
+                          <SelectItem key={propriedade.id} value={propriedade.id}>
+                            {propriedade.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="cliente">Cliente <span className="text-destructive">*</span></Label>
-                <Select 
-                  value={clienteId} 
-                  onValueChange={setClienteId}
-                  defaultValue={clientes.length > 0 ? clientes[0].id : undefined}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um cliente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clientes.map((cliente) => (
-                      <SelectItem key={cliente.id} value={cliente.id}>
-                        {cliente.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {/* Seção 3: Dados Financeiros */}
+            <div className="pt-2 border-t">
+              <h3 className="text-base font-medium mb-3 flex items-center">
+                <DollarSign className="h-4 w-4 mr-2 text-primary" />
+                Dados Financeiros
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="valorTotal" className="flex items-center">
+                    Valor Total <span className="text-destructive ml-1">*</span>
+                  </Label>
+                  <div className="relative">
+                    <DollarSign className="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="valorTotal"
+                      name="valorTotal"
+                      value={valorTotal}
+                      onChange={handleValorChange}
+                      placeholder="R$ 0,00"
+                      className="pl-8 focus-visible:ring-primary"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="linhaCredito" className="flex items-center">
+                    Linha de Crédito <span className="text-destructive ml-1">*</span>
+                  </Label>
+                  <div className="relative">
+                    <CreditCard className="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Select 
+                      value={linhaCredito || undefined} 
+                      onValueChange={setLinhaCredito}
+                      defaultValue="PRONAF"
+                    >
+                      <SelectTrigger id="linhaCredito" className="pl-8 focus-visible:ring-primary">
+                        <SelectValue placeholder="Selecione a linha de crédito" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PRONAF">PRONAF</SelectItem>
+                        <SelectItem value="PRONAMP">PRONAMP</SelectItem>
+                        <SelectItem value="INOVAGRO">INOVAGRO</SelectItem>
+                        <SelectItem value="ABC+">ABC+</SelectItem>
+                        <SelectItem value="MODERFROTA">MODERFROTA</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="propriedade">Propriedade</Label>
-                <Select 
-                  value={propriedadeId} 
-                  onValueChange={setPropriedadeId}
-                  defaultValue={propriedades.length > 0 ? propriedades[0].id : undefined}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma propriedade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {propriedades.map((propriedade) => (
-                      <SelectItem key={propriedade.id} value={propriedade.id}>
-                        {propriedade.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="taxaJuros" className="flex items-center">
+                    Taxa de Juros (% ao ano)
+                  </Label>
+                  <div className="relative">
+                    <DollarSign className="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="taxaJuros"
+                      name="taxaJuros"
+                      value={taxaJuros}
+                      onChange={handleChange}
+                      placeholder="Taxa de juros"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      className="pl-8 focus-visible:ring-primary"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="prazo" className="flex items-center">
+                      Prazo (anos)
+                    </Label>
+                    <Input
+                      id="prazo"
+                      name="prazo"
+                      value={prazo}
+                      onChange={handleChange}
+                      placeholder="Prazo em anos"
+                      type="number"
+                      min="1"
+                      className="focus-visible:ring-primary"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="carencia" className="flex items-center">
+                      Carência (meses)
+                    </Label>
+                    <Input
+                      id="carencia"
+                      name="carencia"
+                      value={carencia}
+                      onChange={handleChange}
+                      placeholder="Carência em meses"
+                      type="number"
+                      min="0"
+                      className="focus-visible:ring-primary"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
             
-            <Separator />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="linhaCredito">Linha de Crédito <span className="text-destructive">*</span></Label>
-                <Select 
-                  value={linhaCredito || undefined} 
-                  onValueChange={setLinhaCredito}
-                  defaultValue="PRONAF"
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a linha de crédito" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PRONAF">PRONAF</SelectItem>
-                    <SelectItem value="PRONAMP">PRONAMP</SelectItem>
-                    <SelectItem value="INOVAGRO">INOVAGRO</SelectItem>
-                    <SelectItem value="ABC+">ABC+</SelectItem>
-                    <SelectItem value="MODERFROTA">MODERFROTA</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Seção 4: Status e Prazos */}
+            <div className="pt-2 border-t">
+              <h3 className="text-base font-medium mb-3 flex items-center">
+                <BarChart2 className="h-4 w-4 mr-2 text-primary" />
+                Status e Prazos
+              </h3>
               
-              <div className="space-y-2">
-                <Label htmlFor="valorTotal">Valor Total <span className="text-destructive">*</span></Label>
-                <Input
-                  id="valorTotal"
-                  name="valorTotal"
-                  value={valorTotal}
-                  onChange={handleValorChange}
-                  placeholder="R$ 0,00"
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select 
-                  value={status} 
-                  onValueChange={(value) => setStatus(value as any)}
-                  defaultValue="Em Elaboração"
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Em Elaboração">Em Elaboração</SelectItem>
-                    <SelectItem value="Em Análise">Em Análise</SelectItem>
-                    <SelectItem value="Aprovado">Aprovado</SelectItem>
-                    <SelectItem value="Contratado">Contratado</SelectItem>
-                    <SelectItem value="Cancelado">Cancelado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="taxaJuros">Taxa de Juros (% ao ano)</Label>
-                <Input
-                  id="taxaJuros"
-                  name="taxaJuros"
-                  value={taxaJuros}
-                  onChange={handleChange}
-                  placeholder="Taxa de juros"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="prazo">Prazo (anos)</Label>
-                <Input
-                  id="prazo"
-                  name="prazo"
-                  value={prazo}
-                  onChange={handleChange}
-                  placeholder="Prazo em anos"
-                  type="number"
-                  min="1"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="carencia">Carência (meses)</Label>
-                <Input
-                  id="carencia"
-                  name="carencia"
-                  value={carencia}
-                  onChange={handleChange}
-                  placeholder="Carência em meses"
-                  type="number"
-                  min="0"
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="dataPrevisaoTermino">
-                  Previsão de Término <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="dataPrevisaoTermino"
-                  name="dataPrevisaoTermino"
-                  placeholder="DD/MM/AAAA"
-                  value={dataPrevisaoTermino}
-                  onChange={handleDataChange}
-                  maxLength={10}
-                  required
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="status" className="flex items-center">
+                    Status
+                  </Label>
+                  <div className="space-y-3">
+                    <Select 
+                      value={status} 
+                      onValueChange={(value) => setStatus(value as any)}
+                      defaultValue="Em Elaboração"
+                    >
+                      <SelectTrigger id="status" className="focus-visible:ring-primary">
+                        <SelectValue placeholder="Selecione o status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Em Elaboração">
+                          <div className="flex items-center">
+                            <Badge className={coresStatus.projeto['Em Elaboração']}>
+                              Em Elaboração
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Em Análise">
+                          <div className="flex items-center">
+                            <Badge className={coresStatus.projeto['Em Análise']}>
+                              Em Análise
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Aprovado">
+                          <div className="flex items-center">
+                            <Badge className={coresStatus.projeto['Aprovado']}>
+                              Aprovado
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Contratado">
+                          <div className="flex items-center">
+                            <Badge className={coresStatus.projeto['Contratado']}>
+                              Contratado
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Cancelado">
+                          <div className="flex items-center">
+                            <Badge className={coresStatus.projeto['Cancelado']}>
+                              Cancelado
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    {/* Barra de progresso baseada no status */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span>Progresso</span>
+                        <span>{status === 'Em Elaboração' ? '20%' : 
+                               status === 'Em Análise' ? '40%' : 
+                               status === 'Aprovado' ? '60%' : 
+                               status === 'Contratado' ? '100%' : 
+                               status === 'Cancelado' ? '0%' : '0%'}</span>
+                      </div>
+                      <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-primary" 
+                          style={{ width: status === 'Em Elaboração' ? '20%' : 
+                                         status === 'Em Análise' ? '40%' : 
+                                         status === 'Aprovado' ? '60%' : 
+                                         status === 'Contratado' ? '100%' : 
+                                         status === 'Cancelado' ? '0%' : '0%' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="dataPrevisaoTermino" className="flex items-center">
+                    Previsão de Término <span className="text-destructive ml-1">*</span>
+                  </Label>
+                  <DatePicker
+                    date={dataPrevisaoTerminoDate}
+                    setDate={handleDataPrevisaoTerminoChange}
+                    placeholder="Selecione a data de previsão"
+                  />
+                </div>
               </div>
             </div>
           </CardContent>
-          <CardFooter className="border-t bg-muted/50 flex justify-between">
-            <Button variant="outline" asChild>
+          <CardFooter className="border-t px-6 py-4 flex justify-between bg-muted/20">
+            <Button variant="outline" asChild className="flex items-center">
               <Link href={`/projetos/${projetoId}`}>
+                <X className="h-4 w-4 mr-2" />
                 Cancelar
               </Link>
             </Button>
-            <Button type="submit" disabled={salvando}>
+            <Button type="submit" disabled={salvando} className="flex items-center">
               {salvando ? (
                 <>
                   <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
                   Salvando...
                 </>
               ) : (
-                'Salvar Alterações'
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Salvar Alterações
+                </>
               )}
             </Button>
           </CardFooter>

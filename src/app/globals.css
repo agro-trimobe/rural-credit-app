@@ -70,4 +70,16 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Remove as setas de incremento/decremento dos campos numéricos */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  
+  /* Para Firefox */
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
 }

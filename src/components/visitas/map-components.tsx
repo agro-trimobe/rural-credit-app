@@ -171,15 +171,15 @@ export default function MapComponents({ dados }: { dados: DadosMapa }) {
                 </div>
                 
                 <div className="map-popup-actions">
-                  <Link href={`/visitas/${visita.id}`} className="map-popup-button">
-                    <Eye className="h-3 w-3" /> Ver
+                  <Link href={`/visitas/${visita.id}`} className="map-popup-button" style={{ color: 'white' }}>
+                    <Eye className="h-3 w-3" style={{ color: 'white' }} /> Ver
                   </Link>
-                  <Link href={`/visitas/${visita.id}/editar`} className="map-popup-button">
-                    <FileEdit className="h-3 w-3" /> Editar
+                  <Link href={`/visitas/${visita.id}/editar`} className="map-popup-button" style={{ color: 'white' }}>
+                    <FileEdit className="h-3 w-3" style={{ color: 'white' }} /> Editar
                   </Link>
                   {visita.status === 'Agendada' && (
-                    <Link href={`/visitas/${visita.id}/registrar`} className="map-popup-button">
-                      <CheckSquare className="h-3 w-3" /> Registrar
+                    <Link href={`/visitas/${visita.id}/registrar`} className="map-popup-button" style={{ color: 'white' }}>
+                      <CheckSquare className="h-3 w-3" style={{ color: 'white' }} /> Registrar
                     </Link>
                   )}
                 </div>
