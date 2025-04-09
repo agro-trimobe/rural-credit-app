@@ -14,6 +14,9 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
+import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,13 +27,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { 
   ArrowLeft, 
   Camera, 
   Trash2, 
   Upload,
   X,
-  Plus
+  Plus,
+  ChevronRight,
+  Download,
+  Eye,
+  MoreVertical,
+  Image
 } from 'lucide-react'
 import { Visita } from '@/lib/crm-utils'
 import { formatarData } from '@/lib/formatters'
@@ -47,6 +61,7 @@ export default function VisitaFotosConteudo({ visitaId }: { visitaId: string }) 
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const [fotoParaExcluir, setFotoParaExcluir] = useState<number | null>(null)
   const [dialogoExclusaoAberto, setDialogoExclusaoAberto] = useState(false)
+  const [fotoEmVisualizacao, setFotoEmVisualizacao] = useState<string | null>(null)
 
   useEffect(() => {
     const carregarVisita = async () => {
@@ -162,7 +177,7 @@ export default function VisitaFotosConteudo({ visitaId }: { visitaId: string }) 
       setExcluindo(true)
       
       // Criar uma cópia do array de fotos sem a foto a ser removida
-      const novasFotos = [...visita.fotos]
+      const novasFotos = [...(visita.fotos || [])]
       novasFotos.splice(fotoParaExcluir, 1)
       
       // Atualizar a visita com o novo array de fotos
@@ -195,17 +210,54 @@ export default function VisitaFotosConteudo({ visitaId }: { visitaId: string }) 
     }
   }
 
+  // Função para visualizar uma foto em tamanho maior
+  const handleVisualizarFoto = (url: string) => {
+    setFotoEmVisualizacao(url)
+  }
+
+  // Função para fechar a visualização da foto
+  const handleFecharVisualizacao = () => {
+    setFotoEmVisualizacao(null)
+  }
+
   if (carregando) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="container py-6 space-y-6">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-10 w-10 rounded-md" />
+          <Skeleton className="h-8 w-64" />
+        </div>
+        
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-32 w-full" />
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-4 w-32" />
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="aspect-square rounded-md" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   if (!visita) {
     return (
-      <div className="p-6">
+      <div className="container py-6">
         <Card>
           <CardContent className="pt-6">
             <p>Visita não encontrada.</p>
@@ -221,33 +273,63 @@ export default function VisitaFotosConteudo({ visitaId }: { visitaId: string }) 
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center space-x-2">
-        <Button variant="outline" size="icon" asChild>
-          <Link href={`/visitas/${visitaId}`}>
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <h1 className="text-2xl font-bold tracking-tight">Gerenciar Fotos da Visita</h1>
+    <div className="container py-4 space-y-4">
+      {/* Cabeçalho com breadcrumbs e informações da visita */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Link href="/visitas" className="hover:text-primary transition-colors">Visitas</Link>
+          <ChevronRight className="h-4 w-4" />
+          <Link href={`/visitas/${visitaId}`} className="hover:text-primary transition-colors">Detalhes</Link>
+          <ChevronRight className="h-4 w-4" />
+          <span>Fotos</span>
+        </div>
+        
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h1 className="text-2xl font-bold">Gerenciar Fotos da Visita</h1>
+            <div className="flex items-center text-sm text-muted-foreground">
+              <span>{formatarData(visita.data)}</span>
+              {visita.status && (
+                <>
+                  <span className="mx-1">•</span>
+                  <Badge variant={visita.status === 'Agendada' ? 'outline' : 
+                           visita.status === 'Realizada' ? 'default' : 'destructive'}>
+                    {visita.status}
+                  </Badge>
+                </>
+              )}
+            </div>
+          </div>
+          
+          <Button variant="outline" asChild size="sm">
+            <Link href={`/visitas/${visitaId}`}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para Detalhes
+            </Link>
+          </Button>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Adicionar Novas Fotos</CardTitle>
-          <CardDescription>
-            Selecione as fotos que deseja adicionar à visita
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-center w-full">
-              <label htmlFor="file-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500">
+      <div className="grid gap-4 md:grid-cols-5">
+        {/* Área de Upload - 2 colunas em desktop */}
+        <Card className="md:col-span-2">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Adicionar Novas Fotos</CardTitle>
+            <CardDescription>
+              Selecione as fotos que deseja adicionar à visita
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <label 
+                htmlFor="file-upload" 
+                className="group flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all"
+              >
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <Camera className="w-8 h-8 mb-3 text-gray-500 dark:text-gray-400" />
-                  <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                    <span className="font-semibold">Clique para selecionar</span> ou arraste e solte
+                  <Upload className="w-8 h-8 mb-2 text-primary/60 group-hover:text-primary/80 transition-colors" />
+                  <p className="text-sm font-medium">
+                    Arraste fotos ou clique para selecionar
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-muted-foreground mt-1">
                     PNG, JPG ou JPEG (máx. 10MB por arquivo)
                   </p>
                 </div>
@@ -261,103 +343,138 @@ export default function VisitaFotosConteudo({ visitaId }: { visitaId: string }) 
                   disabled={enviando}
                 />
               </label>
-            </div>
 
-            {previewUrls.length > 0 && (
-              <div className="space-y-4">
-                <Separator />
-                <h3 className="text-lg font-medium">Fotos selecionadas ({previewUrls.length})</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {previewUrls.map((url, index) => (
-                    <div key={index} className="relative group">
-                      <div className="aspect-square rounded-md overflow-hidden border">
-                        <img
-                          src={url}
-                          alt={`Preview ${index + 1}`}
-                          className="object-cover w-full h-full"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removerArquivoSelecionado(index)}
-                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="Remover"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
+              {previewUrls.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">Fotos selecionadas</span>
+                      <Badge variant="outline">{previewUrls.length}</Badge>
                     </div>
-                  ))}
+                    <Button
+                      size="sm"
+                      onClick={handleEnviarFotos}
+                      disabled={enviando || previewUrls.length === 0}
+                    >
+                      {enviando ? (
+                        <>Enviando...</>
+                      ) : (
+                        <>
+                          <Upload className="mr-2 h-3.5 w-3.5" /> Enviar
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    {previewUrls.map((url, index) => (
+                      <div key={index} className="relative group">
+                        <div className="aspect-square rounded-md overflow-hidden border bg-muted/20">
+                          <img
+                            src={url}
+                            alt={`Preview ${index + 1}`}
+                            className="object-cover w-full h-full"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removerArquivoSelecionado(index)}
+                          className="absolute top-1 right-1 bg-black/70 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Remover"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex justify-end">
-                  <Button
-                    onClick={handleEnviarFotos}
-                    disabled={enviando || previewUrls.length === 0}
-                  >
-                    {enviando ? (
-                      <>Enviando...</>
-                    ) : (
-                      <>
-                        <Upload className="mr-2 h-4 w-4" /> Enviar {previewUrls.length} foto(s)
-                      </>
-                    )}
-                  </Button>
-                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Fotos Existentes - 3 colunas em desktop */}
+        <Card className="md:col-span-3">
+
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">Fotos da Visita</CardTitle>
+                <CardDescription>
+                  {visita.fotos?.length || 0} foto(s) registrada(s)
+                </CardDescription>
+              </div>
+              
+              {visita.fotos?.length > 0 && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" disabled>
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Baixar todas as fotos</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            {!visita.fotos?.length ? (
+              <div className="text-center py-6 border-2 border-dashed rounded-lg border-muted">
+                <Image className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
+                <p className="font-medium">Nenhuma foto registrada</p>
+                <p className="text-sm text-muted-foreground mt-1 mb-3">
+                  Adicione fotos usando o formulário ao lado
+                </p>
+                <Button size="sm" variant="outline" onClick={() => document.getElementById('file-upload')?.click()}>
+                  <Plus className="mr-2 h-3.5 w-3.5" /> Adicionar Fotos
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {visita.fotos?.map((foto, index) => (
+                  <div key={index} className="relative group">
+                    <div 
+                      className="aspect-square rounded-md overflow-hidden border bg-muted/20 cursor-pointer"
+                      onClick={() => handleVisualizarFoto(foto)}
+                    >
+                      <img
+                        src={foto}
+                        alt={`Foto ${index + 1}`}
+                        className="object-cover w-full h-full transition-transform group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="secondary" 
+                        className="h-8 px-2"
+                        onClick={() => handleVisualizarFoto(foto)}
+                      >
+                        <Eye className="h-3.5 w-3.5 mr-1" /> Ver
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="destructive" 
+                        className="h-8 px-2"
+                        onClick={() => handleRemoverFoto(index)}
+                        disabled={excluindo}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Fotos Existentes</CardTitle>
-          <CardDescription>
-            {visita.fotos.length} foto(s) registrada(s) nesta visita
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {visita.fotos.length === 0 ? (
-            <div className="text-center py-8">
-              <Camera className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
-              <p className="text-muted-foreground">Nenhuma foto registrada</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Adicione fotos usando o formulário acima
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {visita.fotos.map((foto, index) => (
-                <div key={index} className="relative group">
-                  <div className="aspect-square rounded-md overflow-hidden border">
-                    <img
-                      src={foto}
-                      alt={`Foto ${index + 1}`}
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoverFoto(index)}
-                    disabled={excluindo}
-                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Remover"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button variant="outline" asChild>
-            <Link href={`/visitas/${visitaId}`}>
-              <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para Detalhes
-            </Link>
-          </Button>
-        </CardFooter>
-      </Card>
-
+      {/* Diálogo de confirmação de exclusão */}
       <AlertDialog
         open={dialogoExclusaoAberto}
         onOpenChange={setDialogoExclusaoAberto}
@@ -375,6 +492,28 @@ export default function VisitaFotosConteudo({ visitaId }: { visitaId: string }) 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal de visualização de foto */}
+      {fotoEmVisualizacao && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={handleFecharVisualizacao}>
+          <div className="relative max-w-4xl max-h-[90vh] w-full h-full flex items-center justify-center">
+            <img 
+              src={fotoEmVisualizacao} 
+              alt="Visualização da foto" 
+              className="max-w-full max-h-full object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 border-none text-white"
+              onClick={handleFecharVisualizacao}
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
