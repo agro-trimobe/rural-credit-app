@@ -63,6 +63,10 @@ import { Projeto } from '@/lib/crm-utils'
 import { formatarMoeda, formatarData, coresStatus } from '@/lib/formatters'
 import { projetosApi, clientesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
+import { CabecalhoPagina } from '@/components/ui/cabecalho-pagina'
+import { CardEstatistica } from '@/components/ui/card-padrao'
+import { FiltrosPadrao, FiltroSelect } from '@/components/ui/filtros-padrao'
+import { TabelaPadrao } from '@/components/ui/tabela-padrao'
 
 // Função auxiliar para calcular o progresso com base no status
 function getProgressoStatus(status: string): number {
@@ -81,7 +85,7 @@ export default function ProjetosPage() {
   const [clientesMap, setClientesMap] = useState<{[key: string]: string}>({})
   const [carregando, setCarregando] = useState(true)
   const [busca, setBusca] = useState('')
-  const [filtro, setFiltro] = useState<'Todos' | 'Em Elaboração' | 'Em Análise' | 'Aprovado' | 'Contratado' | 'Cancelado'>('Todos')
+  const [filtro, setFiltro] = useState<'Todos' | 'Em Elaboração' | 'Em Análise' | 'Aprovado' | 'Contratado' | 'Cancelado' | 'Liberado' | 'Negado'>('Todos')
   const [excluindo, setExcluindo] = useState(false)
   const [projetoParaExcluir, setProjetoParaExcluir] = useState<string | null>(null)
   const [dialogoExclusaoAberto, setDialogoExclusaoAberto] = useState(false)
@@ -189,126 +193,79 @@ export default function ProjetosPage() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Cabeçalho com título e botão de novo projeto */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Projetos</h1>
-          <p className="text-muted-foreground">
-            Gerencie todos os projetos de crédito rural
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/projetos/novo">
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Projeto
-          </Link>
-        </Button>
-      </div>
+    <div className="container mx-auto py-6 space-y-4">
+      <CabecalhoPagina
+        titulo="Projetos"
+        descricao="Gerencie todos os projetos de crédito rural"
+        acoes={
+          <Button asChild>
+            <Link href="/projetos/novo">
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Projeto
+            </Link>
+          </Button>
+        }
+      />
 
       {/* Cards de estatísticas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total de Projetos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">{estatisticas.total}</div>
-              <FileText className="h-8 w-8 text-muted-foreground opacity-50" />
-            </div>
-          </CardContent>
-        </Card>
+        <CardEstatistica
+          titulo="Total de Projetos"
+          valor={estatisticas.total}
+          icone={<FileText className="h-5 w-5" />}
+        />
         
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Valor em Carteira</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">{formatarMoeda(estatisticas.valorTotal)}</div>
-              <DollarSign className="h-8 w-8 text-muted-foreground opacity-50" />
-            </div>
-          </CardContent>
-        </Card>
+        <CardEstatistica
+          titulo="Valor em Carteira"
+          valor={formatarMoeda(estatisticas.valorTotal)}
+          icone={<DollarSign className="h-5 w-5" />}
+        />
         
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Em Elaboração</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">{estatisticas.emElaboracao}</div>
-              <FileEdit className="h-8 w-8 text-muted-foreground opacity-50" />
-            </div>
-          </CardContent>
-        </Card>
+        <CardEstatistica
+          titulo="Em Elaboração"
+          valor={estatisticas.emElaboracao}
+          icone={<FileEdit className="h-5 w-5" />}
+          corIcone="text-blue-600"
+        />
         
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Em Análise</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">{estatisticas.emAnalise}</div>
-              <ClipboardCheck className="h-8 w-8 text-muted-foreground opacity-50" />
-            </div>
-          </CardContent>
-        </Card>
+        <CardEstatistica
+          titulo="Em Análise"
+          valor={estatisticas.emAnalise}
+          icone={<ClipboardCheck className="h-5 w-5" />}
+          corIcone="text-purple-600"
+        />
       </div>
 
-      {/* Barra de ações e filtros */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-xl font-bold">Lista de Projetos</h2>
-          <p className="text-sm text-muted-foreground">Total de {projetosFiltrados.length} projetos encontrados</p>
-        </div>
-        
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Buscar projetos..."
-              className="pl-8 w-full"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-            />
-          </div>
+      {/* Barra de filtros */}
+      <div className="bg-card rounded-lg border shadow-sm p-4">
+        <FiltrosPadrao
+          titulo="Lista de Projetos"
+          subtitulo={`Total de ${projetosFiltrados.length} projetos encontrados`}
+          termoBusca={busca}
+          onChangeBusca={(e) => setBusca(e.target.value)}  
+          placeholderBusca="Buscar projetos..."
+        >
+          <FiltroSelect
+            label="Status"
+            valor={filtro}
+            onChange={(valor: string) => setFiltro(valor as any)}
+            opcoes={[
+              { valor: 'Todos', label: 'Todos os Status' },
+              { valor: 'Em Elaboração', label: 'Em Elaboração' },
+              { valor: 'Em Análise', label: 'Em Análise' },
+              { valor: 'Aprovado', label: 'Aprovado' },
+              { valor: 'Contratado', label: 'Contratado' },
+              { valor: 'Liberado', label: 'Liberado' },
+              { valor: 'Negado', label: 'Negado' },
+            ]}
+          />
           
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
-                {filtro === 'Todos' ? 'Todos os Status' : filtro}
-                <ChevronDown className="h-4 w-4 ml-2" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[200px]">
-              <DropdownMenuLabel>Filtrar por Status</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setFiltro('Todos')}>
-                Todos
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFiltro('Em Elaboração')}>
-                Em Elaboração
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFiltro('Em Análise')}>
-                Em Análise
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFiltro('Aprovado')}>
-                Aprovado
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFiltro('Contratado')}>
-                Contratado
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFiltro('Cancelado')}>
-                Cancelado
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
-          <Button variant="outline" size="sm" onClick={() => setVisualizacao(visualizacao === 'tabela' ? 'cards' : 'tabela')}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setVisualizacao(visualizacao === 'tabela' ? 'cards' : 'tabela')}
+            className="ml-2"
+          >
             {visualizacao === 'tabela' ? (
               <>
                 <LayoutGrid className="h-4 w-4 mr-2" />
@@ -321,7 +278,7 @@ export default function ProjetosPage() {
               </>
             )}
           </Button>
-        </div>
+        </FiltrosPadrao>
       </div>
       
       {/* Conteúdo principal - Alternância entre visualização em cards e tabela */}

@@ -32,6 +32,8 @@ import {
 } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { CabecalhoPagina } from "@/components/ui/cabecalho-pagina"
+import { CardEstatistica } from "@/components/ui/card-padrao"
 import { 
   ArrowLeft,
   FileEdit,
@@ -194,62 +196,43 @@ export default function OportunidadeDetalhesPage() {
   };
 
   return (
-    <div className="p-4 space-y-4">
-      {/* Cabeçalho compacto com ações */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/oportunidades">
-              <ArrowLeft className="mr-1 h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Voltar</span>
-            </Link>
-          </Button>
-          <h1 className="text-xl font-bold truncate max-w-[200px] sm:max-w-md">{oportunidade.titulo}</h1>
+    <div className="container mx-auto py-6 space-y-4">
+      <CabecalhoPagina
+        titulo={oportunidade.titulo}
+        descricao={`Oportunidade com ${nomeCliente}`}
+        breadcrumbs={[
+          { titulo: 'Oportunidades', href: '/oportunidades' },
+          { titulo: oportunidade.titulo, href: `/oportunidades/${id}` }
+        ]}
+        acoes={
+          <div className="flex space-x-2">
+            {isOportunidadeAtiva && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/oportunidades/${id}/avancar`}>
+                  <ArrowUpRight className="h-4 w-4 mr-2" />
+                  Avançar Status
+                </Link>
+              </Button>
+            )}
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/oportunidades/${id}/editar`}>
+                <FileEdit className="h-4 w-4 mr-2" />
+                Editar
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" className="text-destructive" onClick={() => setDialogoExclusaoAberto(true)}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir
+            </Button>
+          </div>
+        }
+        badges={
           <Badge className={coresStatus.oportunidade[oportunidade.status]}>
             {iconeStatus[statusMapeado]}
             <span className="ml-1">{oportunidade.status}</span>
           </Badge>
-        </div>
-        
-        <div className="flex space-x-1">
-          {isOportunidadeAtiva && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/oportunidades/${id}/avancar`}>
-                      <ArrowUpRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Avançar Status</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="sm" asChild>
-                  <Link href={`/oportunidades/${id}/editar`}>
-                    <FileEdit className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Editar</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="sm" onClick={handleExcluir}>
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Excluir</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </div>
+        }
+      />
       
       {/* Barra de progresso do funil */}
       {oportunidade.status !== 'Perdido' && (

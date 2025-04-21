@@ -34,6 +34,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { CabecalhoPagina } from '@/components/ui/cabecalho-pagina'
+import { CardEstatistica } from '@/components/ui/card-padrao'
 import { 
   User, 
   FileText, 
@@ -233,70 +235,76 @@ function ClienteDetalhesConteudo({ clienteId }: { clienteId: string }) {
 
   return (
     <div className="space-y-3">
-      {/* Cabeçalho com navegação e ações */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="icon" asChild className="h-8 w-8">
-            <Link href="/clientes">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <h1 className="text-xl font-bold tracking-tight">Detalhes do Cliente</h1>
-        </div>
-        
-        <div className="flex space-x-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="sm" asChild className="h-8">
-                  <Link href={`/clientes/${cliente.id}/editar`}>
-                    <Edit className="mr-1 h-3.5 w-3.5" />
-                    Editar
-                  </Link>
+      {/* Cabeçalho padronizado */}
+      <CabecalhoPagina
+        titulo={cliente.nome}
+        descricao={`${cliente.tipo === 'PF' ? 'Pessoa Física' : 'Pessoa Jurídica'} • ${formatarCpfCnpj(cliente.cpfCnpj)}`}
+        breadcrumbs={[
+          { titulo: 'Clientes', href: '/clientes' },
+          { titulo: cliente.nome }
+        ]}
+        badges={(
+          <Badge variant="outline" className={getCorBadge(cliente.perfil)}>
+            {cliente.perfil === 'pequeno' ? 'Pequeno' : 
+             cliente.perfil === 'medio' ? 'Médio' : 'Grande'}
+          </Badge>
+        )}
+        acoes={
+          <div className="flex space-x-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="sm" asChild className="h-8">
+                    <Link href={`/clientes/${cliente.id}/interacoes/nova`}>
+                      <Phone className="h-4 w-4 mr-1" />
+                      Registrar Contato
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Registrar nova interação com este cliente</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8">
+                  <MoreHorizontal className="h-4 w-4" />
+                  <span className="ml-2">Ações</span>
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent>Editar informações do cliente</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8">
-                <PlusCircle className="mr-1 h-3.5 w-3.5" />
-                Ações
-                <MoreHorizontal className="ml-1 h-3.5 w-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Ações Rápidas</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href={`/clientes/${cliente.id}/interacoes/nova`} className="flex items-center">
-                  <MessageCircle className="mr-2 h-4 w-4" />
-                  Nova Interação
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`/propriedades/nova?clienteId=${cliente.id}`} className="flex items-center">
-                  <Home className="mr-2 h-4 w-4" />
-                  Adicionar Propriedade
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`/projetos/novo?clienteId=${cliente.id}`} className="flex items-center">
-                  <FileSpreadsheet className="mr-2 h-4 w-4" />
-                  Iniciar Projeto
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleExcluir} className="text-destructive flex items-center">
-                <Trash2 className="mr-2 h-4 w-4" />
-                Excluir Cliente
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Ações do Cliente</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href={`/clientes/${cliente.id}/editar`}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Editar Cliente
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/projetos/novo?clienteId=${cliente.id}`}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    Novo Projeto
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/propriedades/novo?clienteId=${cliente.id}`}>
+                    <MapPin className="h-4 w-4 mr-2" />
+                    Nova Propriedade
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive" onClick={handleExcluir}>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Excluir Cliente
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        }
+      />
 
       {/* Card principal com informações do cliente */}
       <Card className="overflow-hidden">
@@ -324,38 +332,39 @@ function ClienteDetalhesConteudo({ clienteId }: { clienteId: string }) {
         
         {/* Cards de estatísticas */}
         <CardContent className="p-4 pt-0">
+          {/* Cards de estatísticas padronizados */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-            <Card className="border-none shadow-sm">
-              <CardContent className="p-3 flex flex-col items-center">
-                <Home className="h-5 w-5 text-muted-foreground mb-1" />
-                <p className="text-xl font-semibold">{estatisticas.totalPropriedades}</p>
-                <p className="text-xs text-muted-foreground">Propriedades</p>
-              </CardContent>
-            </Card>
+            <CardEstatistica
+              titulo="Propriedades"
+              valor={estatisticas.totalPropriedades.toString()}
+              icone={<Home className="h-5 w-5" />}
+              corIcone="text-blue-500"
+              className="border-none shadow-sm bg-blue-50/30"
+            />
             
-            <Card className="border-none shadow-sm">
-              <CardContent className="p-3 flex flex-col items-center">
-                <FileSpreadsheet className="h-5 w-5 text-muted-foreground mb-1" />
-                <p className="text-xl font-semibold">{estatisticas.totalProjetos}</p>
-                <p className="text-xs text-muted-foreground">Projetos</p>
-              </CardContent>
-            </Card>
+            <CardEstatistica
+              titulo="Projetos"
+              valor={estatisticas.totalProjetos.toString()}
+              icone={<FileSpreadsheet className="h-5 w-5" />}
+              corIcone="text-green-500"
+              className="border-none shadow-sm bg-green-50/30"
+            />
             
-            <Card className="border-none shadow-sm">
-              <CardContent className="p-3 flex flex-col items-center">
-                <MessageCircle className="h-5 w-5 text-muted-foreground mb-1" />
-                <p className="text-xl font-semibold">{estatisticas.totalInteracoes}</p>
-                <p className="text-xs text-muted-foreground">Interações</p>
-              </CardContent>
-            </Card>
+            <CardEstatistica
+              titulo="Interações"
+              valor={estatisticas.totalInteracoes.toString()}
+              icone={<MessageCircle className="h-5 w-5" />}
+              corIcone="text-purple-500"
+              className="border-none shadow-sm bg-purple-50/30"
+            />
             
-            <Card className="border-none shadow-sm">
-              <CardContent className="p-3 flex flex-col items-center">
-                <BarChart3 className="h-5 w-5 text-muted-foreground mb-1" />
-                <p className="text-xl font-semibold">{formatarMoeda(estatisticas.valorTotalProjetos)}</p>
-                <p className="text-xs text-muted-foreground">Em Projetos</p>
-              </CardContent>
-            </Card>
+            <CardEstatistica
+              titulo="Em Projetos"
+              valor={formatarMoeda(estatisticas.valorTotalProjetos)}
+              icone={<BarChart3 className="h-5 w-5" />}
+              corIcone="text-amber-500"
+              className="border-none shadow-sm bg-amber-50/30"
+            />
           </div>
           
           {/* Informações de contato e última interação */}

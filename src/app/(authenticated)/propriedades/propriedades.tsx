@@ -43,6 +43,9 @@ import {
   BarChart2,
   ChevronRight
 } from 'lucide-react'
+import { CabecalhoPagina } from '@/components/ui/cabecalho-pagina'
+import { CardEstatistica } from '@/components/ui/card-padrao'
+import { FiltrosPadrao, FiltroSelect } from '@/components/ui/filtros-padrao'
 import MapaPropriedadesLista from '@/components/propriedades/mapa-propriedades-lista'
 import { Propriedade, Projeto } from '@/lib/crm-utils'
 import { propriedadesApi, clientesApi, projetosApi } from '@/lib/api'
@@ -152,116 +155,77 @@ export default function PropriedadesConteudo() {
 
   return (
     <div className="space-y-4">
-      {/* Cabeçalho com navegação e estatísticas */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div>
-          <div className="flex items-center gap-1 text-muted-foreground text-sm mb-1">
-            <Link href="/dashboard" className="hover:text-primary transition-colors">
-              <Home className="h-3.5 w-3.5" />
+      <CabecalhoPagina
+        titulo="Propriedades"
+        descricao="Gerencie propriedades rurais e terrenos cadastrados"
+        breadcrumbs={[
+          { titulo: 'Dashboard', href: '/dashboard' },
+          { titulo: 'Propriedades' }
+        ]}
+        badges={<Badge variant="outline">{totalPropriedades}</Badge>}
+        acoes={
+          <Button asChild>
+            <Link href="/propriedades/nova">
+              <Plus className="mr-2 h-4 w-4" />
+              Nova Propriedade
             </Link>
-            <ChevronRight className="h-3.5 w-3.5" />
-            <span>Propriedades</span>
-          </div>
-          <div className="flex items-center">
-            <h1 className="text-2xl font-bold tracking-tight">Propriedades</h1>
-            <Badge variant="outline" className="ml-2">{totalPropriedades}</Badge>
-          </div>
-        </div>
-        <Button asChild>
-          <Link href="/propriedades/nova">
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Propriedade
-          </Link>
-        </Button>
-      </div>
+          </Button>
+        }
+      />
 
       {/* Cards de estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-primary/5">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Área Total</p>
-              <p className="text-2xl font-bold">{totalArea.toLocaleString('pt-BR')} ha</p>
-            </div>
-            <Ruler className="h-8 w-8 text-primary/70" />
-          </CardContent>
-        </Card>
+        <CardEstatistica
+          titulo="Área Total"
+          valor={`${totalArea.toLocaleString('pt-BR')} ha`}
+          icone={<Ruler className="h-5 w-5" />}
+        />
         
-        <Card className="bg-primary/5">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Estados</p>
-              <p className="text-2xl font-bold">{totalEstados}</p>
-            </div>
-            <MapPin className="h-8 w-8 text-primary/70" />
-          </CardContent>
-        </Card>
+        <CardEstatistica
+          titulo="Estados"
+          valor={totalEstados}
+          icone={<MapPin className="h-5 w-5" />}
+          corIcone="text-blue-600"
+        />
         
-        <Card className="bg-primary/5">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Projetos Vinculados</p>
-              <p className="text-2xl font-bold">{carregandoProjetos ? '...' : projetos.length}</p>
-            </div>
-            <FileText className="h-8 w-8 text-primary/70" />
-          </CardContent>
-        </Card>
+        <CardEstatistica
+          titulo="Projetos Vinculados"
+          valor={carregandoProjetos ? '...' : projetos.length}
+          icone={<FileText className="h-5 w-5" />}
+          corIcone="text-green-600"
+        />
       </div>
 
       {/* Filtros e busca */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Buscar propriedades..."
-            className="pl-8"
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
+      <div className="bg-card rounded-lg border shadow-sm p-4">
+        <FiltrosPadrao
+          titulo="Lista de Propriedades"
+          subtitulo={`Mostrando ${propriedadesFiltradas.length} de ${totalPropriedades} propriedades`}
+          termoBusca={busca}
+          onChangeBusca={(e) => setBusca(e.target.value)}  
+          placeholderBusca="Buscar propriedades..."
+        >
+          <FiltroSelect
+            label="Estado"
+            valor={filtroEstado}
+            onChange={(valor: string) => setFiltroEstado(valor)}
+            opcoes={[
+              { valor: '', label: 'Todos os Estados' },
+              ...estados.map(estado => ({ valor: estado, label: estado }))
+            ]}
           />
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="flex items-center">
-                <Filter className="h-4 w-4 mr-1" />
-                Filtros
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
-              <DropdownMenuLabel>Filtrar por Estado</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setFiltroEstado('')} className={filtroEstado === '' ? 'bg-muted' : ''}>
-                Todos os Estados
-              </DropdownMenuItem>
-              {estados.map(estado => (
-                <DropdownMenuItem 
-                  key={estado} 
-                  onClick={() => setFiltroEstado(estado)}
-                  className={filtroEstado === estado ? 'bg-muted' : ''}
-                >
-                  {estado}
-                </DropdownMenuItem>
-              ))}
-              
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Filtrar por Tamanho</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setFiltroTamanho('')} className={filtroTamanho === '' ? 'bg-muted' : ''}>
-                Todos os Tamanhos
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFiltroTamanho('pequena')} className={filtroTamanho === 'pequena' ? 'bg-muted' : ''}>
-                Pequena (até 20 ha)
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFiltroTamanho('media')} className={filtroTamanho === 'media' ? 'bg-muted' : ''}>
-                Média (20 a 100 ha)
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFiltroTamanho('grande')} className={filtroTamanho === 'grande' ? 'bg-muted' : ''}>
-                Grande (mais de 100 ha)
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+          <FiltroSelect
+            label="Tamanho"
+            valor={filtroTamanho}
+            onChange={(valor: string) => setFiltroTamanho(valor)}
+            opcoes={[
+              { valor: '', label: 'Todos os Tamanhos' },
+              { valor: 'pequena', label: 'Pequena (até 20 ha)' },
+              { valor: 'media', label: 'Média (20 a 100 ha)' },
+              { valor: 'grande', label: 'Grande (mais de 100 ha)' }
+            ]}
+          />
+        </FiltrosPadrao>
       </div>
 
       {/* Conteúdo baseado na visualização selecionada */}

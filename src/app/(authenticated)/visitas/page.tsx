@@ -80,6 +80,8 @@ import { visitasApi, clientesApi } from '@/lib/api'
 import { CalendarioVisitas } from '@/components/visitas/calendario-visitas'
 import { MapaVisitas } from '@/components/visitas/mapa-visitas'
 import { toast } from '@/hooks/use-toast'
+import { CabecalhoPagina } from '@/components/ui/cabecalho-pagina'
+import { CardEstatistica } from '@/components/ui/card-padrao'
 
 export default function VisitasPage() {
   const [visitas, setVisitas] = useState<Visita[]>([])
@@ -269,66 +271,47 @@ export default function VisitasPage() {
   }
 
   return (
-    <div className="container p-4 space-y-4 mx-auto max-w-7xl">
-      {/* Cabeçalho e Ações Principais */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center">
-            <MapPin className="h-5 w-5 mr-2 text-primary" />
-            Visitas Técnicas
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Gerencie suas visitas técnicas e acompanhamentos em campo
-          </p>
-        </div>
-        <Button asChild className="bg-primary hover:bg-primary/90">
-          <Link href="/visitas/nova">
-            <Plus className="mr-2 h-4 w-4" /> Nova Visita
-          </Link>
-        </Button>
-      </div>
+    <div className="container mx-auto py-6 space-y-4">
+      <CabecalhoPagina
+        titulo="Visitas Técnicas"
+        descricao="Gerencie suas visitas técnicas e acompanhamentos em campo"
+        acoes={
+          <Button asChild className="bg-primary hover:bg-primary/90">
+            <Link href="/visitas/nova">
+              <Plus className="mr-2 h-4 w-4" /> Nova Visita
+            </Link>
+          </Button>
+        }
+      />
 
       {/* Cards de Estatísticas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <Card className="shadow-sm">
-          <CardContent className="p-4 flex flex-row items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-muted-foreground">Total de Visitas</p>
-              <h3 className="text-2xl font-bold">{estatisticas.totalVisitas}</h3>
-            </div>
-            <CalendarDays className="h-8 w-8 text-primary opacity-80" />
-          </CardContent>
-        </Card>
+        <CardEstatistica
+          titulo="Total de Visitas"
+          valor={estatisticas.totalVisitas}
+          icone={<CalendarDays className="h-5 w-5" />}
+        />
         
-        <Card className="shadow-sm">
-          <CardContent className="p-4 flex flex-row items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-muted-foreground">Visitas Pendentes</p>
-              <h3 className="text-2xl font-bold">{estatisticas.visitasPendentes}</h3>
-            </div>
-            <Clock className="h-8 w-8 text-amber-500 opacity-80" />
-          </CardContent>
-        </Card>
+        <CardEstatistica
+          titulo="Visitas Pendentes"
+          valor={estatisticas.visitasPendentes}
+          icone={<Clock className="h-5 w-5" />}
+          corIcone="text-amber-500"
+        />
         
-        <Card className="shadow-sm">
-          <CardContent className="p-4 flex flex-row items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-muted-foreground">Realizadas este Mês</p>
-              <h3 className="text-2xl font-bold">{estatisticas.visitasRealizadasMes}</h3>
-            </div>
-            <CheckCircle className="h-8 w-8 text-green-500 opacity-80" />
-          </CardContent>
-        </Card>
+        <CardEstatistica
+          titulo="Realizadas este Mês"
+          valor={estatisticas.visitasRealizadasMes}
+          icone={<CheckCircle className="h-5 w-5" />}
+          corIcone="text-green-500"
+        />
         
-        <Card className="shadow-sm">
-          <CardContent className="p-4 flex flex-row items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-muted-foreground">Próximos 7 dias</p>
-              <h3 className="text-2xl font-bold">{estatisticas.visitasProximaSemana}</h3>
-            </div>
-            <Calendar className="h-8 w-8 text-blue-500 opacity-80" />
-          </CardContent>
-        </Card>
+        <CardEstatistica
+          titulo="Próximos 7 dias"
+          valor={estatisticas.visitasProximaSemana}
+          icone={<Calendar className="h-5 w-5" />}
+          corIcone="text-blue-500"
+        />
       </div>
 
       {/* Alternância entre Visualizações */}

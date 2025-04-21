@@ -59,6 +59,8 @@ import { oportunidadesApi, clientesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { CabecalhoPagina } from '@/components/ui/cabecalho-pagina'
+import { CardFormulario } from '@/components/ui/card-padrao'
 
 // Schema de validação
 const oportunidadeSchema = z.object({
@@ -165,19 +167,24 @@ export default function NovaOportunidadePage() {
   }
 
   return (
-    <div className="p-4 max-w-6xl mx-auto">
-      {/* Cabeçalho com breadcrumb */}
-      <div className="flex items-center mb-4">
-        <Button variant="ghost" size="sm" asChild className="mr-2">
-          <Link href="/oportunidades">
-            <ArrowLeft className="mr-1 h-3.5 w-3.5" />
-            <span className="text-sm">Voltar</span>
-          </Link>
-        </Button>
-        <h1 className="text-xl font-semibold">Nova Oportunidade</h1>
-      </div>
+    <div className="container mx-auto py-6 max-w-5xl">
+      <CabecalhoPagina
+        titulo="Nova Oportunidade"
+        descricao="Cadastre uma nova oportunidade de negócio"
+        breadcrumbs={[
+          { titulo: 'Oportunidades', href: '/oportunidades' },
+          { titulo: 'Nova Oportunidade', href: '/oportunidades/nova' }
+        ]}
+        acoes={
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/oportunidades">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar
+            </Link>
+          </Button>
+        }
+      />
 
-      {/* Mensagem de erro */}
       {erro && (
         <div className="bg-destructive/15 text-destructive p-3 rounded-md mb-4">
           {erro}
@@ -186,18 +193,32 @@ export default function NovaOportunidadePage() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          {/* Card de Informações Básicas */}
-          <Card className="shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-md flex items-center">
-                <FileText className="mr-2 h-4 w-4 text-primary" />
-                Informações Básicas
-              </CardTitle>
-              <CardDescription>
-                Informações essenciais da oportunidade
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <CardFormulario
+            titulo="Informações Básicas"
+            descricao="Preencha as informações básicas da oportunidade"
+            icone={<Info className="h-5 w-5" />}
+            footer={
+              <div className="space-x-2">
+                <Button variant="outline" type="button" asChild>
+                  <Link href="/oportunidades">Cancelar</Link>
+                </Button>
+                <Button type="submit" disabled={salvando}>
+                  {salvando ? (
+                    <span className="flex items-center space-x-2">
+                      <span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+                      <span>Salvando...</span>
+                    </span>
+                  ) : (
+                    <span className="flex items-center space-x-2">
+                      <Plus className="h-4 w-4" />
+                      <span>Criar Oportunidade</span>
+                    </span>
+                  )}
+                </Button>
+              </div>
+            }
+          >
+            <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -247,68 +268,52 @@ export default function NovaOportunidadePage() {
                   )}
                 />
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Card de Detalhes Financeiros */}
-          <Card className="shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-md flex items-center">
-                <DollarSign className="mr-2 h-4 w-4 text-primary" />
-                Detalhes Financeiros
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <FormField
-                control={form.control}
-                name="valor"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center">
-                      <DollarSign className="mr-1 h-3.5 w-3.5 text-muted-foreground" />
-                      Valor (R$)
-                    </FormLabel>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">R$</span>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          className="pl-8"
-                          placeholder="0,00" 
-                          value={field.value || ''}
-                          onChange={(e) => {
-                            const value = e.target.value === '' ? '' : Number(e.target.value);
-                            field.onChange(value);
-                          }}
-                        />
-                      </FormControl>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Valor estimado da oportunidade</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="valor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        <DollarSign className="mr-1 h-3.5 w-3.5 text-muted-foreground" />
+                        Valor (R$)
+                      </FormLabel>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">R$</span>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            className="pl-8"
+                            placeholder="0,00" 
+                            value={field.value || ''}
+                            onChange={(e) => {
+                              const value = e.target.value === '' ? '' : Number(e.target.value);
+                              field.onChange(value);
+                            }}
+                          />
+                        </FormControl>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Valor estimado da oportunidade</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
 
-          {/* Card de Status e Contato */}
-          <Card className="shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-md flex items-center">
-                <CalendarDays className="mr-2 h-4 w-4 text-primary" />
-                Status e Agendamento
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -389,18 +394,9 @@ export default function NovaOportunidadePage() {
                   )}
                 />
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Card de Descrição */}
-          <Card className="shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-md flex items-center">
-                <FileText className="mr-2 h-4 w-4 text-primary" />
-                Descrição
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+            <div className="space-y-4">
               <FormField
                 control={form.control}
                 name="descricao"
@@ -420,29 +416,8 @@ export default function NovaOportunidadePage() {
                   </FormItem>
                 )}
               />
-            </CardContent>
-          </Card>
-
-          {/* Botões de ação */}
-          <div className="flex justify-end space-x-2 pt-2">
-            <Button variant="outline" type="button" asChild>
-              <Link href="/oportunidades">
-                Cancelar
-              </Link>
-            </Button>
-            <Button type="submit" disabled={salvando}>
-              {salvando ? (
-                <>
-                  <div className="animate-spin mr-2 h-4 w-4 border-2 border-b-transparent border-white rounded-full"></div>
-                  Criando...
-                </>
-              ) : (
-                <>
-                  <Plus className="mr-2 h-4 w-4" /> Criar Oportunidade
-                </>
-              )}
-            </Button>
-          </div>
+            </div>
+          </CardFormulario>
         </form>
       </Form>
     </div>

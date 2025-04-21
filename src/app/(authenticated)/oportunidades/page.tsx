@@ -23,7 +23,8 @@ import {
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
-  DropdownMenuTrigger 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -74,6 +75,10 @@ import { Oportunidade } from '@/lib/crm-utils'
 import { formatarMoeda, formatarData, formatarDataHora, coresStatus } from '@/lib/formatters'
 import { oportunidadesApi, clientesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
+import { CabecalhoPagina } from '@/components/ui/cabecalho-pagina'
+import { FiltrosPadrao } from '@/components/ui/filtros-padrao'
+import { CardEstatistica } from '@/components/ui/card-padrao'
+import { TabelaPadrao } from '@/components/ui/tabela-padrao'
 
 export default function OportunidadesPage() {
   // Estados principais
@@ -90,7 +95,7 @@ export default function OportunidadesPage() {
   // Estados para exclusão
   const [excluindo, setExcluindo] = useState(false)
   const [dialogoExclusaoAberto, setDialogoExclusaoAberto] = useState(false)
-  const [oportunidadeParaExcluir, setOportunidadeParaExcluir] = useState<string | null>(null)
+  const [idOportunidadeExclusao, setIdOportunidadeExclusao] = useState<string>('')
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -155,47 +160,57 @@ export default function OportunidadesPage() {
       }))
   }
 
+  // Cores e ícones para o funil de vendas
+  const coresFunil: Record<string, string> = {
+    'Prospecção': 'bg-blue-50 dark:bg-blue-900',
+    'Contato Inicial': 'bg-indigo-50 dark:bg-indigo-900',
+    'Proposta': 'bg-purple-50 dark:bg-purple-900',
+    'Negociação': 'bg-amber-50 dark:bg-amber-900',
+    'Fechado': 'bg-green-50 dark:bg-green-900',
+    'Perdido': 'bg-red-50 dark:bg-red-900'
+  }
+  
+  const iconesFunil: Record<string, React.ReactNode> = {
+    'Prospecção': <Search className="h-4 w-4 text-blue-600 dark:text-blue-400" />,
+    'Contato Inicial': <Phone className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />,
+    'Proposta': <FileText className="h-4 w-4 text-purple-600 dark:text-purple-400" />,
+    'Negociação': <MessageSquare className="h-4 w-4 text-amber-600 dark:text-amber-400" />,
+    'Fechado': <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />,
+    'Perdido': <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+  }
+
   // Função para abrir o diálogo de confirmação de exclusão
   const confirmarExclusao = (id: string) => {
-    setOportunidadeParaExcluir(id)
+    setIdOportunidadeExclusao(id)
     setDialogoExclusaoAberto(true)
   }
 
   // Função para excluir uma oportunidade
   const excluirOportunidade = async () => {
-    if (excluindo || !oportunidadeParaExcluir) return;
+    if (!idOportunidadeExclusao) return
     
     try {
-      setExcluindo(true);
+      setExcluindo(true)
+      await oportunidadesApi.excluirOportunidade(idOportunidadeExclusao)
       
-      // Chamar API para excluir
-      const sucesso = await oportunidadesApi.excluirOportunidade(oportunidadeParaExcluir);
+      // Atualizar a lista após exclusão
+      setOportunidades(oportunidades.filter(o => o.id !== idOportunidadeExclusao))
       
-      if (sucesso) {
-        // Atualizar lista de oportunidades removendo a excluída
-        setOportunidades(oportunidades.filter(oportunidade => oportunidade.id !== oportunidadeParaExcluir));
-        toast({
-          title: "Oportunidade excluída",
-          description: "A oportunidade foi excluída com sucesso.",
-        });
-      } else {
-        toast({
-          title: "Erro ao excluir",
-          description: "Não foi possível excluir a oportunidade. Tente novamente.",
-          variant: "destructive"
-        });
-      }
+      toast({
+        title: "Oportunidade excluída",
+        description: "A oportunidade foi excluída com sucesso.",
+      })
     } catch (error) {
-      console.error('Erro ao excluir oportunidade:', error);
+      console.error('Erro ao excluir oportunidade:', error)
       toast({
         title: "Erro ao excluir",
-        description: "Não foi possível excluir a oportunidade. Tente novamente.",
+        description: "Ocorreu um erro ao excluir a oportunidade.",
         variant: "destructive"
-      });
+      })
     } finally {
-      setExcluindo(false);
-      setDialogoExclusaoAberto(false);
-      setOportunidadeParaExcluir(null);
+      setExcluindo(false)
+      setDialogoExclusaoAberto(false)
+      setIdOportunidadeExclusao('')
     }
   };
 
@@ -268,34 +283,28 @@ export default function OportunidadesPage() {
 
   return (
     <div className="p-4 space-y-4">
-      {/* Cabeçalho compacto */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight">Oportunidades</h1>
-          <p className="text-sm text-muted-foreground">
-            Gerencie seu funil de vendas e oportunidades de negócio
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/oportunidades/nova">
-            <Plus className="mr-2 h-4 w-4" /> Nova Oportunidade
-          </Link>
-        </Button>
-      </div>
+      {/* Cabeçalho padronizado */}
+      <CabecalhoPagina
+        titulo="Oportunidades"
+        descricao="Gerencie seu funil de vendas e oportunidades de negócio"
+        acoes={
+          <Button asChild>
+            <Link href="/oportunidades/nova">
+              <Plus className="mr-2 h-4 w-4" /> Nova Oportunidade
+            </Link>
+          </Button>
+        }
+      />
       
-      {/* Cards de estatísticas */}
+      {/* Cards de estatísticas padronizados */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-        <Card>
+        <Card className="shadow-sm">
           <CardContent className="p-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Valor Total em Negociação</p>
-                <p className="text-2xl font-bold">{formatarMoeda(getValorTotalOportunidades())}</p>
-              </div>
-              <div className="p-2 rounded-full bg-primary/10">
-                <BarChart className="h-5 w-5 text-primary" />
-              </div>
-            </div>
+            <CardEstatistica
+              titulo="Valor Total em Negociação"
+              valor={formatarMoeda(getValorTotalOportunidades())}
+              icone={<BarChart className="h-5 w-5" />}
+            />
             <div className="flex items-center text-xs text-muted-foreground mt-2">
               <TrendingUp className="mr-1 h-4 w-4 text-green-500" />
               <span>Oportunidades ativas: {oportunidades.filter(o => !['Fechado', 'Perdido'].includes(o.status)).length}</span>
@@ -303,17 +312,13 @@ export default function OportunidadesPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-sm">
           <CardContent className="p-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Próximos Contatos</p>
-                <p className="text-2xl font-bold">{getProximosContatos().length}</p>
-              </div>
-              <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900">
-                <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-            </div>
+            <CardEstatistica
+              titulo="Próximos Contatos"
+              valor={getProximosContatos().length.toString()}
+              icone={<Clock className="h-5 w-5" />}
+            />
             <div className="flex items-center text-xs text-muted-foreground mt-2">
               {getProximosContatos()[0] ? (
                 <>
@@ -327,21 +332,17 @@ export default function OportunidadesPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-sm">
           <CardContent className="p-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Taxa de Conversão</p>
-                <p className="text-2xl font-bold">
-                  {oportunidades.length > 0 
-                    ? `${Math.round((getOportunidadesPorStatus('Fechado') / oportunidades.length) * 100)}%`
-                    : '0%'}
-                </p>
-              </div>
-              <div className="p-2 rounded-full bg-green-100 dark:bg-green-900">
-                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
-              </div>
-            </div>
+            <CardEstatistica
+              titulo="Taxa de Conversão"
+              valor={
+                oportunidades.length > 0 
+                  ? `${Math.round((getOportunidadesPorStatus('Fechado') / oportunidades.length) * 100)}%`
+                  : '0%'
+              }
+              icone={<CheckCircle2 className="h-5 w-5" />}
+            />
             <div className="flex items-center text-xs text-muted-foreground mt-2">
               <span>Ganhos: {getOportunidadesPorStatus('Fechado')} | Perdidos: {getOportunidadesPorStatus('Perdido')}</span>
             </div>
@@ -349,57 +350,64 @@ export default function OportunidadesPage() {
         </Card>
       </div>
 
-      {/* Área de busca e filtros */}
-      <div className="flex flex-col sm:flex-row gap-2 mb-4">
-        <div className="relative flex-grow">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Buscar por título, descrição ou cliente..." 
-            className="pl-9"
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-          />
-        </div>
-        <div className="flex gap-2">
-          <Select 
-            value={filtroStatus} 
-            onValueChange={(value: 'Todos' | 'Prospecção' | 'Contato Inicial' | 'Proposta' | 'Negociação' | 'Fechado' | 'Perdido') => setFiltroStatus(value)}
-          >
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Todos os status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Todos">Todos os status</SelectItem>
-              <SelectItem value="Prospecção">Prospecção</SelectItem>
-              <SelectItem value="Contato Inicial">Contato Inicial</SelectItem>
-              <SelectItem value="Proposta">Proposta</SelectItem>
-              <SelectItem value="Negociação">Negociação</SelectItem>
-              <SelectItem value="Fechado">Fechado</SelectItem>
-              <SelectItem value="Perdido">Perdido</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Select 
-            value={filtroValor} 
-            onValueChange={(value: 'todos' | 'ate50k' | 'de50ka100k' | 'de100ka200k' | 'acima200k') => setFiltroValor(value)}
-          >
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Todos os valores" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos os valores</SelectItem>
-              <SelectItem value="ate50k">Até R$ 50 mil</SelectItem>
-              <SelectItem value="de50ka100k">R$ 50 mil a R$ 100 mil</SelectItem>
-              <SelectItem value="de100ka200k">R$ 100 mil a R$ 200 mil</SelectItem>
-              <SelectItem value="acima200k">Acima de R$ 200 mil</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Button variant="outline" size="icon" title="Exportar">
-            <Download className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+      {/* Área de busca e filtros padronizados */}
+      <FiltrosPadrao
+        valorBusca={busca}
+        onBusca={(valor) => setBusca(valor)}
+        placeholderBusca="Buscar por título, descrição ou cliente..."
+        onResetarFiltros={() => {
+          setBusca('');
+          setFiltroStatus('Todos');
+          setFiltroValor('todos');
+        }}
+        filtrosAvancados={
+          <div className="flex flex-wrap gap-4">
+            <div className="w-full md:w-1/3">
+              <label className="text-sm font-medium mb-1 block">Status</label>
+              <Select 
+                value={filtroStatus} 
+                onValueChange={(value: 'Todos' | 'Prospecção' | 'Contato Inicial' | 'Proposta' | 'Negociação' | 'Fechado' | 'Perdido') => setFiltroStatus(value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Todos os status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Todos">Todos os status</SelectItem>
+                  <SelectItem value="Prospecção">Prospecção</SelectItem>
+                  <SelectItem value="Contato Inicial">Contato Inicial</SelectItem>
+                  <SelectItem value="Proposta">Proposta</SelectItem>
+                  <SelectItem value="Negociação">Negociação</SelectItem>
+                  <SelectItem value="Fechado">Fechado</SelectItem>
+                  <SelectItem value="Perdido">Perdido</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="w-full md:w-1/3">
+              <label className="text-sm font-medium mb-1 block">Valor</label>
+              <Select 
+                value={filtroValor} 
+                onValueChange={(value: 'todos' | 'ate50k' | 'de50ka100k' | 'de100ka200k' | 'acima200k') => setFiltroValor(value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Todos os valores" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os valores</SelectItem>
+                  <SelectItem value="ate50k">Até R$ 50 mil</SelectItem>
+                  <SelectItem value="de50ka100k">R$ 50 mil a R$ 100 mil</SelectItem>
+                  <SelectItem value="de100ka200k">R$ 100 mil a R$ 200 mil</SelectItem>
+                  <SelectItem value="acima200k">Acima de R$ 200 mil</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        }
+      >
+        <Button variant="outline" size="icon" title="Exportar">
+          <Download className="h-4 w-4" />
+        </Button>
+      </FiltrosPadrao>
 
       {/* Visualização em abas (tabela/funil) */}
       <Tabs defaultValue="tabela" className="w-full">
@@ -411,96 +419,110 @@ export default function OportunidadesPage() {
         <TabsContent value="tabela" className="space-y-4">
           <Card className="border shadow-sm">
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Título</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Valor</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Próximo Contato</TableHead>
-                    <TableHead>Atualização</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {oportunidadesOrdenadas.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="h-24 text-center">
-                        Nenhuma oportunidade encontrada.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    oportunidadesOrdenadas.map((oportunidade) => (
-                      <TableRow key={oportunidade.id}>
-                        <TableCell className="font-medium">{oportunidade.titulo}</TableCell>
-                        <TableCell>{clientesMap[oportunidade.clienteId] || 'Cliente não encontrado'}</TableCell>
-                        <TableCell>{formatarMoeda(oportunidade.valor)}</TableCell>
-                        <TableCell>
-                          <Badge className={coresStatus.oportunidade[oportunidade.status]}>
-                            {oportunidade.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {oportunidade.proximoContato ? (
-                            <div className="flex items-center">
-                              {formatarData(oportunidade.proximoContato)}
-                              {new Date(oportunidade.proximoContato) <= new Date() && (
-                                <Badge variant="outline" className="ml-2 bg-red-50 text-red-800 border-red-200">
-                                  Atrasado
-                                </Badge>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">Não agendado</span>
+              <TabelaPadrao
+                dados={oportunidadesOrdenadas}
+                mensagemVazia="Nenhuma oportunidade encontrada."
+                idChave="id"
+                colunas={[
+                  {
+                    chave: 'titulo',
+                    titulo: 'Título',
+                    renderizador: (valor, item) => (
+                      <span className="font-medium">{valor}</span>
+                    )
+                  },
+                  {
+                    chave: 'clienteId',
+                    titulo: 'Cliente',
+                    renderizador: (valor: string, item) => (
+                      clientesMap[valor] || 'Cliente não encontrado'
+                    )
+                  },
+                  {
+                    chave: 'valor',
+                    titulo: 'Valor',
+                    renderizador: (valor: number) => formatarMoeda(valor)
+                  },
+                  {
+                    chave: 'status',
+                    titulo: 'Status',
+                    renderizador: (valor: string) => (
+                      <Badge className={coresStatus.oportunidade[valor as keyof typeof coresStatus.oportunidade] || 'bg-gray-100 text-gray-800'}>
+                        {valor}
+                      </Badge>
+                    )
+                  },
+                  {
+                    chave: 'proximoContato',
+                    titulo: 'Próximo Contato',
+                    renderizador: (valor: string | null, item: any) => (
+                      valor ? (
+                        <div className="flex items-center">
+                          {formatarData(valor)}
+                          {new Date(valor) <= new Date() && (
+                            <Badge variant="outline" className="ml-2 bg-red-50 text-red-800 border-red-200">
+                              Atrasado
+                            </Badge>
                           )}
-                        </TableCell>
-                        <TableCell>{formatarData(oportunidade.dataAtualizacao)}</TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Abrir menu</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem asChild>
-                                <Link href={`/oportunidades/${oportunidade.id}`}>
-                                  <Eye className="mr-2 h-4 w-4" />
-                                  Visualizar
-                                </Link>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem asChild>
-                                <Link href={`/oportunidades/${oportunidade.id}/editar`}>
-                                  <FileEdit className="mr-2 h-4 w-4" />
-                                  Editar
-                                </Link>
-                              </DropdownMenuItem>
-                              {oportunidade.status !== 'Ganho' && oportunidade.status !== 'Perdido' && (
-                                <DropdownMenuItem asChild>
-                                  <Link href={`/oportunidades/${oportunidade.id}/avancar`}>
-                                    <ArrowUpRight className="mr-2 h-4 w-4" />
-                                    Avançar Status
-                                  </Link>
-                                </DropdownMenuItem>
-                              )}
-                              <DropdownMenuItem 
-                                className="text-destructive"
-                                onClick={() => confirmarExclusao(oportunidade.id)}
-                                disabled={excluindo}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Excluir
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">Não agendado</span>
+                      )
+                    )
+                  },
+                  {
+                    chave: 'dataAtualizacao',
+                    titulo: 'Atualização',
+                    renderizador: (valor: string) => formatarData(valor)
+                  },
+                ]}
+                acaoRenderizador={(oportunidade: Oportunidade) => (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">Abrir menu</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <Link href={`/oportunidades/${oportunidade.id}`}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          Visualizar
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href={`/oportunidades/${oportunidade.id}/editar`}>
+                          <FileEdit className="mr-2 h-4 w-4" />
+                          Editar
+                        </Link>
+                      </DropdownMenuItem>
+                      {oportunidade.status !== 'Ganho' && oportunidade.status !== 'Perdido' && (
+                        <DropdownMenuItem asChild>
+                          <Link href={`/oportunidades/${oportunidade.id}/avancar`}>
+                            <ArrowUpRight className="mr-2 h-4 w-4" />
+                            Avançar Status
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem asChild>
+                        <Link href={`/oportunidades/${oportunidade.id}/registrar-interacao`}>
+                          <MessageSquare className="mr-2 h-4 w-4" />
+                          Registrar Interação
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={() => confirmarExclusao(oportunidade.id)}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Excluir
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -510,26 +532,6 @@ export default function OportunidadesPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {['Prospecção', 'Contato Inicial', 'Proposta', 'Negociação', 'Fechado', 'Perdido'].map((status, index) => {
               const oportunidadesDoStatus = oportunidadesOrdenadas.filter(o => o.status === status)
-              
-              // Definir cores para cada coluna do funil
-              const coresFunil: Record<string, string> = {
-                'Prospecção': 'bg-blue-50 dark:bg-blue-900',
-                'Contato Inicial': 'bg-indigo-50 dark:bg-indigo-900',
-                'Proposta': 'bg-purple-50 dark:bg-purple-900',
-                'Negociação': 'bg-amber-50 dark:bg-amber-900',
-                'Fechado': 'bg-green-50 dark:bg-green-900',
-                'Perdido': 'bg-red-50 dark:bg-red-900'
-              }
-              
-              // Ícones para cada status
-              const iconesFunil: Record<string, React.ReactNode> = {
-                'Prospecção': <Search className="h-4 w-4 text-blue-600 dark:text-blue-400" />,
-                'Contato Inicial': <Phone className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />,
-                'Proposta': <FileText className="h-4 w-4 text-purple-600 dark:text-purple-400" />,
-                'Negociação': <MessageSquare className="h-4 w-4 text-amber-600 dark:text-amber-400" />,
-                'Fechado': <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />,
-                'Perdido': <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-              }
               
               return (
                 <Card key={status} className="h-[calc(100vh-320px)] overflow-hidden">

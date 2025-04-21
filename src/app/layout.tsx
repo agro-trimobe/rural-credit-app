@@ -18,6 +18,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Trimobe",
   description: "Aplicação de Crédito Rural",
+  icons: {
+    icon: [
+      { url: "/icons/favicon.svg" },
+      { url: "/favicon.ico" }
+    ]
+  }
 };
 
 export default function RootLayout({

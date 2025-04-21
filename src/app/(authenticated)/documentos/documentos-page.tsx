@@ -7,6 +7,9 @@ import { documentosApi } from '@/lib/api/documentos'
 import { clientesApi } from '@/lib/api/clientes'
 import { Documento } from '@/lib/crm-utils'
 import { formatarData, formatarTamanhoArquivo, coresStatus } from '@/lib/formatters'
+import { CabecalhoPagina } from '@/components/ui/cabecalho-pagina'
+import { CardEstatistica } from '@/components/ui/card-padrao'
+import { FiltrosPadrao, FiltroSelect } from '@/components/ui/filtros-padrao'
 
 // Componentes UI
 import { Button } from '@/components/ui/button'
@@ -235,73 +238,56 @@ export default function DocumentosPageNew() {
   }
 
   return (
-    <div className="p-4 space-y-4">
-      {/* Cabeçalho e botão de adicionar */}
-      <div className="flex items-center justify-between mb-2">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Documentos do Projeto</h1>
-          <p className="text-sm text-muted-foreground">Projeto do Cliente: {documentos[0]?.clienteId ? clientesMap[documentos[0].clienteId] : 'Todos os clientes'}</p>
-        </div>
-        <Button asChild>
-          <Link href="/documentos/novo" className="gap-2">
-            <PlusCircle className="h-4 w-4" />
-            Adicionar Documento
-          </Link>
-        </Button>
-      </div>
+    <div className="container mx-auto py-6 space-y-4">
+      <CabecalhoPagina
+        titulo="Documentos do Projeto"
+        descricao={`Projeto do Cliente: ${documentos[0]?.clienteId ? clientesMap[documentos[0].clienteId] : 'Todos os clientes'}`}
+        acoes={
+          <Button asChild>
+            <Link href="/documentos/novo" className="gap-2">
+              <PlusCircle className="h-4 w-4" />
+              Adicionar Documento
+            </Link>
+          </Button>
+        }
+      />
 
       {/* Cards de estatísticas */}
-      <Card className="mb-4">
-        <CardContent className="p-3">
-          <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-full bg-muted">
-                <FileText className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Total</p>
-                <p className="text-lg font-bold">{totalDocumentos}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-full bg-amber-100 dark:bg-amber-900">
-                <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Pendentes</p>
-                <p className="text-lg font-bold">{documentosPendentes}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-full bg-blue-100 dark:bg-blue-900">
-                <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Em Análise</p>
-                <p className="text-lg font-bold">{documentosEmAnalise}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-full bg-green-100 dark:bg-green-900">
-                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Aprovados</p>
-                <p className="text-lg font-bold">{documentosAprovados}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-full bg-red-100 dark:bg-red-900">
-                <FileX className="h-4 w-4 text-red-600 dark:text-red-400" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Rejeitados</p>
-                <p className="text-lg font-bold">{documentosRejeitados}</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+        <CardEstatistica
+          titulo="Total"
+          valor={totalDocumentos}
+          icone={<FileText className="h-5 w-5" />}
+        />
+        
+        <CardEstatistica
+          titulo="Pendentes"
+          valor={documentosPendentes}
+          icone={<Clock className="h-5 w-5" />}
+          corIcone="text-amber-600"
+        />
+        
+        <CardEstatistica
+          titulo="Em Análise"
+          valor={documentosEmAnalise}
+          icone={<FileText className="h-5 w-5" />}
+          corIcone="text-blue-600"
+        />
+        
+        <CardEstatistica
+          titulo="Aprovados"
+          valor={documentosAprovados}
+          icone={<CheckCircle className="h-5 w-5" />}
+          corIcone="text-green-600"
+        />
+        
+        <CardEstatistica
+          titulo="Rejeitados"
+          valor={documentosRejeitados}
+          icone={<FileX className="h-5 w-5" />}
+          corIcone="text-red-600"
+        />
+      </div>
 
       {/* Filtros visuais (badges) */}
       <div className="flex overflow-x-auto pb-2 mb-3">
@@ -350,46 +336,40 @@ export default function DocumentosPageNew() {
       </div>
 
       {/* Barra de busca e filtros */}
-      <div className="flex flex-col sm:flex-row gap-2 mb-4">
-        <div className="relative flex-grow">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Buscar documentos..." 
-            className="pl-9"
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
+      <div className="bg-card rounded-lg border shadow-sm p-4">
+        <FiltrosPadrao
+          titulo="Lista de Documentos"
+          subtitulo={`Mostrando ${documentosFiltrados.length} de ${totalDocumentos} documentos`}
+          termoBusca={busca}
+          onChangeBusca={(e) => setBusca(e.target.value)}  
+          placeholderBusca="Buscar documentos..."
+        >
+          <FiltroSelect
+            label="Tipo"
+            valor={tipoFiltro}
+            onChange={(valor: string) => setTipoFiltro(valor)}
+            opcoes={[
+              { valor: 'todos', label: 'Todos os tipos' },
+              ...tiposDocumentos.filter(tipo => tipo !== 'todos')
+                .map(tipo => ({ valor: tipo, label: tipo }))
+            ]}
           />
-        </div>
-        <div className="flex gap-2">
-          <Select value={tipoFiltro} onValueChange={setTipoFiltro}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Todos os tipos" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos os tipos</SelectItem>
-              {tiposDocumentos.filter(tipo => tipo !== 'todos').map((tipo) => (
-                <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
           
           {todasTags.length > 0 && (
-            <Select value={filtroTag} onValueChange={setFiltroTag}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Todas as tags" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Todas as tags</SelectItem>
-                {todasTags.map((tag) => (
-                  <SelectItem key={tag} value={tag}>{tag}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <FiltroSelect
+              label="Tag"
+              valor={filtroTag}
+              onChange={(valor: string) => setFiltroTag(valor)}
+              opcoes={[
+                { valor: '', label: 'Todas as tags' },
+                ...todasTags.map(tag => ({ valor: tag, label: tag }))
+              ]}
+            />
           )}
           
-          <div className="border rounded-md p-1">
+          <div className="border rounded-md p-1 ml-2">
             <Button 
-              variant={viewMode === 'grid' ? 'default' : 'ghost'} 
+              variant="ghost" 
               size="sm" 
               className="px-2"
               onClick={() => setViewMode('grid')}
@@ -397,7 +377,7 @@ export default function DocumentosPageNew() {
               <Grid className="h-4 w-4" />
             </Button>
             <Button 
-              variant={viewMode === 'list' ? 'default' : 'ghost'} 
+              variant="ghost" 
               size="sm" 
               className="px-2"
               onClick={() => setViewMode('list')}
@@ -405,7 +385,7 @@ export default function DocumentosPageNew() {
               <List className="h-4 w-4" />
             </Button>
           </div>
-        </div>
+        </FiltrosPadrao>
       </div>
 
       {/* Área de conteúdo principal */}

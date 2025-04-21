@@ -10,8 +10,12 @@ import {
   CalendarIcon, 
   ClipboardList, 
   CreditCard, 
-  TrendingUp
+  TrendingUp,
+  BarChart3,
+  Users
 } from 'lucide-react'
+import { CabecalhoPagina } from '@/components/ui/cabecalho-pagina'
+import { CardEstatistica } from '@/components/ui/card-padrao'
 import Link from 'next/link'
 
 interface Projeto {
@@ -160,90 +164,68 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Visão geral das suas atividades e desempenho
-        </p>
-      </div>
+      <CabecalhoPagina
+        titulo="Dashboard"
+        descricao="Visão geral das suas atividades e desempenho"
+      />
 
-      {/* Cards de Resumo */}
+      {/* Cards de Resumo Padronizados */}
       <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
-        {/* Card de Projetos */}
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-4">
-            <CardTitle className="text-sm font-medium">Projetos Ativos</CardTitle>
-            <ClipboardList className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-          </CardHeader>
-          <CardContent className="px-4 pb-3 pt-0">
-            <div className="text-xl font-bold">{estatisticas.totalProjetos}</div>
-            <div className="flex justify-between items-center mt-1">
-              <p className="text-xs text-muted-foreground">
-                Total em andamento
-              </p>
-              <Link href="/projetos" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
-                Ver detalhes
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="relative group">
+          <CardEstatistica
+            titulo="Projetos Ativos"
+            valor={estatisticas.totalProjetos.toString()}
+            icone={<ClipboardList className="h-5 w-5" />}
+          />
+          <Link 
+            href="/projetos" 
+            className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center bg-black/5 dark:bg-white/5 transition-opacity rounded-lg"
+          >
+            <span className="text-xs font-medium bg-primary/90 text-primary-foreground px-2 py-1 rounded">Ver detalhes</span>
+          </Link>
+        </div>
         
-        {/* Card de Valor Total em Projetos */}
-        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-4">
-            <CardTitle className="text-sm font-medium">Valor em Projetos</CardTitle>
-            <CreditCard className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-          </CardHeader>
-          <CardContent className="px-4 pb-3 pt-0">
-            <div className="text-xl font-bold">{formatarMoeda(estatisticas.valorProjetos)}</div>
-            <div className="flex justify-between items-center mt-1">
-              <p className="text-xs text-muted-foreground">
-                Projetos ativos: {estatisticas.totalProjetos}
-              </p>
-              <Link href="/projetos" className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline">
-                Ver projetos
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="relative group">
+          <CardEstatistica
+            titulo="Valor em Projetos"
+            valor={formatarMoeda(estatisticas.valorProjetos)}
+            icone={<CreditCard className="h-5 w-5" />}
+          />
+          <Link 
+            href="/projetos" 
+            className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center bg-black/5 dark:bg-white/5 transition-opacity rounded-lg"
+          >
+            <span className="text-xs font-medium bg-primary/90 text-primary-foreground px-2 py-1 rounded">Ver detalhes</span>
+          </Link>
+        </div>
         
-        {/* Card de Visitas */}
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-4">
-            <CardTitle className="text-sm font-medium">Visitas</CardTitle>
-            <CalendarIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
-          </CardHeader>
-          <CardContent className="px-4 pb-3 pt-0">
-            <div className="text-xl font-bold">{estatisticas.totalVisitas}</div>
-            <div className="flex justify-between items-center mt-1">
-              <p className="text-xs text-muted-foreground">
-                Agendadas: {estatisticas.visitasStatus['Agendada'] || 0}
-              </p>
-              <Link href="/visitas" className="text-xs text-green-600 dark:text-green-400 hover:underline">
-                Ver agenda
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="relative group">
+          <CardEstatistica
+            titulo="Total de Clientes"
+            valor={estatisticas.totalClientes.toString()}
+            icone={<Users className="h-5 w-5" />}
+          />
+          <Link 
+            href="/clientes" 
+            className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center bg-black/5 dark:bg-white/5 transition-opacity rounded-lg"
+          >
+            <span className="text-xs font-medium bg-primary/90 text-primary-foreground px-2 py-1 rounded">Ver detalhes</span>
+          </Link>
+        </div>
         
-        {/* Card de Oportunidades */}
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-4">
-            <CardTitle className="text-sm font-medium">Oportunidades</CardTitle>
-            <TrendingUp className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-          </CardHeader>
-          <CardContent className="px-4 pb-3 pt-0">
-            <div className="text-xl font-bold">{Object.values(estatisticas.oportunidadesStatus).reduce((acc, curr) => acc + curr.quantidade, 0)}</div>
-            <div className="flex justify-between items-center mt-1">
-              <p className="text-xs text-muted-foreground">
-                Valor: {formatarMoeda(estatisticas.valorOportunidades)}
-              </p>
-              <Link href="/oportunidades" className="text-xs text-purple-600 dark:text-purple-400 hover:underline">
-                Ver detalhes
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="relative group">
+          <CardEstatistica
+            titulo="Valor em Oportunidades"
+            valor={formatarMoeda(estatisticas.valorOportunidades)}
+            icone={<TrendingUp className="h-5 w-5" />}
+          />
+          <Link 
+            href="/oportunidades" 
+            className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center bg-black/5 dark:bg-white/5 transition-opacity rounded-lg"
+          >
+            <span className="text-xs font-medium bg-primary/90 text-primary-foreground px-2 py-1 rounded">Ver detalhes</span>
+          </Link>
+        </div>
       </div>
 
       {/* Seção de Gráficos */}
