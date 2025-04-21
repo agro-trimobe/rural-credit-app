@@ -5,8 +5,8 @@ import * as RechartsPrimitive from "recharts"
 
 import { cn } from "@/lib/utils"
 
-// Format: { THEME_NAME: CSS_SELECTOR }
-const THEMES = { light: "", dark: ".dark" } as const
+// Apenas tema claro é suportado
+const THEMES = { light: "" } as const
 
 export type ChartConfig = {
   [k in string]: {
@@ -14,7 +14,7 @@ export type ChartConfig = {
     icon?: React.ComponentType
   } & (
     | { color?: string; theme?: never }
-    | { color?: never; theme: Record<keyof typeof THEMES, string> }
+    | { color?: never; theme: Record<'light', string> }
   )
 }
 

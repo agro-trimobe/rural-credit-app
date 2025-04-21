@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Sidebar } from '@/components/crm/sidebar'
-import { ThemeToggle } from '@/components/ui/theme-toggle'
+// Importações mantidas sem o toggle de tema
 
 export default function CRMLayout({
   children,
@@ -23,7 +23,7 @@ export default function CRMLayout({
       >
         <header className="sticky top-0 z-10 w-full border-b border-border bg-background/95 backdrop-blur">
           <div className="flex h-10 items-center justify-end px-4">
-            <ThemeToggle />
+            {/* Cabeçalho mantido sem o seletor de tema */}
           </div>
         </header>
         <main className="p-3 md:p-4 pb-16 w-full">

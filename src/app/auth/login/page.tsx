@@ -25,20 +25,15 @@ import Link from "next/link";
 // Componente de carregamento para o Suspense
 function LoginPageLoading() {
   return (
-    <div className="container flex h-screen w-full flex-col items-center justify-center bg-background">
-      <div className="mx-auto w-full max-w-[400px] space-y-6">
-        <div className="flex justify-center mb-6">
-          <Orbit className="h-10 w-10 text-primary" />
-        </div>
-        <Card className="w-full shadow-lg">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Carregando...</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 flex justify-center p-6">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          </CardContent>
-        </Card>
-      </div>
+    <div className="container px-4 sm:px-6 flex min-h-screen w-full flex-col items-center justify-center py-8 bg-background">
+      <Card className="w-full max-w-[400px] shadow-lg border-border/50">
+        <CardHeader className="space-y-1 px-4 sm:px-6 pt-4 sm:pt-6">
+          <CardTitle className="text-xl sm:text-2xl text-center">Carregando...</CardTitle>
+        </CardHeader>
+        <CardContent className="flex justify-center px-4 sm:px-6 py-12 sm:py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -225,22 +220,14 @@ function LoginPageContent() {
   };
 
   return (
-    <div className="container flex h-screen w-full flex-col items-center justify-center bg-background">
-      <div className="mx-auto w-full max-w-[400px] space-y-6">
-        <div className="flex flex-col items-center mb-6">
-          <Link href="/" className="flex items-center mb-2">
-            <Orbit className="h-10 w-10 text-primary mr-2" />
-            <span className="text-2xl font-bold">Trimobe</span>
-          </Link>
-          <p className="text-sm text-muted-foreground">Sistema de Crédito Rural</p>
-        </div>
-        
-        <Card className="w-full shadow-lg">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">
+    <div className="container px-4 sm:px-6 flex min-h-screen w-full flex-col items-center justify-center py-8 bg-background">
+      <div className="mx-auto w-full max-w-[400px]">
+        <Card className="w-full shadow-lg border-border/50 mb-4 sm:mb-0">
+          <CardHeader className="space-y-1 px-4 sm:px-6 pt-4 sm:pt-6">
+            <CardTitle className="text-xl sm:text-2xl text-center">
               {isForgotPassword ? "Recuperar Senha" : isLogin ? "Login" : "Criar Conta"}
             </CardTitle>
-            <CardDescription className="text-center">
+            <CardDescription className="text-center text-sm sm:text-base">
               {isForgotPassword
                 ? "Digite seu email para receber as instruções de recuperação de senha"
                 : isLogin
@@ -250,9 +237,9 @@ function LoginPageContent() {
           </CardHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-5 px-4 sm:px-6 py-4 sm:py-5">
                 {errorMessage && (
-                  <Alert variant="destructive" className="mb-4">
+                  <Alert variant="destructive" className="mb-3 text-sm sm:text-base">
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>{errorMessage}</AlertDescription>
                   </Alert>
@@ -264,9 +251,12 @@ function LoginPageContent() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nome</FormLabel>
+                        <FormLabel className="text-sm sm:text-base">Nome</FormLabel>
                         <FormControl>
-                          <Input placeholder="Digite seu nome" {...field} />
+                          <Input
+                            placeholder="Digite seu nome"
+                            className="h-10 sm:h-11 text-sm sm:text-base py-6 px-3"
+                            {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -279,11 +269,12 @@ function LoginPageContent() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel className="text-sm sm:text-base">Email</FormLabel>
                       <FormControl>
                         <Input
                           type="email"
                           placeholder="Digite seu email"
+                          className="h-10 sm:h-11 text-sm sm:text-base py-6 px-3"
                           {...field}
                         />
                       </FormControl>
@@ -298,19 +289,20 @@ function LoginPageContent() {
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Senha</FormLabel>
+                        <FormLabel className="text-sm sm:text-base">Senha</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Input
                               {...field}
                               type={showPassword ? "text" : "password"}
                               placeholder="Digite sua senha"
+                              className="h-10 sm:h-11 text-sm sm:text-base py-6 px-3"
                             />
                             <Button
                               type="button"
                               variant="ghost"
                               size="icon"
-                              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent touch-manipulation"
                               onClick={() => setShowPassword(!showPassword)}
                             >
                               {showPassword ? (
@@ -333,11 +325,12 @@ function LoginPageContent() {
                     name="confirmPassword"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Confirmar Senha</FormLabel>
+                        <FormLabel className="text-sm sm:text-base">Confirmar Senha</FormLabel>
                         <FormControl>
                           <Input
                             type="password"
                             placeholder="Confirme sua senha"
+                            className="h-10 sm:h-11 text-sm sm:text-base py-6 px-3"
                             {...field}
                           />
                         </FormControl>
@@ -348,21 +341,21 @@ function LoginPageContent() {
                 )}
               </CardContent>
 
-              <CardFooter className="flex flex-col">
+              <CardFooter className="flex flex-col px-4 sm:px-6 pb-5 sm:pb-6 pt-2">
                 <Button
                   type="submit"
-                  className="w-full bg-primary hover:bg-primary-dark"
+                  className="w-full bg-primary hover:bg-primary/90 py-2.5 sm:py-3 text-sm sm:text-base rounded-md"
                   disabled={isLoading}
                 >
                   {isLoading ? "Carregando..." : isForgotPassword ? "Enviar Email" : isLogin ? "Entrar" : "Cadastrar"}
                 </Button>
 
-                <div className="mt-4 text-center space-y-2">
+                <div className="mt-4 sm:mt-5 text-center space-y-2 sm:space-y-3">
                   {isLogin && !isForgotPassword && (
                     <Button
                       type="button"
                       variant="link"
-                      className="text-sm"
+                      className="text-xs sm:text-sm py-2 h-auto touch-manipulation"
                       onClick={() => {
                         setIsForgotPassword(true);
                         setErrorMessage(null);
@@ -377,7 +370,7 @@ function LoginPageContent() {
                     <Button
                       type="button"
                       variant="link"
-                      className="text-sm"
+                      className="text-xs sm:text-sm py-2 h-auto touch-manipulation"
                       onClick={() => {
                         setIsForgotPassword(false);
                         setErrorMessage(null);
@@ -392,7 +385,7 @@ function LoginPageContent() {
                     <Button
                       type="button"
                       variant="link"
-                      className="text-sm"
+                      className="text-xs sm:text-sm py-2 h-auto touch-manipulation"
                       onClick={() => {
                         setIsLogin(!isLogin);
                         setErrorMessage(null);
@@ -407,12 +400,6 @@ function LoginPageContent() {
             </form>
           </Form>
         </Card>
-        
-        <div className="text-center">
-          <Link href="/" className="text-sm text-muted-foreground hover:text-muted-foreground-dark">
-            Voltar para a página inicial
-          </Link>
-        </div>
       </div>
     </div>
   );

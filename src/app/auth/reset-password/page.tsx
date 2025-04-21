@@ -102,15 +102,15 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="container relative flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-1 lg:px-0">
-      <Card className="mx-auto w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl text-center">Redefinir Senha</CardTitle>
-          <CardDescription className="text-center">
+    <div className="container px-4 sm:px-6 flex min-h-screen w-full flex-col items-center justify-center py-8 bg-background">
+      <Card className="w-full max-w-md shadow-lg border-border/50">
+        <CardHeader className="space-y-1 px-4 sm:px-6 pt-4 sm:pt-6">
+          <CardTitle className="text-xl sm:text-2xl text-center">Redefinir Senha</CardTitle>
+          <CardDescription className="text-center text-sm sm:text-base">
             Digite o código recebido por email e sua nova senha
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 sm:px-6 py-3 sm:py-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -118,9 +118,9 @@ function ResetPasswordForm() {
                 name="code"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Código de Verificação</FormLabel>
+                    <FormLabel className="text-sm sm:text-base">Código de Verificação</FormLabel>
                     <FormControl>
-                      <Input placeholder="Digite o código" {...field} />
+                      <Input placeholder="Digite o código" className="text-base sm:text-base py-5 px-3" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -132,18 +132,19 @@ function ResetPasswordForm() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nova Senha</FormLabel>
+                    <FormLabel className="text-sm sm:text-base">Nova Senha</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
                           type={showPassword ? "text" : "password"}
                           placeholder="Digite sua nova senha"
+                          className="text-base sm:text-base py-5 px-3"
                           {...field}
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
+                          className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground touch-manipulation"
                         >
                           {showPassword ? (
                             <EyeOff className="h-4 w-4" />
@@ -163,11 +164,12 @@ function ResetPasswordForm() {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Confirmar Nova Senha</FormLabel>
+                    <FormLabel className="text-sm sm:text-base">Confirmar Nova Senha</FormLabel>
                     <FormControl>
                       <Input
                         type="password"
                         placeholder="Confirme sua nova senha"
+                        className="text-base sm:text-base py-5 px-3"
                         {...field}
                       />
                     </FormControl>
@@ -178,7 +180,7 @@ function ResetPasswordForm() {
 
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full bg-primary hover:bg-primary/90 py-2 sm:py-2.5 text-sm sm:text-base mt-2"
                 disabled={isLoading}
               >
                 {isLoading ? "Redefinindo..." : "Redefinir Senha"}
@@ -191,13 +193,25 @@ function ResetPasswordForm() {
   );
 }
 
+// Componente de carregamento para o Suspense
+function ResetPasswordLoading() {
+  return (
+    <div className="container px-4 sm:px-6 flex min-h-screen w-full flex-col items-center justify-center py-8 bg-background">
+      <Card className="w-full max-w-md shadow-lg border-border/50">
+        <CardHeader className="space-y-1 px-4 sm:px-6 pt-4 sm:pt-6">
+          <CardTitle className="text-xl sm:text-2xl text-center">Carregando...</CardTitle>
+        </CardHeader>
+        <CardContent className="flex justify-center px-4 sm:px-6 py-6 sm:py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={
-      <div className="container flex items-center justify-center min-h-screen">
-        <div className="text-muted-foreground">Carregando...</div>
-      </div>
-    }>
+    <Suspense fallback={<ResetPasswordLoading />}>
       <ResetPasswordForm />
     </Suspense>
   );

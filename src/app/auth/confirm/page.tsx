@@ -91,15 +91,15 @@ function ConfirmForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <Card className="w-[400px]">
-        <CardHeader>
-          <CardTitle>Confirmar Email</CardTitle>
-          <CardDescription>
-            Digite o código de confirmação enviado para {email}
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 sm:px-6 py-8">
+      <Card className="w-full max-w-[400px] shadow-lg border-border/50">
+        <CardHeader className="px-4 sm:px-6 pt-4 sm:pt-6">
+          <CardTitle className="text-xl sm:text-2xl text-center">Confirmar Email</CardTitle>
+          <CardDescription className="text-center text-sm sm:text-base">
+            Digite o código de confirmação enviado para <span className="break-all">{email}</span>
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 sm:px-6 py-3 sm:py-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Input
@@ -108,12 +108,17 @@ function ConfirmForm() {
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 disabled={isLoading}
+                className="text-base sm:text-base py-5 px-3"
               />
               {error && (
                 <p className="text-sm text-destructive">{error}</p>
               )}
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button 
+              type="submit" 
+              className="w-full bg-primary hover:bg-primary/90 py-2 sm:py-2.5 text-sm sm:text-base mt-2" 
+              disabled={isLoading}
+            >
               {isLoading ? "Confirmando..." : "Confirmar"}
             </Button>
           </form>
@@ -123,9 +128,25 @@ function ConfirmForm() {
   );
 }
 
+// Componente de carregamento para o Suspense
+function ConfirmPageLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 sm:px-6 py-8">
+      <Card className="w-full max-w-[400px] shadow-lg border-border/50">
+        <CardHeader className="px-4 sm:px-6 pt-4 sm:pt-6">
+          <CardTitle className="text-xl sm:text-2xl text-center">Carregando...</CardTitle>
+        </CardHeader>
+        <CardContent className="flex justify-center px-4 sm:px-6 py-6 sm:py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default function ConfirmPage() {
   return (
-    <Suspense fallback={<div>Carregando...</div>}>
+    <Suspense fallback={<ConfirmPageLoading />}>
       <ConfirmForm />
     </Suspense>
   );

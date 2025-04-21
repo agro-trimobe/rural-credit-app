@@ -78,17 +78,11 @@ export default function Home() {
                 <p className="text-sm sm:text-base lg:text-lg text-muted-foreground mb-6 sm:mb-8 max-w-3xl">
                   Uma plataforma específica para projetos de crédito rural com inteligência artificial, que simplifica o MCR, automatiza documentos, otimiza a prospecção e centraliza informações para decisões estratégicas e ágeis.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex justify-center sm:justify-start">
                   <Link href="/auth/login">
-                    <Button size="lg" className="rounded-md px-8 bg-primary hover:bg-primary/90 transition-colors">
+                    <Button size="lg" className="rounded-md px-8 py-6 text-base sm:text-lg bg-primary hover:bg-primary/90 transition-colors w-full sm:w-auto">
                       Começar Agora
                       <ArrowRight className="ml-2 h-5 w-5" />
-                    </Button>
-                  </Link>
-                  <Link href="#demonstracao">
-                    <Button variant="outline" size="lg" className="rounded-md px-8">
-                      Ver demonstração
-                      <ChevronRight className="ml-1 h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
@@ -150,11 +144,16 @@ export default function Home() {
                   <CardDescription className="text-muted-foreground min-h-[60px] sm:min-h-[80px]">
                     Não se preocupe com a complexidade do Manual de Crédito Rural. Nosso assistente inteligente está sempre disponível para esclarecer suas dúvidas e direcionar suas ações.
                   </CardDescription>
-                  <div className="mt-4 sm:mt-6 rounded-lg bg-muted aspect-video flex items-center justify-center overflow-hidden border border-border/50">
-                    <div className="text-center text-muted-foreground">
-                      <Orbit className="h-8 w-8 mx-auto mb-2 text-primary/60" />
-                      <p className="text-sm">GIF: Assistente inteligente MCR</p>
-                    </div>
+                  <div className="mt-4 sm:mt-6 rounded-lg overflow-hidden border border-border/50 relative" style={{ paddingTop: '56.25%' }}>
+                    <iframe 
+                      className="absolute top-0 left-0 w-full h-full" 
+                      src="https://www.youtube.com/embed/ZK-rNEhJIDs?rel=0" 
+                      title="Assistente inteligente MCR" 
+                      frameBorder="0" 
+                      loading="lazy"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                      allowFullScreen
+                    ></iframe>
                   </div>
                 </CardContent>
               </Card>
@@ -168,11 +167,16 @@ export default function Home() {
                   <CardDescription className="text-muted-foreground min-h-[60px] sm:min-h-[80px]">
                     Deixe a análise de documentos conosco. Nosso assistente inteligente faz o trabalho pesado, permitindo que você economize tempo e evite erros.
                   </CardDescription>
-                  <div className="mt-4 sm:mt-6 rounded-lg bg-muted aspect-video flex items-center justify-center overflow-hidden border border-border/50">
-                    <div className="text-center text-muted-foreground">
-                      <FolderArchive className="h-8 w-8 mx-auto mb-2 text-primary/60" />
-                      <p className="text-sm">GIF: Automação de documentos</p>
-                    </div>
+                  <div className="mt-4 sm:mt-6 rounded-lg overflow-hidden border border-border/50 relative" style={{ paddingTop: '56.25%' }}>
+                    <iframe 
+                      className="absolute top-0 left-0 w-full h-full" 
+                      src="https://www.youtube.com/embed/ZK-rNEhJIDs?rel=0" 
+                      title="Automação de documentos" 
+                      frameBorder="0" 
+                      loading="lazy"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                      allowFullScreen
+                    ></iframe>
                   </div>
                 </CardContent>
               </Card>
@@ -186,11 +190,16 @@ export default function Home() {
                   <CardDescription className="text-muted-foreground min-h-[60px] sm:min-h-[80px]">
                     A prospecção de clientes nunca foi tão fácil. Nossa plataforma de CRM específica para o setor garante que você encontre e gerencie clientes de forma eficiente.
                   </CardDescription>
-                  <div className="mt-4 sm:mt-6 rounded-lg bg-muted aspect-video flex items-center justify-center overflow-hidden border border-border/50">
-                    <div className="text-center text-muted-foreground">
-                      <Users className="h-8 w-8 mx-auto mb-2 text-primary/60" />
-                      <p className="text-sm">GIF: Interface de clientes</p>
-                    </div>
+                  <div className="mt-4 sm:mt-6 rounded-lg overflow-hidden border border-border/50 relative" style={{ paddingTop: '56.25%' }}>
+                    <iframe 
+                      className="absolute top-0 left-0 w-full h-full" 
+                      src="https://www.youtube.com/embed/ZK-rNEhJIDs?rel=0" 
+                      title="Interface de clientes" 
+                      frameBorder="0" 
+                      loading="lazy"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                      allowFullScreen
+                    ></iframe>
                   </div>
                 </CardContent>
               </Card>
@@ -204,11 +213,16 @@ export default function Home() {
                   <CardDescription className="text-muted-foreground min-h-[60px] sm:min-h-[80px]">
                     Diga adeus à desorganização. Nossa solução centraliza todas as informações, facilitando o acesso e a gestão.
                   </CardDescription>
-                  <div className="mt-4 sm:mt-6 rounded-lg bg-muted aspect-video flex items-center justify-center overflow-hidden border border-border/50">
-                    <div className="text-center text-muted-foreground">
-                      <Clock className="h-8 w-8 mx-auto mb-2 text-primary/60" />
-                      <p className="text-sm">GIF: Centralização de informações</p>
-                    </div>
+                  <div className="mt-4 sm:mt-6 rounded-lg overflow-hidden border border-border/50 relative" style={{ paddingTop: '56.25%' }}>
+                    <iframe 
+                      className="absolute top-0 left-0 w-full h-full" 
+                      src="https://www.youtube.com/embed/ZK-rNEhJIDs?rel=0" 
+                      title="Centralização de informações" 
+                      frameBorder="0" 
+                      loading="lazy"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                      allowFullScreen
+                    ></iframe>
                   </div>
                 </CardContent>
               </Card>
@@ -222,11 +236,16 @@ export default function Home() {
                   <CardDescription className="text-muted-foreground min-h-[60px] sm:min-h-[80px]">
                     Com nossos dashboards, você terá uma visão clara dos seus resultados, permitindo decisões informadas e estratégicas.
                   </CardDescription>
-                  <div className="mt-4 sm:mt-6 rounded-lg bg-muted aspect-video flex items-center justify-center overflow-hidden border border-border/50">
-                    <div className="text-center text-muted-foreground">
-                      <BarChart3 className="h-8 w-8 mx-auto mb-2 text-primary/60" />
-                      <p className="text-sm">GIF: Dashboard com métricas</p>
-                    </div>
+                  <div className="mt-4 sm:mt-6 rounded-lg overflow-hidden border border-border/50 relative" style={{ paddingTop: '56.25%' }}>
+                    <iframe 
+                      className="absolute top-0 left-0 w-full h-full" 
+                      src="https://www.youtube.com/embed/ZK-rNEhJIDs?rel=0" 
+                      title="Dashboard com métricas" 
+                      frameBorder="0" 
+                      loading="lazy"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                      allowFullScreen
+                    ></iframe>
                   </div>
                 </CardContent>
               </Card>
@@ -240,11 +259,16 @@ export default function Home() {
                   <CardDescription className="text-muted-foreground min-h-[60px] sm:min-h-[80px]">
                     Simule diferentes cenários de financiamento com facilidade e apresente as melhores opções para seus clientes com confiança.
                   </CardDescription>
-                  <div className="mt-4 sm:mt-6 rounded-lg bg-muted aspect-video flex items-center justify-center overflow-hidden border border-border/50">
-                    <div className="text-center text-muted-foreground">
-                      <CreditCard className="h-8 w-8 mx-auto mb-2 text-primary/60" />
-                      <p className="text-sm">GIF: Simulações de crédito</p>
-                    </div>
+                  <div className="mt-4 sm:mt-6 rounded-lg overflow-hidden border border-border/50 relative" style={{ paddingTop: '56.25%' }}>
+                    <iframe 
+                      className="absolute top-0 left-0 w-full h-full" 
+                      src="https://www.youtube.com/embed/ZK-rNEhJIDs?rel=0" 
+                      title="Simulações de crédito" 
+                      frameBorder="0" 
+                      loading="lazy"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                      allowFullScreen
+                    ></iframe>
                   </div>
                 </CardContent>
               </Card>
@@ -263,129 +287,122 @@ export default function Home() {
               <div className="text-center mb-12">
                 <Badge className="mb-2 bg-primary/10 text-primary hover:bg-primary/20 transition-colors px-3 py-1 mx-auto">
                   <Sparkles className="mr-1 h-3.5 w-3.5" />
-                  Escolha seu plano
+                  Experimente grátis
                 </Badge>
                 <h2 className="text-3xl md:text-4xl font-bold text-foreground">
                   Pronto para transformar sua <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">gestão de crédito rural</span>?
                 </h2>
                 <p className="text-lg text-muted-foreground max-w-2xl mx-auto mt-4">
-                  Junte-se a centenas de profissionais que já estão economizando tempo e aumentando seus resultados com a plataforma Trimobe.
+                  Acesso completo por 14 dias sem precisar de cartão de crédito. Escolha seu plano apenas se gostar da experiência.
                 </p>
               </div>
               
-              {/* Cards de Planos */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6">
-                {/* Plano Free Trial */}
-                <div className="bg-card rounded-xl border border-border/50 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
-                  <div className="p-6 space-y-4">
-                    <h3 className="text-xl font-bold">Free Trial</h3>
-                    <div className="flex items-end">
-                      <span className="text-3xl font-bold">Grátis</span>
-                      <span className="text-muted-foreground ml-2 mb-1">/ 14 dias</span>
+              {/* Card do Trial e Planos */}
+              <div className="mx-auto max-w-5xl">
+                {/* Trial Card */}
+                <div className="bg-gradient-to-r from-primary/10 to-purple-400/10 rounded-xl border border-primary/20 shadow-lg mb-6 sm:mb-10 overflow-hidden">
+                  <div className="p-5 sm:p-6 md:p-8">
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-6">
+                      <div>
+                        <h3 className="text-xl sm:text-2xl font-bold mb-2 flex items-center">
+                          <Clock className="h-5 w-5 sm:h-6 sm:w-6 mr-2 text-primary" />
+                          14 dias grátis, acesso total!
+                        </h3>
+                        <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4 max-w-2xl">
+                          Teste todas as funcionalidades sem limitações e sem precisar de cartão de crédito. Decida apenas após experimentar.
+                        </p>
+                        <div className="flex flex-wrap gap-2 sm:gap-3 mb-4">
+                          <Badge variant="secondary" className="text-xs py-1 px-2 sm:px-3">
+                            <CheckCircle className="h-3 w-3 mr-1" /> Sem cartão
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs py-1 px-2 sm:px-3">
+                            <CheckCircle className="h-3 w-3 mr-1" /> Acesso total
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs py-1 px-2 sm:px-3">
+                            <CheckCircle className="h-3 w-3 mr-1" /> Sem compromisso
+                          </Badge>
+                        </div>
+                      </div>
+                      <Link href="/auth/login" className="shrink-0 w-full md:w-auto">
+                        <Button size="lg" className="w-full md:w-auto px-4 sm:px-8 py-2 bg-primary hover:bg-primary/90 transition-colors text-sm sm:text-base">
+                          Começar agora
+                          <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+                        </Button>
+                      </Link>
                     </div>
-                    <p className="text-muted-foreground text-sm">Experimente as funcionalidades básicas sem compromisso.</p>
-                    
-                    <ul className="space-y-2 py-4">
-                      <li className="flex items-center">
-                        <CheckCircle className="h-4 w-4 text-primary mr-2" />
-                        <span className="text-sm">Gestão de clientes</span>
-                      </li>
-                      <li className="flex items-center">
-                        <CheckCircle className="h-4 w-4 text-primary mr-2" />
-                        <span className="text-sm">Gestão de oportunidades</span>
-                      </li>
-                      <li className="flex items-center">
-                        <CheckCircle className="h-4 w-4 text-primary mr-2" />
-                        <span className="text-sm">Simulações básicas</span>
-                      </li>
-                      <li className="flex items-center">
-                        <CheckCircle className="h-4 w-4 text-muted mr-2" />
-                        <span className="text-sm text-muted-foreground">Funcionalidades avançadas</span>
-                      </li>
-                    </ul>
-                    
-                    <Link href="/auth/login" className="block w-full">
-                      <Button variant="outline" className="w-full mt-2 border-primary/20 hover:border-primary/50 transition-all text-sm sm:text-base py-2">
-                        Começar Trial
-                      </Button>
-                    </Link>
                   </div>
                 </div>
                 
-                {/* Plano CRM */}
-                <div className="bg-card rounded-xl border border-primary/30 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden relative">
-                  <div className="absolute top-0 right-0 bg-primary text-white text-xs font-medium px-3 py-1 rounded-bl-lg">
-                    Popular
-                  </div>
-                  <div className="p-6 space-y-4">
-                    <h3 className="text-xl font-bold">CRM</h3>
-                    <div className="flex items-end">
-                      <span className="text-3xl font-bold">R$ 197</span>
-                      <span className="text-muted-foreground ml-2 mb-1">/ mês</span>
-                    </div>
-                    <p className="text-muted-foreground text-sm">Gerencie todo seu negócio de crédito rural.</p>
-                    
-                    <ul className="space-y-2 py-4">
-                      <li className="flex items-center">
-                        <CheckCircle className="h-4 w-4 text-primary mr-2" />
-                        <span className="text-sm">Gestão completa de clientes</span>
-                      </li>
-                      <li className="flex items-center">
-                        <CheckCircle className="h-4 w-4 text-primary mr-2" />
-                        <span className="text-sm">Gestão de documentos</span>
-                      </li>
-                      <li className="flex items-center">
-                        <CheckCircle className="h-4 w-4 text-primary mr-2" />
-                        <span className="text-sm">Simulações avançadas</span>
-                      </li>
-                      <li className="flex items-center">
-                        <CheckCircle className="h-4 w-4 text-primary mr-2" />
-                        <span className="text-sm">Dashboard analítico</span>
-                      </li>
-                    </ul>
-                    
-                    <Link href="/auth/login" className="block w-full">
-                      <Button className="w-full mt-2 bg-primary hover:bg-primary/90 text-sm sm:text-base py-2">
-                        Assinar Agora
-                      </Button>
-                    </Link>
-                  </div>
+                <div className="text-center mb-6 sm:mb-8">
+                  <h3 className="text-lg sm:text-xl font-bold mb-2">Após o período de teste, escolha seu plano:</h3>
+                  <p className="text-sm sm:text-base text-muted-foreground px-2">Você será avisado antes do término do período gratuito para escolher um dos planos abaixo:</p>
                 </div>
                 
-                {/* Plano CRM + IA */}
-                <div className="bg-gradient-to-br from-background to-primary/5 rounded-xl border border-border/50 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
-                  <div className="p-6 space-y-4">
-                    <h3 className="text-xl font-bold">CRM + IA</h3>
-                    <div className="flex items-end">
-                      <span className="text-3xl font-bold">R$ 297</span>
-                      <span className="text-muted-foreground ml-2 mb-1">/ mês</span>
+                {/* Cards de Planos */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-8">
+                  {/* Plano CRM */}
+                  <div className="bg-card rounded-xl border border-border/50 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden h-full">
+                    <div className="p-4 sm:p-6 space-y-3 sm:space-y-4 flex flex-col h-full">
+                      <h3 className="text-lg sm:text-xl font-bold">Plano Básico: CRM</h3>
+                      <div className="flex items-end">
+                        <span className="text-2xl sm:text-3xl font-bold">R$ 57</span>
+                        <span className="text-muted-foreground ml-2 mb-1 text-sm">/ mês</span>
+                      </div>
+                      <p className="text-muted-foreground text-xs sm:text-sm">Gerencie todo seu negócio de crédito rural de forma eficiente.</p>
+                      
+                      <ul className="space-y-1.5 sm:space-y-2 py-3 sm:py-4 flex-1">
+                        <li className="flex items-center">
+                          <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mr-2" />
+                          <span className="text-xs sm:text-sm">Gestão completa de clientes</span>
+                        </li>
+                        <li className="flex items-center">
+                          <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mr-2" />
+                          <span className="text-xs sm:text-sm">Gestão de documentos</span>
+                        </li>
+                        <li className="flex items-center">
+                          <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mr-2" />
+                          <span className="text-xs sm:text-sm">Simulações avançadas</span>
+                        </li>
+                        <li className="flex items-center">
+                          <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mr-2" />
+                          <span className="text-xs sm:text-sm">Dashboard analítico</span>
+                        </li>
+                      </ul>
                     </div>
-                    <p className="text-muted-foreground text-sm">Potencialize seu negócio com recursos de inteligência artificial.</p>
-                    
-                    <ul className="space-y-2 py-4">
-                      <li className="flex items-center">
-                        <CheckCircle className="h-4 w-4 text-primary mr-2" />
-                        <span className="text-sm">Tudo do plano CRM</span>
-                      </li>
-                      <li className="flex items-center">
-                        <CheckCircle className="h-4 w-4 text-primary mr-2" />
-                        <span className="text-sm">Assistente MCR inteligente</span>
-                      </li>
-                      <li className="flex items-center">
-                        <CheckCircle className="h-4 w-4 text-primary mr-2" />
-                        <span className="text-sm">Análise automática de documentos</span>
-                      </li>
-                      <li className="flex items-center">
-                        <CheckCircle className="h-4 w-4 text-primary mr-2" />
-                        <span className="text-sm">Previsões e recomendações</span>
-                      </li>
-                    </ul>
-                    
-                    <Link href="/auth/login" className="block w-full">
-                      <Button variant="outline" className="w-full mt-2 border-primary hover:bg-primary/10 text-sm sm:text-base py-2">
-                        Assinar Premium
-                      </Button>
-                    </Link>
+                  </div>
+                  
+                  {/* Plano CRM + IA */}
+                  <div className="bg-gradient-to-br from-background to-primary/5 rounded-xl border border-primary/30 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden relative h-full">
+                    <div className="absolute top-0 right-0 bg-primary text-white text-xs font-medium px-2 sm:px-3 py-1 rounded-bl-lg">
+                      Recomendado
+                    </div>
+                    <div className="p-4 sm:p-6 space-y-3 sm:space-y-4 flex flex-col h-full">
+                      <h3 className="text-lg sm:text-xl font-bold">Plano Premium: CRM + IA</h3>
+                      <div className="flex items-end">
+                        <span className="text-2xl sm:text-3xl font-bold">R$ 87</span>
+                        <span className="text-muted-foreground ml-2 mb-1 text-sm">/ mês</span>
+                      </div>
+                      <p className="text-muted-foreground text-xs sm:text-sm">Potencialize seu negócio com recursos avançados de inteligência artificial.</p>
+                      
+                      <ul className="space-y-1.5 sm:space-y-2 py-3 sm:py-4 flex-1">
+                        <li className="flex items-center">
+                          <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mr-2" />
+                          <span className="text-xs sm:text-sm">Tudo do plano CRM básico</span>
+                        </li>
+                        <li className="flex items-center">
+                          <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mr-2" />
+                          <span className="text-xs sm:text-sm">Assistente MCR inteligente</span>
+                        </li>
+                        <li className="flex items-center">
+                          <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mr-2" />
+                          <span className="text-xs sm:text-sm">Análise automática de documentos</span>
+                        </li>
+                        <li className="flex items-center">
+                          <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mr-2" />
+                          <span className="text-xs sm:text-sm">Previsões e recomendações</span>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -399,7 +416,7 @@ export default function Home() {
         <div className="container max-w-7xl mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center text-muted-foreground text-sm">
             <div>
-              &copy; {new Date().getFullYear()} Trimobe. Todos os direitos reservados.
+              &copy; {new Date().getFullYear()} Trimobe. contato@trimobe.com
             </div>
             <div className="mt-4 md:mt-0 flex space-x-6">
               <Link href="#" className="hover:text-primary transition-colors">
@@ -407,9 +424,6 @@ export default function Home() {
               </Link>
               <Link href="#" className="hover:text-primary transition-colors">
                 Privacidade
-              </Link>
-              <Link href="#" className="hover:text-primary transition-colors">
-                Cookies
               </Link>
             </div>
           </div>
