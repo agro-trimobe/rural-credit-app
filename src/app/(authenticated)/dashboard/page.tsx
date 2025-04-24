@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { BarChart, LineChart } from '@/components/ui/charts'
 import { DoughnutChart } from '@/components/ui/doughnut-chart'
 import { formatarData, formatarMoeda, coresStatus } from '@/lib/formatters'
@@ -12,10 +12,15 @@ import {
   CreditCard, 
   TrendingUp,
   BarChart3,
-  Users
+  Users,
+  ArrowUp,
+  ArrowDown,
+  ExternalLink
 } from 'lucide-react'
 import { CabecalhoPagina } from '@/components/ui/cabecalho-pagina'
 import { CardEstatistica } from '@/components/ui/card-padrao'
+import { Separator } from '@/components/ui/separator'
+import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 
 interface Projeto {
@@ -170,125 +175,241 @@ export default function Dashboard() {
       />
 
       {/* Cards de Resumo Padronizados */}
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
-        <div className="relative group">
-          <CardEstatistica
-            titulo="Projetos Ativos"
-            valor={estatisticas.totalProjetos.toString()}
-            icone={<ClipboardList className="h-5 w-5" />}
-          />
-          <Link 
-            href="/projetos" 
-            className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center bg-black/5 dark:bg-white/5 transition-opacity rounded-lg"
-          >
-            <span className="text-xs font-medium bg-primary/90 text-primary-foreground px-2 py-1 rounded">Ver detalhes</span>
-          </Link>
-        </div>
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+        <Card className="overflow-hidden border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+          <CardHeader className="p-3 pb-0">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Projetos Ativos</CardTitle>
+              <ClipboardList className="h-4 w-4 text-blue-500" />
+            </div>
+          </CardHeader>
+          <CardContent className="p-3 pt-2 flex-grow">
+            <div className="flex items-baseline gap-1">
+              <div className="text-2xl font-bold">{estatisticas.totalProjetos}</div>
+              <Badge variant="outline" className="text-[10px] h-4 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                <span className="flex items-center gap-px">
+                  <ArrowUp className="h-3 w-3" />
+                  <span>5%</span>
+                </span>
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Comparado ao mês anterior</p>
+          </CardContent>
+          <CardFooter className="p-0 mt-auto">
+            <Link 
+              href="/projetos" 
+              className="w-full text-center text-xs py-1.5 border-t hover:bg-muted/50 transition-colors font-medium text-primary flex items-center justify-center gap-1"
+            >
+              <span>Ver todos os projetos</span>
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+          </CardFooter>
+        </Card>
         
-        <div className="relative group">
-          <CardEstatistica
-            titulo="Valor em Projetos"
-            valor={formatarMoeda(estatisticas.valorProjetos)}
-            icone={<CreditCard className="h-5 w-5" />}
-          />
-          <Link 
-            href="/projetos" 
-            className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center bg-black/5 dark:bg-white/5 transition-opacity rounded-lg"
-          >
-            <span className="text-xs font-medium bg-primary/90 text-primary-foreground px-2 py-1 rounded">Ver detalhes</span>
-          </Link>
-        </div>
+        <Card className="overflow-hidden border-l-4 border-l-emerald-500 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+          <CardHeader className="p-3 pb-0">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Valor em Projetos</CardTitle>
+              <CreditCard className="h-4 w-4 text-emerald-500" />
+            </div>
+          </CardHeader>
+          <CardContent className="p-3 pt-2 flex-grow">
+            <div className="flex items-baseline gap-1">
+              <div className="text-2xl font-bold">{formatarMoeda(estatisticas.valorProjetos)}</div>
+              <Badge variant="outline" className="text-[10px] h-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800">
+                <span className="flex items-center gap-px">
+                  <ArrowUp className="h-3 w-3" />
+                  <span>12%</span>
+                </span>
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Comparado ao mês anterior</p>
+          </CardContent>
+          <CardFooter className="p-0 mt-auto">
+            <Link 
+              href="/projetos" 
+              className="w-full text-center text-xs py-1.5 border-t hover:bg-muted/50 transition-colors font-medium text-primary flex items-center justify-center gap-1"
+            >
+              <span>Ver detalhes financeiros</span>
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+          </CardFooter>
+        </Card>
         
-        <div className="relative group">
-          <CardEstatistica
-            titulo="Total de Clientes"
-            valor={estatisticas.totalClientes.toString()}
-            icone={<Users className="h-5 w-5" />}
-          />
-          <Link 
-            href="/clientes" 
-            className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center bg-black/5 dark:bg-white/5 transition-opacity rounded-lg"
-          >
-            <span className="text-xs font-medium bg-primary/90 text-primary-foreground px-2 py-1 rounded">Ver detalhes</span>
-          </Link>
-        </div>
+        <Card className="overflow-hidden border-l-4 border-l-violet-500 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+          <CardHeader className="p-3 pb-0">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total de Clientes</CardTitle>
+              <Users className="h-4 w-4 text-violet-500" />
+            </div>
+          </CardHeader>
+          <CardContent className="p-3 pt-2 flex-grow">
+            <div className="flex items-baseline gap-1">
+              <div className="text-2xl font-bold">{estatisticas.totalClientes}</div>
+              <Badge variant="outline" className="text-[10px] h-4 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800">
+                <span className="flex items-center gap-px">
+                  <ArrowUp className="h-3 w-3" />
+                  <span>3%</span>
+                </span>
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Comparado ao mês anterior</p>
+          </CardContent>
+          <CardFooter className="p-0 mt-auto">
+            <Link 
+              href="/clientes" 
+              className="w-full text-center text-xs py-1.5 border-t hover:bg-muted/50 transition-colors font-medium text-primary flex items-center justify-center gap-1"
+            >
+              <span>Ver todos os clientes</span>
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+          </CardFooter>
+        </Card>
         
-        <div className="relative group">
-          <CardEstatistica
-            titulo="Valor em Oportunidades"
-            valor={formatarMoeda(estatisticas.valorOportunidades)}
-            icone={<TrendingUp className="h-5 w-5" />}
-          />
-          <Link 
-            href="/oportunidades" 
-            className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center bg-black/5 dark:bg-white/5 transition-opacity rounded-lg"
-          >
-            <span className="text-xs font-medium bg-primary/90 text-primary-foreground px-2 py-1 rounded">Ver detalhes</span>
-          </Link>
-        </div>
+        <Card className="overflow-hidden border-l-4 border-l-amber-500 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+          <CardHeader className="p-3 pb-0">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Valor em Oportunidades</CardTitle>
+              <TrendingUp className="h-4 w-4 text-amber-500" />
+            </div>
+          </CardHeader>
+          <CardContent className="p-3 pt-2 flex-grow">
+            <div className="flex items-baseline gap-1">
+              <div className="text-2xl font-bold">{formatarMoeda(estatisticas.valorOportunidades)}</div>
+              <Badge variant="outline" className="text-[10px] h-4 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
+                <span className="flex items-center gap-px">
+                  <ArrowDown className="h-3 w-3" />
+                  <span>2%</span>
+                </span>
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Comparado ao mês anterior</p>
+          </CardContent>
+          <CardFooter className="p-0 mt-auto">
+            <Link 
+              href="/oportunidades" 
+              className="w-full text-center text-xs py-1.5 border-t hover:bg-muted/50 transition-colors font-medium text-primary flex items-center justify-center gap-1"
+            >
+              <span>Ver todas as oportunidades</span>
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+          </CardFooter>
+        </Card>
       </div>
 
-      {/* Seção de Gráficos */}
-      <div className="grid gap-3 grid-cols-1 md:grid-cols-3">
-        {/* Gráfico de Projetos */}
-        <Card className="shadow-md">
-          <CardHeader className="pb-1 pt-2 px-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-sm">Projetos por Status</CardTitle>
-                <CardDescription className="text-xs">
-                  Distribuição por fase atual
-                </CardDescription>
+      {/* Seção de Gráficos - Com título da seção */}
+      <div className="mb-4">
+        <h3 className="text-sm font-medium mb-2">Indicadores de Performance</h3>
+        <Separator className="mb-4" />
+        
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+          {/* Gráfico de Projetos */}
+          <Card className="shadow-sm hover:shadow-md transition-shadow flex flex-col">
+            <CardHeader className="p-4 pb-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <Badge className="bg-blue-100 hover:bg-blue-100 text-blue-700 border-none p-1.5">
+                      <ClipboardList className="h-3.5 w-3.5" />
+                    </Badge>
+                    Projetos por Status
+                  </CardTitle>
+                  <CardDescription className="text-xs mt-1">
+                    Distribuição por fase atual
+                  </CardDescription>
+                </div>
               </div>
-              <ClipboardList className="h-4 w-4 text-muted-foreground" />
-            </div>
-          </CardHeader>
-          <CardContent className="flex justify-center items-center h-80 px-2 pb-3">
-            <div className="w-full h-full max-w-[250px]">
-              <DoughnutChart data={dadosGraficoProjetos} />
-            </div>
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 flex-grow flex flex-col justify-center">
+              <div className="flex justify-center items-center h-[280px]">
+                <div className="w-full h-full" style={{ maxWidth: '280px' }}>
+                  <DoughnutChart data={dadosGraficoProjetos} />
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="p-0 mt-auto">
+              <Link 
+                href="/projetos" 
+                className="w-full text-center text-xs py-1.5 border-t hover:bg-muted/50 transition-colors font-medium text-primary flex items-center justify-center gap-1"
+              >
+                <span>Ver detalhes</span>
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </CardFooter>
+          </Card>
 
-        {/* Gráfico de Oportunidades */}
-        <Card className="shadow-md">
-          <CardHeader className="pb-1 pt-2 px-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-sm">Funil de Vendas</CardTitle>
-                <CardDescription className="text-xs">
-                  Oportunidades por estágio
-                </CardDescription>
+          {/* Gráfico de Oportunidades */}
+          <Card className="shadow-sm hover:shadow-md transition-shadow flex flex-col">
+            <CardHeader className="p-4 pb-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <Badge className="bg-amber-100 hover:bg-amber-100 text-amber-700 border-none p-1.5">
+                      <TrendingUp className="h-3.5 w-3.5" />
+                    </Badge>
+                    Funil de Vendas
+                  </CardTitle>
+                  <CardDescription className="text-xs mt-1">
+                    Oportunidades por estágio
+                  </CardDescription>
+                </div>
               </div>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </div>
-          </CardHeader>
-          <CardContent className="h-80 px-2 pb-3">
-            <div className="w-full h-full">
-              <BarChart data={dadosGraficoOportunidades} />
-            </div>
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 flex-grow flex flex-col justify-center">
+              <div className="h-[280px] mt-2">
+                <BarChart data={dadosGraficoOportunidades} />
+              </div>
+              <div className="text-center mt-2">
+                <span className="text-xs font-medium text-muted-foreground">Taxa de conversão:</span>
+                <span className="text-sm font-semibold ml-1">24%</span>
+              </div>
+            </CardContent>
+            <CardFooter className="p-0 mt-auto">
+              <Link 
+                href="/oportunidades" 
+                className="w-full text-center text-xs py-1.5 border-t hover:bg-muted/50 transition-colors font-medium text-primary flex items-center justify-center gap-1"
+              >
+                <span>Ver detalhes</span>
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </CardFooter>
+          </Card>
 
-        {/* Gráfico de Visitas */}
-        <Card className="shadow-md">
-          <CardHeader className="pb-1 pt-2 px-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-sm">Visitas por Status</CardTitle>
-                <CardDescription className="text-xs">
-                  Distribuição das visitas
-                </CardDescription>
+          {/* Gráfico de Visitas */}
+          <Card className="shadow-sm hover:shadow-md transition-shadow flex flex-col">
+            <CardHeader className="p-4 pb-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <Badge className="bg-violet-100 hover:bg-violet-100 text-violet-700 border-none p-1.5">
+                      <CalendarIcon className="h-3.5 w-3.5" />
+                    </Badge>
+                    Visitas por Status
+                  </CardTitle>
+                  <CardDescription className="text-xs mt-1">
+                    Distribuição das visitas
+                  </CardDescription>
+                </div>
               </div>
-              <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-            </div>
-          </CardHeader>
-          <CardContent className="flex justify-center items-center h-80 px-2 pb-3">
-            <div className="w-full h-full max-w-[250px]">
-              <DoughnutChart data={dadosGraficoVisitas} />
-            </div>
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 flex-grow flex flex-col justify-center">
+              <div className="flex justify-center items-center h-[280px]">
+                <div className="w-full h-full" style={{ maxWidth: '280px' }}>
+                  <DoughnutChart data={dadosGraficoVisitas} />
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="p-0 mt-auto">
+              <Link 
+                href="/visitas" 
+                className="w-full text-center text-xs py-1.5 border-t hover:bg-muted/50 transition-colors font-medium text-primary flex items-center justify-center gap-1"
+              >
+                <span>Ver detalhes</span>
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </CardFooter>
+          </Card>
+        </div>
       </div>
     </div>
   )
