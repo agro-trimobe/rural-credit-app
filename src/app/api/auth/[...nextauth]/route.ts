@@ -100,6 +100,7 @@ function validateEnvironmentConfig() {
   return true;
 }
 
+// Configuração do NextAuth com opções avançadas
 const handler = NextAuth({
   providers: [
     CredentialsProvider({
@@ -230,13 +231,20 @@ const handler = NextAuth({
     })
   ],
   debug: process.env.NODE_ENV === 'development',
-  session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 dias
-  },
   pages: {
     signIn: '/auth/login',
     error: '/auth/login',
+  },
+  logger: {
+    error(code, metadata) {
+      console.error('NextAuth Error:', { code, metadata });
+    },
+    warn(code) {
+      console.warn('NextAuth Warning:', code);
+    },
+    debug(code, metadata) {
+      console.log('NextAuth Debug:', { code, metadata });
+    },
   },
   // Configuração de cookies para garantir compatibilidade entre ambientes
   cookies: {
@@ -258,17 +266,24 @@ const handler = NextAuth({
         secure: process.env.NODE_ENV === 'production',
       },
     },
+    csrfToken: {
+      name: `next-auth.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
   },
-  logger: {
-    error(code, metadata) {
-      console.error('NextAuth Error:', { code, metadata });
-    },
-    warn(code) {
-      console.warn('NextAuth Warning:', code);
-    },
-    debug(code, metadata) {
-      console.log('NextAuth Debug:', { code, metadata });
-    },
+  // Configuração específica para JWT
+  jwt: {
+    maxAge: 60 * 60 * 24 * 30, // 30 dias
+  },
+  // Configuração de sessão
+  session: {
+    strategy: 'jwt',
+    maxAge: 60 * 60 * 24 * 30, // 30 dias
   },
   callbacks: {
     async jwt({ token, user }: { token: JWT; user: any }) {
