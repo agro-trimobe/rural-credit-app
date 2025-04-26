@@ -136,8 +136,20 @@ export async function middleware(request: NextRequest) {
         de: pathname,
         para: '/auth/login'
       });
-      const urlLogin = new URL('/auth/login', request.url);
-      logDetalhe('URL de redirecionamento para login', { url: urlLogin.toString() });
+      
+      // Construir URL baseada no host da requisição em vez de usar localhost
+      const host = request.headers.get('host') || '';
+      const protocol = host.includes('localhost') ? 'http' : 'https';
+      const baseUrl = `${protocol}://${host}`;
+      const urlLogin = new URL('/auth/login', baseUrl);
+      
+      logDetalhe('URL de redirecionamento para login', { 
+        url: urlLogin.toString(),
+        baseUrl,
+        host,
+        protocol 
+      });
+      
       const response = NextResponse.redirect(urlLogin);
       return addNoCacheHeaders(response);
     }
@@ -148,8 +160,20 @@ export async function middleware(request: NextRequest) {
         de: pathname,
         para: '/dashboard'
       });
-      const urlDashboard = new URL('/dashboard', request.url);
-      logDetalhe('URL de redirecionamento para dashboard', { url: urlDashboard.toString() });
+      
+      // Construir URL baseada no host da requisição em vez de usar localhost
+      const host = request.headers.get('host') || '';
+      const protocol = host.includes('localhost') ? 'http' : 'https';
+      const baseUrl = `${protocol}://${host}`;
+      const urlDashboard = new URL('/dashboard', baseUrl);
+      
+      logDetalhe('URL de redirecionamento para dashboard', { 
+        url: urlDashboard.toString(),
+        baseUrl,
+        host,
+        protocol
+      });
+      
       const response = NextResponse.redirect(urlDashboard);
       return addNoCacheHeaders(response);
     }
