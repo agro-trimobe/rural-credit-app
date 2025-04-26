@@ -98,14 +98,37 @@ export async function middleware(request: NextRequest) {
     }
 
     // Verificar token de autenticação
+    const host = request.headers.get('host') || '';
+    const protocol = host.includes('localhost') ? 'http' : 'https';
+    const baseUrl = `${protocol}://${host}`;
+
+    // Configurar opções para o getToken
     const tokenConfig = {
       req: request,
       secret: process.env.NEXTAUTH_SECRET,
+      secureCookie: protocol === 'https',
+      cookieName: 'next-auth.session-token',
     };
     
     logDetalhe('Tentando obter token de autenticação', {
       secretDefinido: !!process.env.NEXTAUTH_SECRET,
-      cookiesPresentesNaRequisicao: request.cookies.size > 0
+      cookiesPresentesNaRequisicao: request.cookies.size > 0,
+      baseUrl,
+      protocol,
+      host,
+      ambiente: process.env.NODE_ENV
+    });
+    
+    // Verificar o nome do cookie de acordo com o ambiente
+    const cookieName = process.env.NODE_ENV === 'production' 
+      ? `__Secure-next-auth.session-token`
+      : `next-auth.session-token`;
+      
+    const sessionCookie = request.cookies.get(cookieName) || request.cookies.get('next-auth.session-token');
+    logDetalhe('Verificando cookie de sessão', {
+      cookieName,
+      cookieEncontrado: !!sessionCookie,
+      valorCookie: sessionCookie ? 'Presente (valor não exibido)' : 'Ausente'
     });
     
     let token;
@@ -137,11 +160,10 @@ export async function middleware(request: NextRequest) {
         para: '/auth/login'
       });
       
-      // Construir URL baseada no host da requisição em vez de usar localhost
-      const host = request.headers.get('host') || '';
-      const protocol = host.includes('localhost') ? 'http' : 'https';
-      const baseUrl = `${protocol}://${host}`;
+      // Já temos o baseUrl definido acima
       const urlLogin = new URL('/auth/login', baseUrl);
+      // Adicionar parâmetro callbackUrl para retornar depois do login
+      urlLogin.searchParams.set('callbackUrl', encodeURIComponent(href));
       
       logDetalhe('URL de redirecionamento para login', { 
         url: urlLogin.toString(),
@@ -161,10 +183,7 @@ export async function middleware(request: NextRequest) {
         para: '/dashboard'
       });
       
-      // Construir URL baseada no host da requisição em vez de usar localhost
-      const host = request.headers.get('host') || '';
-      const protocol = host.includes('localhost') ? 'http' : 'https';
-      const baseUrl = `${protocol}://${host}`;
+      // Já temos o baseUrl definido acima
       const urlDashboard = new URL('/dashboard', baseUrl);
       
       logDetalhe('URL de redirecionamento para dashboard', { 
