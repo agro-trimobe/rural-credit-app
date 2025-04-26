@@ -44,7 +44,7 @@ import {
   Cloud,
   Droplets
 } from 'lucide-react'
-import MapaPropriedade from '@/components/propriedades/mapa-propriedade'
+import ClienteMapa from '@/components/propriedades/cliente-mapa'
 import { Propriedade, Cliente, Projeto } from '@/lib/crm-utils'
 import { formatarData, formatarDataHora, formatarMoeda } from '@/lib/formatters'
 import { clientesApi, propriedadesApi, projetosApi } from '@/lib/api'
@@ -382,7 +382,7 @@ function PropriedadeDetalhesConteudo({ propriedadeId }: { propriedadeId: string 
             
             {/* Card de Mapa (largura total) */}
             <div className="col-span-1 md:col-span-3">
-              <MapaPropriedade 
+              <ClienteMapa 
                 coordenadas={propriedade.coordenadas} 
                 nome={propriedade.nome}
                 municipio={propriedade.municipio}

@@ -3,52 +3,48 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle,
-  CardFooter
+  Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
 import { 
-  ArrowLeft, 
-  Save, 
-  MapPin, 
-  Ruler, 
-  Info, 
-  ChevronDown, 
-  ChevronUp,
-  Home,
-  Map,
-  Building,
-  FileText
+  ArrowLeft, Save, MapPin, Ruler, Info, 
+  Home, Map as MapIcon, Building, FileText, Eye, LocateFixed
 } from 'lucide-react'
 import { Propriedade, Cliente } from '@/lib/crm-utils'
 import { propriedadesApi, clientesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
+
+// Importação dinâmica do mapa para evitar problemas de SSR
+// Definição da interface das props do MapSelector para uso antes do carregamento dinâmico
+interface MapSelectorProps {
+  initialPosition?: { latitude: number; longitude: number }
+  onPositionChange: (position: { latitude: number; longitude: number }) => void
+}
+
+const MapSelector = dynamic<MapSelectorProps>(() => import('../../../../components/propriedades/map-selector'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[300px] w-full flex items-center justify-center bg-muted/20 rounded-md border border-dashed">
+      <div className="flex flex-col items-center justify-center gap-2">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <p className="text-sm text-muted-foreground">Carregando mapa...</p>
+      </div>
+    </div>
+  )
+})
 
 // Lista de estados brasileiros em ordem alfabética
 const estadosBrasileiros = [
@@ -58,17 +54,23 @@ const estadosBrasileiros = [
 
 // Função para classificar o tamanho da propriedade
 const classificarTamanho = (area: number) => {
-  if (area < 20) return { texto: 'Pequena', cor: 'bg-blue-100 text-blue-800 hover:bg-blue-100/80' }
-  if (area < 100) return { texto: 'Média', cor: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80' }
-  return { texto: 'Grande', cor: 'bg-green-100 text-green-800 hover:bg-green-100/80' }
-}
+  if (area < 20) {
+    return { texto: 'Pequena', cor: 'bg-[hsl(12,76%,61%)] text-white' }; // --chart-1
+  } else if (area >= 20 && area < 100) {
+    return { texto: 'Média', cor: 'bg-[hsl(173,58%,39%)] text-white' }; // --chart-2
+  } else {
+    return { texto: 'Grande', cor: 'bg-[hsl(197,37%,24%)] text-white' }; // --chart-3
+  }
+};
 
 export default function NovaPropriedadeConteudo() {
   const router = useRouter()
   const [carregando, setCarregando] = useState(true)
   const [enviando, setEnviando] = useState(false)
   const [clientes, setClientes] = useState<Cliente[]>([])
-  const [mostrarAvancado, setMostrarAvancado] = useState(false)
+  const [errosValidacao, setErrosValidacao] = useState<Record<string, string>>({})
+  
+  // Estado do formulário com valores iniciais
   const [formData, setFormData] = useState<Partial<Propriedade>>({
     nome: '',
     clienteId: '',
@@ -103,96 +105,174 @@ export default function NovaPropriedadeConteudo() {
     carregarClientes()
   }, [])
 
+  // Validar um campo específico do formulário
+  const validarCampo = (nome: string, valor: any): string => {
+    if (['nome', 'endereco', 'municipio'].includes(nome) && (!valor || valor.trim() === '')) {
+      return 'Este campo é obrigatório';
+    }
+    if (nome === 'clienteId' && (!valor || valor === '')) {
+      return 'Selecione um proprietário';
+    }
+    if (nome === 'estado' && (!valor || valor === '')) {
+      return 'Selecione um estado';
+    }
+    if (nome === 'area') {
+      if (!valor || valor <= 0) {
+        return 'Informe uma área válida';
+      }
+    }
+    return '';
+  };
+
+  // Atualizar campo e validar
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     
     if (name === 'area') {
+      const areaValue = parseFloat(value) || 0;
       setFormData({
         ...formData,
-        [name]: parseFloat(value) || 0
-      })
+        [name]: areaValue
+      });
+      
+      // Validar após a atualização
+      const erro = validarCampo(name, areaValue);
+      setErrosValidacao(prev => ({ ...prev, [name]: erro }));
     } else if (name === 'latitude' || name === 'longitude') {
       // Permitir valores vazios ou negativos para coordenadas
       const numeroProcessado = value === '' ? 0 : parseFloat(value)
       
+      const novasCoordenadas = {
+        latitude: name === 'latitude' ? numeroProcessado : formData.coordenadas?.latitude || 0,
+        longitude: name === 'longitude' ? numeroProcessado : formData.coordenadas?.longitude || 0
+      };
+      
       setFormData({
         ...formData,
-        coordenadas: {
-          latitude: name === 'latitude' ? numeroProcessado : formData.coordenadas?.latitude || 0,
-          longitude: name === 'longitude' ? numeroProcessado : formData.coordenadas?.longitude || 0
-        }
-      })
+        coordenadas: novasCoordenadas
+      });
     } else {
       setFormData({
         ...formData,
         [name]: value
-      })
+      });
+      
+      // Validar após a atualização
+      const erro = validarCampo(name, value);
+      setErrosValidacao(prev => ({ ...prev, [name]: erro }));
     }
   }
 
+  // Atualizar campo de select e validar
   const handleSelectChange = (name: string, value: string) => {
     setFormData({
       ...formData,
       [name]: value
-    })
+    });
+    
+    // Validar após a atualização
+    const erro = validarCampo(name, value);
+    setErrosValidacao(prev => ({ ...prev, [name]: erro }));
+  }
+  
+  // Atualizar coordenadas a partir do mapa
+  const handleMapPositionChange = (position: { latitude: number; longitude: number }) => {
+    setFormData({
+      ...formData,
+      coordenadas: position
+    });
   }
 
+  // Validar todo o formulário
+  const validarFormulario = (): boolean => {
+    const campos = ['nome', 'clienteId', 'endereco', 'municipio', 'estado', 'area'];
+    const novosErros: Record<string, string> = {};
+    
+    campos.forEach(campo => {
+      let valor;
+      if (campo === 'area') {
+        valor = formData[campo as keyof typeof formData] as number;
+      } else {
+        valor = formData[campo as keyof typeof formData] as string;
+      }
+      
+      novosErros[campo] = validarCampo(campo, valor);
+    });
+    
+    setErrosValidacao(novosErros);
+    
+    // Retorna true se não houver erros
+    return !Object.values(novosErros).some(erro => erro !== '');
+  }
+
+  // Enviar formulário
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.nome || !formData.clienteId || !formData.endereco || !formData.municipio || !formData.estado) {
+    // Validar todos os campos antes de enviar
+    if (!validarFormulario()) {
       toast({
-        title: 'Campos obrigatórios',
-        description: 'Por favor, preencha todos os campos obrigatórios.',
+        title: 'Campos inválidos',
+        description: 'Por favor, corrija os campos destacados antes de continuar.',
         variant: 'destructive',
-      })
-      return
+      });
+      return;
     }
     
     try {
-      setEnviando(true)
+      setEnviando(true);
       
-      const novaPropriedade = await propriedadesApi.criarPropriedade(formData as Omit<Propriedade, 'id' | 'dataCriacao'>)
+      const novaPropriedade = await propriedadesApi.criarPropriedade(formData as Omit<Propriedade, 'id' | 'dataCriacao'>);
       
       toast({
         title: 'Propriedade criada',
         description: 'A propriedade foi criada com sucesso.',
-      })
+      });
       
-      router.push(`/propriedades/${novaPropriedade.id}`)
+      router.push(`/propriedades/${novaPropriedade.id}`);
     } catch (error) {
-      console.error('Erro ao criar propriedade:', error)
+      console.error('Erro ao criar propriedade:', error);
       toast({
         title: 'Erro',
         description: 'Não foi possível criar a propriedade.',
         variant: 'destructive',
-      })
+      });
     } finally {
-      setEnviando(false)
+      setEnviando(false);
     }
-  }
-
-  if (carregando) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    )
   }
 
   // Obter a classificação de tamanho para o preview
   const tamanhoPropriedade = classificarTamanho(formData.area || 0)
+  
+  // Estado de carregamento
+  if (carregando) {
+    return (
+      <div className="container mx-auto py-6">
+        <div className="flex justify-center items-center h-64">
+          <div className="flex flex-col items-center gap-4">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+            <p className="text-muted-foreground">Carregando formulário...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="space-y-4">
+    <div className="container mx-auto py-6 space-y-6">
+      {/* Cabeçalho */}
       <div className="flex items-center justify-between pb-2 border-b">
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="icon" asChild>
+        <div className="flex items-center space-x-3">
+          <Button variant="outline" size="icon" asChild className="h-8 w-8">
             <Link href="/propriedades">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-          <h1 className="text-xl font-bold tracking-tight">Nova Propriedade</h1>
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold tracking-tight">Nova Propriedade</h1>
+            <p className="text-sm text-muted-foreground">Adicione uma nova propriedade rural ao sistema</p>
+          </div>
         </div>
       </div>
 
@@ -213,7 +293,7 @@ export default function NovaPropriedadeConteudo() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="nome" className="flex items-center">
+                    <Label htmlFor="nome" className={`flex items-center ${errosValidacao.nome ? 'text-destructive' : ''}`}>
                       <Home className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
                       Nome da Propriedade *
                     </Label>
@@ -235,13 +315,16 @@ export default function NovaPropriedadeConteudo() {
                     onChange={handleChange}
                     placeholder="Nome da propriedade"
                     required
-                    className="border-input"
+                    className={errosValidacao.nome ? 'border-destructive' : ''}
                   />
+                  {errosValidacao.nome && (
+                    <p className="text-xs text-destructive mt-1">{errosValidacao.nome}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="clienteId" className="flex items-center">
+                    <Label htmlFor="clienteId" className={`flex items-center ${errosValidacao.clienteId ? 'text-destructive' : ''}`}>
                       <Building className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
                       Proprietário *
                     </Label>
@@ -250,7 +333,7 @@ export default function NovaPropriedadeConteudo() {
                     value={formData.clienteId}
                     onValueChange={(value) => handleSelectChange('clienteId', value)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className={errosValidacao.clienteId ? 'border-destructive' : ''}>
                       <SelectValue placeholder="Selecione o proprietário" />
                     </SelectTrigger>
                     <SelectContent>
@@ -261,12 +344,15 @@ export default function NovaPropriedadeConteudo() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {errosValidacao.clienteId && (
+                    <p className="text-xs text-destructive mt-1">{errosValidacao.clienteId}</p>
+                  )}
                 </div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center">
-                  <Label htmlFor="endereco" className="flex items-center">
+                  <Label htmlFor="endereco" className={`flex items-center ${errosValidacao.endereco ? 'text-destructive' : ''}`}>
                     <MapPin className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
                     Endereço *
                   </Label>
@@ -278,12 +364,16 @@ export default function NovaPropriedadeConteudo() {
                   onChange={handleChange}
                   placeholder="Endereço completo"
                   required
+                  className={errosValidacao.endereco ? 'border-destructive' : ''}
                 />
+                {errosValidacao.endereco && (
+                  <p className="text-xs text-destructive mt-1">{errosValidacao.endereco}</p>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="municipio" className="flex items-center">
+                  <Label htmlFor="municipio" className={`flex items-center ${errosValidacao.municipio ? 'text-destructive' : ''}`}>
                     <Building className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
                     Município *
                   </Label>
@@ -294,18 +384,22 @@ export default function NovaPropriedadeConteudo() {
                     onChange={handleChange}
                     placeholder="Município"
                     required
+                    className={errosValidacao.municipio ? 'border-destructive' : ''}
                   />
+                  {errosValidacao.municipio && (
+                    <p className="text-xs text-destructive mt-1">{errosValidacao.municipio}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="estado">
+                  <Label htmlFor="estado" className={errosValidacao.estado ? 'text-destructive' : ''}>
                     Estado *
                   </Label>
                   <Select
                     value={formData.estado}
                     onValueChange={(value) => handleSelectChange('estado', value)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className={errosValidacao.estado ? 'border-destructive' : ''}>
                       <SelectValue placeholder="Selecione o estado" />
                     </SelectTrigger>
                     <SelectContent>
@@ -316,11 +410,14 @@ export default function NovaPropriedadeConteudo() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {errosValidacao.estado && (
+                    <p className="text-xs text-destructive mt-1">{errosValidacao.estado}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="area" className="flex items-center">
+                    <Label htmlFor="area" className={`flex items-center ${errosValidacao.area ? 'text-destructive' : ''}`}>
                       <Ruler className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
                       Área (hectares) *
                     </Label>
@@ -344,56 +441,59 @@ export default function NovaPropriedadeConteudo() {
                       id="area"
                       name="area"
                       type="number"
-                      value={formData.area}
+                      value={formData.area === 0 ? '' : formData.area}
                       onChange={handleChange}
                       placeholder="Área em hectares"
-                      className="pr-8"
+                      className={`pr-8 ${errosValidacao.area ? 'border-destructive' : ''}`}
                       required
                     />
                     <span className="absolute right-3 top-2.5 text-muted-foreground text-sm">ha</span>
                   </div>
+                  {errosValidacao.area && (
+                    <p className="text-xs text-destructive mt-1">{errosValidacao.area}</p>
+                  )}
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Card de Preview */}
-          <Card>
+          <Card className="lg:col-span-1">
             <CardHeader className="pb-3">
               <div className="flex items-center">
-                <Map className="h-5 w-5 mr-2 text-primary" />
-                <CardTitle className="text-lg">Preview</CardTitle>
+                <Eye className="h-5 w-5 mr-2 text-primary" />
+                <CardTitle className="text-lg">Visualização</CardTitle>
               </div>
               <CardDescription>
-                Visualização da propriedade
+                Preview da propriedade
               </CardDescription>
             </CardHeader>
-            <CardContent className="pt-0">
+            <CardContent className="pt-0 pb-0">
               <div className="space-y-4">
                 {formData.nome ? (
                   <div className="rounded-md border p-4 space-y-3">
                     <div className="flex justify-between items-start">
                       <h3 className="font-medium">{formData.nome || 'Nome da Propriedade'}</h3>
                       {formData.area !== undefined && formData.area > 0 && (
-                        <div className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${tamanhoPropriedade.cor}`}>
+                        <Badge className={tamanhoPropriedade.cor}>
                           {tamanhoPropriedade.texto}
-                        </div>
+                        </Badge>
                       )}
                     </div>
                     
-                    {formData.endereco && (
-                      <div className="flex items-start">
-                        <MapPin className="h-4 w-4 mr-1.5 text-muted-foreground mt-0.5 shrink-0" />
-                        <span className="text-sm text-muted-foreground">{formData.endereco}</span>
-                      </div>
-                    )}
-                    
                     {(formData.municipio || formData.estado) && (
                       <div className="flex items-center">
-                        <Building className="h-4 w-4 mr-1.5 text-muted-foreground shrink-0" />
+                        <MapPin className="h-4 w-4 mr-1.5 text-muted-foreground shrink-0" />
                         <span className="text-sm text-muted-foreground">
                           {[formData.municipio, formData.estado].filter(Boolean).join(', ')}
                         </span>
+                      </div>
+                    )}
+                    
+                    {formData.endereco && (
+                      <div className="flex items-start">
+                        <Building className="h-4 w-4 mr-1.5 text-muted-foreground mt-0.5 shrink-0" />
+                        <span className="text-sm text-muted-foreground">{formData.endereco}</span>
                       </div>
                     )}
                     
@@ -402,6 +502,15 @@ export default function NovaPropriedadeConteudo() {
                         <Ruler className="h-4 w-4 mr-1.5 text-muted-foreground shrink-0" />
                         <span className="text-sm text-muted-foreground">
                           {formData.area !== undefined ? formData.area.toLocaleString('pt-BR') : '0'} hectares
+                        </span>
+                      </div>
+                    )}
+
+                    {(formData.coordenadas?.latitude !== 0 || formData.coordenadas?.longitude !== 0) && (
+                      <div className="flex items-center">
+                        <LocateFixed className="h-4 w-4 mr-1.5 text-muted-foreground shrink-0" />
+                        <span className="text-sm text-muted-foreground">
+                          Lat: {formData.coordenadas?.latitude.toFixed(6)}, Lon: {formData.coordenadas?.longitude.toFixed(6)}
                         </span>
                       </div>
                     )}
@@ -418,92 +527,40 @@ export default function NovaPropriedadeConteudo() {
                 )}
               </div>
             </CardContent>
+            <CardFooter className="mt-auto flex flex-col gap-2 pb-4 pt-4 border-t">
+              <p className="text-xs text-muted-foreground w-full">
+                Após preencher os dados básicos, você pode:
+              </p>
+              <Button 
+                type="submit" 
+                disabled={enviando}
+                className="bg-primary hover:bg-primary/90 w-full shadow-sm"
+              >
+                <Save className="mr-2 h-4 w-4" />
+                Criar Propriedade
+              </Button>
+            </CardFooter>
+          </Card>
+
+          {/* Seção para o mapa integrado */}
+          <Card className="lg:col-span-3">
+            <CardHeader className="pb-3">
+              <div className="flex items-center">
+                <MapIcon className="h-5 w-5 mr-2 text-primary" />
+                <CardTitle className="text-lg">Localização no Mapa</CardTitle>
+              </div>
+              <CardDescription>
+                Visualize e selecione a localização da propriedade no mapa
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <MapSelector 
+                initialPosition={formData.coordenadas} 
+                onPositionChange={handleMapPositionChange} 
+              />
+            </CardContent>
           </Card>
         </div>
-
-        {/* Seção Avançada Colapsável */}
-        <Collapsible
-          open={mostrarAvancado}
-          onOpenChange={setMostrarAvancado}
-          className="border rounded-md"
-        >
-          <div className="flex items-center justify-between p-4">
-            <h3 className="text-sm font-medium flex items-center">
-              <Map className="h-4 w-4 mr-2 text-muted-foreground" />
-              Informações Geográficas (opcional)
-            </h3>
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="sm">
-                {mostrarAvancado ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </Button>
-            </CollapsibleTrigger>
-          </div>
-          <CollapsibleContent>
-            <div className="p-4 pt-0 border-t">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="latitude">
-                      Latitude
-                    </Label>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Coordenada geográfica norte-sul</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <Input
-                    id="latitude"
-                    name="latitude"
-                    type="text"
-                    inputMode="decimal"
-                    pattern="-?\d*\.?\d*"
-                    value={formData.coordenadas?.latitude === 0 ? '' : formData.coordenadas?.latitude}
-                    onChange={handleChange}
-                    placeholder="Ex: -15.7801"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="longitude">
-                      Longitude
-                    </Label>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Coordenada geográfica leste-oeste</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <Input
-                    id="longitude"
-                    name="longitude"
-                    type="text"
-                    inputMode="decimal"
-                    pattern="-?\d*\.?\d*"
-                    value={formData.coordenadas?.longitude === 0 ? '' : formData.coordenadas?.longitude}
-                    onChange={handleChange}
-                    placeholder="Ex: -47.9292"
-                  />
-                </div>
-              </div>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
 
         {/* Botões de Ação Fixos */}
         <div className="sticky bottom-0 bg-background border-t p-4 flex justify-between items-center mt-6 -mx-4 rounded-b-md">
@@ -513,7 +570,11 @@ export default function NovaPropriedadeConteudo() {
               Cancelar
             </Link>
           </Button>
-          <Button type="submit" disabled={enviando}>
+          <Button 
+            type="submit" 
+            disabled={enviando}
+            className="bg-primary hover:bg-primary/90"
+          >
             {enviando ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
             ) : (
@@ -526,5 +587,5 @@ export default function NovaPropriedadeConteudo() {
         </div>
       </form>
     </div>
-  )
+  );
 }

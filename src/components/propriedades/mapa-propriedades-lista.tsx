@@ -25,11 +25,14 @@ interface DadosMapaPropriedades {
   classificarTamanho: (area: number) => { texto: string; cor: string }
   projetosPorPropriedade: Record<string, number>
   centroDoBrasil: LatLngExpression
+  propriedadeSelecionada: string | null
+  onSelecionarPropriedade: (id: string) => void
 }
 
 // Interface para o componente de mapa
 interface MapComponentsPropriedadesProps {
   dados: DadosMapaPropriedades
+  containerId?: string
 }
 
 // Importação dinâmica dos componentes do Leaflet para evitar erros de SSR
@@ -51,6 +54,7 @@ export default function MapaPropriedadesLista({
   projetosPorPropriedade
 }: MapaPropriedadesListaProps) {
   const [mapaCarregado, setMapaCarregado] = useState(false)
+  const [propriedadeSelecionada, setPropriedadeSelecionada] = useState<string | null>(null)
 
   // Coordenadas aproximadas do centro do Brasil
   const centroDoBrasil: LatLngExpression = [-15.77972, -47.92972]
@@ -60,18 +64,30 @@ export default function MapaPropriedadesLista({
     setMapaCarregado(true)
   }, [])
 
+  // Função para selecionar uma propriedade no mapa
+  const handleSelecionarPropriedade = (id: string) => {
+    setPropriedadeSelecionada(id === propriedadeSelecionada ? null : id)
+  }
+
   // Preparar dados para o componente de mapa
   const dadosMapa: DadosMapaPropriedades = {
     propriedades,
     classificarTamanho,
     projetosPorPropriedade,
-    centroDoBrasil
+    centroDoBrasil,
+    propriedadeSelecionada,
+    onSelecionarPropriedade: handleSelecionarPropriedade
   }
 
   return (
     <Card>
       <CardContent className="p-0 h-[580px] overflow-hidden">
-        {mapaCarregado && <MapComponentsPropriedades dados={dadosMapa} />}
+        {mapaCarregado && (
+          <MapComponentsPropriedades 
+            dados={dadosMapa} 
+            containerId="mapa-propriedades-lista" 
+          />
+        )}
       </CardContent>
     </Card>
   )

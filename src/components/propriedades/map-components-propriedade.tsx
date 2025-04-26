@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { MapPin, Info } from 'lucide-react'
@@ -38,7 +38,9 @@ interface DadosMapaPropriedade {
 }
 
 export default function MapComponentsPropriedade({ dados }: { dados: DadosMapaPropriedade }) {
-  // Corrigir problema com o Leaflet no SSR
+  const mapContainerRef = useRef<HTMLDivElement | null>(null)
+  
+  // Configurar ícones do Leaflet apenas uma vez na inicialização do componente
   useEffect(() => {
     // Corrigir o problema com os ícones padrão do Leaflet
     delete (L.Icon.Default.prototype as any)._getIconUrl
@@ -48,6 +50,9 @@ export default function MapComponentsPropriedade({ dados }: { dados: DadosMapaPr
       iconRetinaUrl: '/images/marker-icon-2x.png',
       shadowUrl: '/images/marker-shadow.png',
     })
+    
+    // Nenhum outro código de inicialização de mapa aqui - deixar o React handleá-lo
+    // com a propriedade key no componente pai
   }, [])
 
   const { coordenadas, nome, municipio, estado } = dados

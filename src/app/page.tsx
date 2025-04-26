@@ -138,7 +138,7 @@ export default function Home() {
               <Card className="border border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 overflow-hidden">
                 <CardContent className="p-4 sm:p-6 space-y-3 sm:space-y-4">
                   <div className="bg-primary/10 p-3 rounded-full w-14 h-14 flex items-center justify-center">
-                    <Orbit className="h-7 w-7 text-primary" />
+                    <BookOpen className="h-7 w-7 text-primary" />
                   </div>
                   <CardTitle className="text-xl font-semibold mt-2">Complexidade do MCR</CardTitle>
                   <CardDescription className="text-muted-foreground min-h-[60px] sm:min-h-[80px]">

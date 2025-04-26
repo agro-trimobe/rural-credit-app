@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { 
@@ -44,11 +44,27 @@ interface DadosMapaPropriedades {
   classificarTamanho: (area: number) => { texto: string; cor: string }
   projetosPorPropriedade: Record<string, number>
   centroDoBrasil: LatLngExpression
+  propriedadeSelecionada: string | null
+  onSelecionarPropriedade: (id: string) => void
 }
 
-export default function MapComponentsPropriedades({ dados }: { dados: DadosMapaPropriedades }) {
-  // Corrigir problema com o Leaflet no SSR
+interface MapComponentsPropriedadesProps {
+  dados: DadosMapaPropriedades;
+  containerId?: string;
+}
+
+export default function MapComponentsPropriedades({ dados, containerId }: MapComponentsPropriedadesProps) {
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const [mapInitialized, setMapInitialized] = useState(false);
+  
+  // Corrigir problema com o Leaflet no SSR e lidar com o ciclo de vida do mapa
   useEffect(() => {
+    // Verificar se estamos no browser
+    if (typeof window === 'undefined') return;
+    
+    // Evitar re-inicialização do mapa
+    if (mapInitialized) return;
+    
     // Corrigir o problema com os ícones padrão do Leaflet
     delete (L.Icon.Default.prototype as any)._getIconUrl
     
@@ -57,9 +73,21 @@ export default function MapComponentsPropriedades({ dados }: { dados: DadosMapaP
       iconRetinaUrl: '/images/marker-icon-2x.png',
       shadowUrl: '/images/marker-shadow.png',
     })
-  }, [])
+    
+    setMapInitialized(true);
+    
+    // Limpeza ao desmontar o componente
+    return () => {
+      if (mapInstanceRef.current) {
+        console.log('Removendo instância do mapa');
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+        setMapInitialized(false);
+      }
+    };
+  }, [mapInitialized])
 
-  const { propriedades, classificarTamanho, projetosPorPropriedade, centroDoBrasil } = dados
+  const { propriedades, classificarTamanho, projetosPorPropriedade, centroDoBrasil, propriedadeSelecionada, onSelecionarPropriedade } = dados
 
   // Função para obter coordenadas de uma propriedade
   const obterCoordenadas = (propriedade: Propriedade): LatLngExpression | null => {
@@ -75,15 +103,40 @@ export default function MapComponentsPropriedades({ dados }: { dados: DadosMapaP
     return 'grande'
   }
 
+  // Componente para capturar a referência do mapa quando ele estiver pronto
+  const MapReference = () => {
+    const map = useMap();
+    
+    useEffect(() => {
+      if (map) {
+        mapInstanceRef.current = map;
+      }
+      
+      return () => {
+        mapInstanceRef.current = null;
+      };
+    }, [map]);
+    
+    return null;
+  };
+  
+  // ID único para o contêiner do mapa
+  const mapId = containerId || `map-${Math.random().toString(36).substring(2, 11)}`;
+
   return (
     <>
-      <MapContainer 
-        center={centroDoBrasil} 
-        zoom={4} 
-        scrollWheelZoom={true}
-        style={{ height: 580, width: '100%' }}
-        className="leaflet-container"
-      >
+      {/* Usar chave para garantir remontagem completa */}
+      <div id={mapId} className="h-full w-full">
+        <MapContainer 
+          center={centroDoBrasil} 
+          zoom={4} 
+          scrollWheelZoom={true}
+          style={{ height: '100%', width: '100%', minHeight: '580px' }}
+          className="leaflet-container z-0"
+          key={mapId}
+          id={mapId}
+        >
+        <MapReference />
         <CentralizarMapa coordenadas={centroDoBrasil} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -144,7 +197,8 @@ export default function MapComponentsPropriedades({ dados }: { dados: DadosMapaP
             </Marker>
           )
         })}
-      </MapContainer>
+        </MapContainer>
+      </div>
       
       {/* Legenda do mapa */}
       <div className="map-legend">

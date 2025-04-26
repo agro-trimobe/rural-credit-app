@@ -1,3 +1,9 @@
+// Interface para coordenadas geográficas
+export interface Coordenadas {
+  latitude: number
+  longitude: number
+}
+
 // Tipos para o CRM
 export interface Cliente {
   id: string
@@ -27,10 +33,7 @@ export interface Propriedade {
   area: number
   municipio: string
   estado: string
-  coordenadas?: {
-    latitude: number
-    longitude: number
-  }
+  coordenadas?: Coordenadas
   dataCriacao: string
   dataAtualizacao?: string
 }

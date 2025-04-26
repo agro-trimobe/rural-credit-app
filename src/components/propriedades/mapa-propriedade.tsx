@@ -47,12 +47,14 @@ const MapComponentsPropriedade = dynamic<MapComponentsPropriedadeProps>(
 )
 
 export default function MapaPropriedade({ coordenadas, nome, municipio, estado }: MapaPropriedadeProps) {
-  const [mapaCarregado, setMapaCarregado] = useState(false)
-
+  // Usar um estado para forçar recriação do mapa quando a propriedade mudar
+  const [mapKey, setMapKey] = useState<string>(`mapa-${Date.now()}`)
+  
+  // Hook para garantir que o mapa seja recriado sempre que as props mudarem
   useEffect(() => {
-    // Marcar que o mapa foi carregado no lado do cliente
-    setMapaCarregado(true)
-  }, [])
+    // Gerar uma nova chave baseada no nome e timestamp
+    setMapKey(`mapa-${nome}-${Date.now()}`)
+  }, [nome, coordenadas])
 
   if (!coordenadas) {
     return (
@@ -96,7 +98,8 @@ export default function MapaPropriedade({ coordenadas, nome, municipio, estado }
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0 h-[250px] rounded-b-lg overflow-hidden">
-        {mapaCarregado && <MapComponentsPropriedade dados={dadosMapa} />}
+        {/* Usar a key para forçar recriação do componente */}
+        <MapComponentsPropriedade key={mapKey} dados={dadosMapa} />
       </CardContent>
     </Card>
   )
