@@ -15,9 +15,10 @@ const DEFAULT_ZOOM = 4
 interface MapSelectorProps {
   initialPosition?: { latitude: number; longitude: number }
   onPositionChange: (position: { latitude: number; longitude: number }) => void
+  onAddressFound?: (address: string, municipio: string, estado: string) => void
 }
 
-export default function MapSelector({ initialPosition, onPositionChange }: MapSelectorProps) {
+export default function MapSelector({ initialPosition, onPositionChange, onAddressFound }: MapSelectorProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const leafletMapRef = useRef<L.Map | null>(null)
   const markerRef = useRef<L.Marker | null>(null)
@@ -106,9 +107,34 @@ export default function MapSelector({ initialPosition, onPositionChange }: MapSe
       const data = await response.json()
 
       if (data && data.length > 0) {
-        const { lat, lon } = data[0]
+        const { lat, lon, display_name } = data[0]
         const latitude = parseFloat(lat)
         const longitude = parseFloat(lon)
+
+        // Extrair informações do endereço
+        const partes = display_name.split(', ')
+        let municipio = ''
+        let estado = ''
+        
+        // Tentar extrair município (geralmente é o 3º do fim para o início)
+        if (partes.length > 2) {
+          municipio = partes[partes.length - 3]
+        }
+        
+        // Tentar extrair o estado (geralmente é o 2º do fim para o início)
+        if (partes.length > 1) {
+          const possiveisEstados = partes[partes.length - 2].split(' ')
+          if (possiveisEstados.length > 0) {
+            // Verificar se o primeiro item parece uma sigla de estado (2 letras maiúsculas)
+            const candidatoEstado = possiveisEstados[0].toUpperCase()
+            if (/^[A-Z]{2}$/.test(candidatoEstado)) {
+              estado = candidatoEstado
+            }
+          }
+        }
+        
+        // Formato do endereço sem o país no final
+        const endereco = display_name.split(', Brasil')[0]
 
         // Atualizar mapa e marcador
         leafletMapRef.current.setView([latitude, longitude], 13)
@@ -127,10 +153,15 @@ export default function MapSelector({ initialPosition, onPositionChange }: MapSe
           latitude: parseFloat(latitude.toFixed(6)),
           longitude: parseFloat(longitude.toFixed(6))
         })
+        
+        // Retornar informações do endereço encontrado
+        if (onAddressFound) {
+          onAddressFound(endereco, municipio, estado)
+        }
 
         toast({
           title: 'Localização encontrada',
-          description: `Coordenadas atualizadas para ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+          description: `Endereço localizado com sucesso`,
         })
       } else {
         toast({

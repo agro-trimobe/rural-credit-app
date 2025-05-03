@@ -10,6 +10,7 @@ interface ClienteMapaProps {
   nome: string
   municipio?: string
   estado?: string
+  id?: string // ID da propriedade para criar uma chave única
 }
 
 // Componente cliente que só carrega o mapa quando estiver no navegador
@@ -17,21 +18,15 @@ export default function ClienteMapa(props: ClienteMapaProps) {
   // Estado para controlar se estamos no cliente ou não
   const [isClient, setIsClient] = useState(false)
   
-  // Estado para armazenar uma chave única para o componente
-  const [key, setKey] = useState(`mapa-${Date.now()}`)
-  
   // Só renderizar quando o componente montar no cliente
   useEffect(() => {
     setIsClient(true)
     
-    // Gerar uma nova chave única sempre que as props mudarem
-    setKey(`mapa-${props.nome}-${Date.now()}`)
-    
-    // Garantir que o componente tenha uma nova chave quando remontado
+    // Função de limpeza quando o componente desmontar
     return () => {
       setIsClient(false)
     }
-  }, [props.nome, props.coordenadas])
+  }, [])
   
   // Importar o MapaPropriedade dinamicamente para evitar problemas com SSR
   const MapaPropriedade = dynamic(
@@ -58,9 +53,12 @@ export default function ClienteMapa(props: ClienteMapaProps) {
     )
   }
   
+  // Criar uma chave única para o componente usando o ID da propriedade
+  const componenteKey = props.id || `propriedade-${props.nome}-${Date.now()}`
+  
   // No cliente, renderizar o mapa com uma chave única
   return (
-    <div key={key}>
+    <div key={componenteKey}>
       <MapaPropriedade {...props} />
     </div>
   )

@@ -18,6 +18,7 @@ interface MapaPropriedadeProps {
   nome: string
   municipio?: string
   estado?: string
+  id?: string // ID da propriedade para criar uma chave única
 }
 
 // Interface para os dados do mapa
@@ -26,6 +27,7 @@ interface DadosMapaPropriedade {
   nome: string
   municipio?: string
   estado?: string
+  id?: string // ID da propriedade para criar uma chave única
 }
 
 // Interface para o componente de mapa
@@ -38,43 +40,48 @@ const MapComponentsPropriedade = dynamic<MapComponentsPropriedadeProps>(
   () => import('./map-components-propriedade'),
   { 
     loading: () => (
-      <div className="flex items-center justify-center h-[250px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center h-[350px] bg-slate-50">
+        <div className="flex flex-col items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-3"></div>
+          <p className="text-sm text-muted-foreground">Carregando mapa...</p>
+        </div>
       </div>
     ),
     ssr: false 
   }
 )
 
-export default function MapaPropriedade({ coordenadas, nome, municipio, estado }: MapaPropriedadeProps) {
-  // Usar um estado para forçar recriação do mapa quando a propriedade mudar
-  const [mapKey, setMapKey] = useState<string>(`mapa-${Date.now()}`)
+export default function MapaPropriedade({ coordenadas, nome, municipio, estado, id }: MapaPropriedadeProps) {
+  // Não precisamos mais gerenciar chaves aqui, pois o componente MapComponentsPropriedade
+  // agora gerencia seu próprio ciclo de vida com base no ID da propriedade
   
-  // Hook para garantir que o mapa seja recriado sempre que as props mudarem
+  // Usamos um estado para forçar uma remontagem completa do componente quando as props mudarem
+  const [recarregar, setRecarregar] = useState(0)
+  
+  // Hook para forçar remontagem quando propriedades importantes mudarem
   useEffect(() => {
-    // Gerar uma nova chave baseada no nome e timestamp
-    setMapKey(`mapa-${nome}-${Date.now()}`)
-  }, [nome, coordenadas])
+    // Forçar remontagem incrementando o contador
+    setRecarregar(prev => prev + 1)
+    
+    // Limpar quaisquer recursos quando o componente for desmontado
+    return () => {
+      console.log('Componente de mapa desmontado')
+    }
+  }, [id, nome, coordenadas?.latitude, coordenadas?.longitude])
 
   if (!coordenadas) {
     return (
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg flex items-center">
-            <Map className="h-5 w-5 mr-2 text-primary" />
-            Mapa da Propriedade
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0 h-[250px] rounded-b-lg overflow-hidden">
-          <div className="bg-slate-100 h-full w-full flex items-center justify-center">
-            <div className="text-center">
-              <Map className="h-12 w-12 mx-auto text-muted-foreground opacity-50" />
-              <p className="text-sm text-muted-foreground mt-2">Coordenadas não disponíveis</p>
+      <div className="w-full h-full">
+        <CardContent className="p-0 h-[300px] rounded-lg overflow-hidden">
+          <div className="bg-slate-50 h-full w-full flex items-center justify-center">
+            <div className="text-center p-6 max-w-xs">
+              <Map className="h-16 w-16 mx-auto text-muted-foreground opacity-50 mb-4" />
+              <p className="text-sm font-medium text-muted-foreground mb-2">Coordenadas não disponíveis</p>
               <p className="text-xs text-muted-foreground">Adicione coordenadas para visualizar o mapa</p>
             </div>
           </div>
         </CardContent>
-      </Card>
+      </div>
     )
   }
 
@@ -86,21 +93,26 @@ export default function MapaPropriedade({ coordenadas, nome, municipio, estado }
     coordenadas: coordenadasLeaflet,
     nome,
     municipio,
-    estado
+    estado,
+    id // Passar o ID da propriedade para criar uma chave única
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg flex items-center">
-          <Map className="h-5 w-5 mr-2 text-primary" />
-          Mapa da Propriedade
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-0 h-[250px] rounded-b-lg overflow-hidden">
-        {/* Usar a key para forçar recriação do componente */}
-        <MapComponentsPropriedade key={mapKey} dados={dadosMapa} />
+    <div className="w-full h-full">
+      <CardContent className="p-0 h-[350px] rounded-lg overflow-hidden">
+        {/* 
+          Fornecer uma key baseada na propriedade id e no contador de recarga
+          para garantir que o componente seja completamente remontado quando necessário 
+        */}
+        <div key={`mapa-container-${id || nome}-${recarregar}`} className="h-full w-full relative">
+          <MapComponentsPropriedade dados={dadosMapa} />
+          {municipio && estado && (
+            <div className="absolute bottom-3 left-3 bg-white bg-opacity-80 py-1 px-3 rounded-md shadow-sm text-xs font-medium z-[400]">
+              {municipio}, {estado}
+            </div>
+          )}
+        </div>
       </CardContent>
-    </Card>
+    </div>
   )
 }

@@ -22,6 +22,9 @@ import {
   Orbit
 } from "lucide-react";
 
+// Importação direta da imagem de destaque
+import ImgHero from "../../public/img-hero.jpg";
+
 export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -102,12 +105,16 @@ export default function Home() {
               
               {/* Imagem apenas para desktop */}
               <div className={`flex-1 w-full max-w-xl rounded-xl bg-gradient-to-br from-primary/30 to-purple-600/30 p-1 shadow-xl ${isMobile ? 'hidden' : 'block'}`}>
-                <div className="bg-card rounded-lg p-6 h-full">
-                  <div className="aspect-[16/10] bg-muted rounded-lg flex items-center justify-center">
-                    <div className="text-center text-muted-foreground">
-                      <LayoutDashboard className="h-10 w-10 mx-auto mb-2 text-primary" />
-                      <p>Imagem do Dashboard</p>
-                    </div>
+                <div className="bg-card rounded-lg p-2 h-full overflow-hidden">
+                  <div className="aspect-[16/10] rounded-lg overflow-hidden relative">
+                    <Image 
+                      src={ImgHero}
+                      alt="Dashboard do sistema Trimobe"
+                      priority
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-500 rounded-lg"
+                      sizes="(max-width: 768px) 100vw, 800px"
+                      placeholder="blur"
+                    />
                   </div>
                 </div>
               </div>

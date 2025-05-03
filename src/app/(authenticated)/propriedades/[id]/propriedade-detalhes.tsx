@@ -3,52 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle,
-  CardFooter
-} from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Separator } from '@/components/ui/separator'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { 
-  User, 
-  FileText, 
-  ArrowLeft, 
-  MapPin, 
-  Calendar,
-  Edit,
-  Trash2,
-  Ruler,
-  Home,
-  Map,
-  ChevronRight,
-  MoreHorizontal,
-  Phone,
-  Mail,
-  Building,
-  Info,
-  Leaf,
-  Cloud,
-  Droplets
-} from 'lucide-react'
-import ClienteMapa from '@/components/propriedades/cliente-mapa'
-import { Propriedade, Cliente, Projeto } from '@/lib/crm-utils'
-import { formatarData, formatarDataHora, formatarMoeda } from '@/lib/formatters'
-import { clientesApi, propriedadesApi, projetosApi } from '@/lib/api'
-import { toast } from '@/hooks/use-toast'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,20 +15,34 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { Skeleton } from "@/components/ui/skeleton"
+import { 
+  Map, 
+  MapPin, 
+  Info, 
+  FileText, 
+  ChevronRight,
+  Building,
+  Ruler,
+  Calendar,
+  User,
+  Phone,
+  Mail
+} from 'lucide-react'
+import { formatarData } from '@/lib/formatters'
 
+import { Propriedade, Cliente, Projeto } from '@/lib/crm-utils'
+import { clientesApi, propriedadesApi, projetosApi } from '@/lib/api'
+import { toast } from '@/hooks/use-toast'
+
+// Componentes modulares para cada seção da página
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+  PropriedadeHeader,
+  PropriedadeInfoCards,
+  PropriedadeMapa,
+  PropriedadeProjetos
+} from '@/components/propriedades'
+import ClienteMapa from '@/components/propriedades/cliente-mapa'
 
 // Componente cliente que implementa a lógica com hooks
 function PropriedadeDetalhesConteudo({ propriedadeId }: { propriedadeId: string }) {
@@ -81,7 +51,6 @@ function PropriedadeDetalhesConteudo({ propriedadeId }: { propriedadeId: string 
   const [cliente, setCliente] = useState<Cliente | null>(null)
   const [projetos, setProjetos] = useState<Projeto[]>([])
   const [carregando, setCarregando] = useState(true)
-  const [abaAtiva, setAbaAtiva] = useState("informacoes")
   const [dialogAberto, setDialogAberto] = useState(false)
 
   const classificarTamanhoPropriedade = (area: number) => {
@@ -185,289 +154,167 @@ function PropriedadeDetalhesConteudo({ propriedadeId }: { propriedadeId: string 
   }
 
   return (
-    <div className="space-y-4">
-      {/* Cabeçalho com breadcrumbs */}
-      <div className="flex flex-col space-y-1">
-        <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-          <Link href="/propriedades" className="hover:underline">Propriedades</Link>
-          <ChevronRight className="h-4 w-4" />
-          <span>Detalhes</span>
-        </div>
-      </div>
-  
-      {/* Banner principal */}
-      <div className="rounded-lg border bg-card p-4 shadow-sm">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold">{propriedade.nome}</h1>
-            <p className="text-muted-foreground">{propriedade.municipio}, {propriedade.estado}</p>
-          </div>
-          <div className="flex items-center gap-3">
-            {propriedade.area && (
-              <Badge variant="outline" className={classificarTamanhoPropriedade(propriedade.area).cor}>
-                {classificarTamanhoPropriedade(propriedade.area).classe}
-              </Badge>
-            )}
-            <span className="flex items-center">
-              <Ruler className="h-4 w-4 mr-1 text-muted-foreground" />
-              <span className="font-semibold">{propriedade.area} hectares</span>
-            </span>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem asChild>
-                  <Link href={`/propriedades/${propriedade.id}/editar`}>
-                    <Edit className="h-4 w-4 mr-2" />
-                    Editar Propriedade
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Novo Projeto
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleExcluir} className="text-destructive">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Excluir
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </div>
-  
-      {/* Conteúdo principal em tabs */}
-      <Tabs defaultValue="informacoes" value={abaAtiva} onValueChange={setAbaAtiva}>
-        <TabsList>
-          <TabsTrigger value="informacoes">Informações</TabsTrigger>
-          <TabsTrigger value="projetos">Projetos {projetos.length > 0 && `(${projetos.length})`}</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="informacoes" className="space-y-4 mt-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Card de Informações Básicas */}
-            <Card className="md:col-span-1">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center">
-                  <Building className="h-5 w-5 mr-2 text-primary" />
+    <div className="space-y-6">
+      {/* Cabeçalho com breadcrumbs e banner principal */}
+      <PropriedadeHeader 
+        propriedade={propriedade}
+        classificarTamanhoPropriedade={classificarTamanhoPropriedade}
+        onExcluir={handleExcluir}
+      />
+
+      {/* Conteúdo principal com nova distribuição para visualização do mapa acima da dobra */}
+      <div className="space-y-5 pt-4">
+        {/* Layout em duas colunas: Informações à esquerda, Mapa à direita */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+          {/* Coluna da esquerda (7/12) - Cards de informações */}
+          <div className="md:col-span-7 space-y-5 flex flex-col">
+            {/* Primeira linha: Informações Básicas */}
+            <Card className="overflow-hidden shadow-sm hover:shadow transition-shadow border-t-4 border-t-indigo-500">
+              <CardHeader className="py-3">
+                <CardTitle className="text-base flex items-center">
+                  <Info className="h-5 w-5 mr-2 text-indigo-500" />
                   Informações Básicas
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center">
-                    <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span className="text-sm">{propriedade.endereco}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Map className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span className="text-sm">{propriedade.municipio}, {propriedade.estado}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Ruler className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span className="text-sm">{propriedade.area} hectares</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span className="text-sm">Cadastrada em {propriedade.dataCriacao ? formatarData(propriedade.dataCriacao) : 'N/A'}</span>
-                  </div>
-                  {propriedade.dataAtualizacao && (
-                    <div className="flex items-center">
-                      <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span className="text-sm">Atualizada em {formatarData(propriedade.dataAtualizacao)}</span>
+              <CardContent className="pb-4 pt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
+                  <div className="flex items-start gap-3">
+                    <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Endereço</p>
+                      <p className="font-medium">{propriedade.endereco}</p>
                     </div>
-                  )}
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <Building className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Localização</p>
+                      <p className="font-medium">{propriedade.municipio}, {propriedade.estado}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <Ruler className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Área</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">{propriedade.area} hectares</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Data de cadastro</p>
+                      <p className="font-medium">{formatarData(propriedade.dataCriacao)}</p>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
             
-            {/* Card de Proprietário */}
-            <Card className="md:col-span-1">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center">
-                  <User className="h-5 w-5 mr-2 text-primary" />
+            {/* Segunda linha: Proprietário */}
+            <Card className="overflow-hidden shadow-sm hover:shadow transition-shadow border-t-4 border-t-blue-500">
+              <CardHeader className="py-3">
+                <CardTitle className="text-base flex items-center">
+                  <User className="h-5 w-5 mr-2 text-blue-500" />
                   Proprietário
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pb-4 pt-0">
                 {cliente ? (
-                  <div className="space-y-2">
-                    <div className="flex items-center">
-                      <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <Link href={`/clientes/${cliente.id}`} className="text-sm hover:underline">
-                        {cliente.nome}
-                      </Link>
-                    </div>
-                    <div className="flex items-center">
-                      <Home className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span className="text-sm">{cliente.endereco || 'Endereço não informado'}</span>
-                    </div>
-                    {cliente.telefone && (
-                      <div className="flex items-center">
-                        <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span className="text-sm">{cliente.telefone}</span>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div className="flex items-start gap-3">
+                      <User className="h-5 w-5 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Nome</p>
+                        <p className="font-medium">{cliente.nome}</p>
                       </div>
-                    )}
-                    {cliente.email && (
-                      <div className="flex items-center">
-                        <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span className="text-sm">{cliente.email}</span>
+                    </div>
+                    
+                    <div className="flex items-start gap-3">
+                      <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Telefone</p>
+                        <p className="font-medium">{cliente.telefone || 'Não informado'}</p>
                       </div>
-                    )}
+                    </div>
+                    
+                    <div className="md:text-right">
+                      <Button variant="secondary" size="sm" className="gap-2" asChild>
+                        <Link href={`/clientes/${cliente.id}`}>
+                          <User className="h-4 w-4" />
+                          Ver cliente
+                        </Link>
+                      </Button>
+                    </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-24 text-center">
-                    <p className="text-sm text-muted-foreground">Proprietário não encontrado</p>
-                    <Button variant="outline" size="sm" className="mt-2">
-                      Vincular Proprietário
-                    </Button>
+                  <div className="text-center py-3">
+                    <User className="h-10 w-10 mx-auto text-muted-foreground opacity-30 mb-2" />
+                    <p className="text-muted-foreground">Proprietário não vinculado</p>
                   </div>
                 )}
               </CardContent>
             </Card>
-            
-            {/* Card de Localização */}
-            <Card className="md:col-span-1">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center">
-                  <MapPin className="h-5 w-5 mr-2 text-primary" />
-                  Localização
+          </div>
+          
+          {/* Coluna da direita (5/12) - Mapa visível acima da dobra, alinhado com os cards da esquerda */}
+          <div className="md:col-span-5 flex flex-col h-full">
+            <Card className="shadow-sm hover:shadow transition-shadow overflow-hidden h-full flex flex-col">
+              <CardHeader className="py-3 border-b flex-shrink-0">
+                <CardTitle className="text-base flex items-center">
+                  <Map className="h-5 w-5 mr-2 text-primary" />
+                  Mapa da Propriedade
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0 flex-grow relative">
                 {propriedade.coordenadas ? (
-                  <div className="space-y-2">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="flex items-center cursor-help">
-                            <Info className="h-4 w-4 mr-2 text-muted-foreground" />
-                            <span className="text-sm">Latitude: {propriedade.coordenadas.latitude}</span>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Coordenada norte-sul</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="flex items-center cursor-help">
-                            <Info className="h-4 w-4 mr-2 text-muted-foreground" />
-                            <span className="text-sm">Longitude: {propriedade.coordenadas.longitude}</span>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Coordenada leste-oeste</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                  <div className="absolute inset-0 w-full h-full">
+                    <iframe 
+                      className="w-full h-full border-0"
+                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${propriedade.coordenadas.longitude - 0.01},${propriedade.coordenadas.latitude - 0.01},${propriedade.coordenadas.longitude + 0.01},${propriedade.coordenadas.latitude + 0.01}&layer=mapnik&marker=${propriedade.coordenadas.latitude},${propriedade.coordenadas.longitude}`}
+                      title="Mapa da Propriedade"
+                      loading="lazy"
+                      allowFullScreen
+                    />
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-24 text-center">
-                    <p className="text-sm text-muted-foreground">Coordenadas não disponíveis</p>
-                    <Button variant="outline" size="sm" className="mt-2">
-                      Adicionar Coordenadas
+                  <div className="flex flex-col items-center justify-center h-full text-center p-6">
+                    <MapPin className="h-12 w-12 text-muted-foreground mb-3 opacity-50" />
+                    <p className="text-base text-muted-foreground mb-4">Coordenadas não disponíveis</p>
+                    <Button variant="outline" size="sm" className="gap-1.5">
+                      <MapPin className="h-4 w-4" />
+                      Adicionar coordenadas
                     </Button>
                   </div>
                 )}
               </CardContent>
             </Card>
-            
-            {/* Card de Mapa (largura total) */}
-            <div className="col-span-1 md:col-span-3">
-              <ClienteMapa 
-                coordenadas={propriedade.coordenadas} 
-                nome={propriedade.nome}
-                municipio={propriedade.municipio}
-                estado={propriedade.estado}
-              />
-            </div>
           </div>
-        </TabsContent>
+        </div>
         
-        <TabsContent value="projetos" className="mt-4">
-          {projetos.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-8 text-center">
-                <FileText className="h-12 w-12 text-muted-foreground opacity-50" />
-                <p className="mt-4 text-muted-foreground">Esta propriedade não possui projetos cadastrados.</p>
-                <Button className="mt-4">
-                  Criar Novo Projeto
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {projetos.map((projeto) => (
-                <Card key={projeto.id} className="overflow-hidden">
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-base">{projeto.titulo}</CardTitle>
-                        <CardDescription>
-                          {projeto.linhaCredito}
-                        </CardDescription>
-                      </div>
-                      <Badge variant={
-                        projeto.status === 'Contratado' ? 'default' : 
-                        projeto.status === 'Em Elaboração' ? 'secondary' : 
-                        projeto.status === 'Cancelado' ? 'destructive' : 'outline'
-                      }>
-                        {projeto.status}
-                      </Badge>
-                    </div>
-                    
-                  </CardHeader>
-                  <CardContent className="pb-2">
-                    <div className="space-y-2">
-                      <div>
-                        <h4 className="text-xs font-medium text-muted-foreground">Valor</h4>
-                        <p className="text-sm font-medium">
-                          {formatarMoeda(projeto.valorTotal)}
-                        </p>
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-medium text-muted-foreground">Data de Criação</h4>
-                        <p className="text-sm">
-                          {formatarData(projeto.dataCriacao)}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="pt-0">
-                    <Button variant="outline" size="sm" asChild className="w-full">
-                      <Link href={`/projetos/${projeto.id}`}>
-                        Ver Detalhes
-                      </Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
-      
-      {/* Diálogo de confirmação de exclusão */}
+        {/* Linha inferior exclusiva para Projetos */}
+        <div className="w-full">
+          <PropriedadeProjetos propriedadeId={propriedadeId} projetos={projetos} />
+        </div>
+      </div>
+
+      {/* Dialog de confirmação para exclusão */}
       <AlertDialog open={dialogAberto} onOpenChange={setDialogAberto}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+            <AlertDialogTitle>Deseja excluir esta propriedade?</AlertDialogTitle>
             <AlertDialogDescription>
-              {propriedade && `Tem certeza que deseja excluir a propriedade ${propriedade.nome}?`}
+              Esta ação não pode ser desfeita. A propriedade será permanentemente removida do sistema.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={confirmarExclusao} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              OK
+              Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

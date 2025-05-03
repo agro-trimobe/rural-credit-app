@@ -23,6 +23,7 @@ import {
   User,
   FolderOpen,
   MessageSquare,
+  Bot,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -94,6 +95,11 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
       title: 'Simulações',
       href: '/simulacoes',
       icon: Calculator,
+    },
+    {
+      title: 'Assistente Inteligente',
+      href: '/assistente',
+      icon: Bot,
     },
   ]
 
