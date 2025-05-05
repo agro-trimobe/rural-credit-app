@@ -150,12 +150,10 @@ export const documentoRepository = {
           const tipoEntidade = documento.projetoId 
             ? 'projetos' 
             : documento.clienteId 
-              ? 'clientes' 
-              : documento.visitaId 
-                ? 'visitas' 
-                : 'clientes';
+              ? 'clientes'
+              : 'clientes';
           
-          const entidadeId = documento.projetoId || documento.clienteId || documento.visitaId || '';
+          const entidadeId = documento.projetoId || documento.clienteId || '';
           
           // Verificar se estamos no ambiente de servidor durante o build
           const isServerBuild = typeof window === 'undefined';
@@ -243,12 +241,10 @@ export const documentoRepository = {
           const tipoEntidade = documentoAtual.projetoId 
             ? 'projetos' 
             : documentoAtual.clienteId 
-              ? 'clientes' 
-              : documentoAtual.visitaId 
-                ? 'visitas' 
-                : 'clientes';
+              ? 'clientes'
+              : 'clientes';
           
-          const entidadeId = documentoAtual.projetoId || documentoAtual.clienteId || documentoAtual.visitaId || '';
+          const entidadeId = documentoAtual.projetoId || documentoAtual.clienteId || '';
           
           // Fazer upload usando a nova estrutura de pastas
           uploadResult = await uploadFile(dadosAtualizados.url, {
@@ -325,30 +321,6 @@ export const documentoRepository = {
 
   async atualizarTags(tenantId: string, documentoId: string, tags: string[]): Promise<Documento | null> {
     return this.atualizarDocumento(tenantId, documentoId, { tags });
-  },
-
-  async listarDocumentosPorVisita(tenantId: string, visitaId: string): Promise<Documento[]> {
-    try {
-      console.log(`Listando documentos para a visita ${visitaId} do tenant ${tenantId}`);
-      
-      const command = new QueryCommand({
-        TableName: TABLE_NAME,
-        IndexName: 'GSI1',
-        KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
-        ExpressionAttributeValues: {
-          ':pk': `TENANT#${tenantId}`,
-          ':sk': `VISITA#${visitaId}#DOCUMENTO#`
-        }
-      });
-
-      const response = await dynamodb.send(command);
-      console.log(`Encontrados ${response.Items?.length || 0} documentos para a visita ${visitaId}`);
-      
-      return (response.Items || []).map(item => itemToDocumento(item as DocumentoItem));
-    } catch (error) {
-      console.error(`Erro ao listar documentos para a visita ${visitaId}:`, error);
-      throw new Error(`Falha ao listar documentos para a visita: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
-    }
   },
 
   async atualizarStatusDocumento(tenantId: string, documentoId: string, status: string): Promise<Documento | null> {

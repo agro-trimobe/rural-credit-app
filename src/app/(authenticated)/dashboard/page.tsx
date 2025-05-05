@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { BarChart, LineChart } from '@/components/ui/charts'
 import { DoughnutChart } from '@/components/ui/doughnut-chart'
 import { formatarData, formatarMoeda, coresStatus } from '@/lib/formatters'
-import { clientesApi, projetosApi, visitasApi, oportunidadesApi } from '@/lib/api'
+import { clientesApi, projetosApi, oportunidadesApi } from '@/lib/api'
 import { 
   CalendarIcon, 
   ClipboardList, 
@@ -28,9 +28,7 @@ interface Projeto {
   valorTotal: number
 }
 
-interface Visita {
-  status: string
-}
+
 
 interface OportunidadeStatus {
   quantidade: number
@@ -41,11 +39,9 @@ export default function Dashboard() {
   const [estatisticas, setEstatisticas] = useState({
     totalClientes: 0,
     totalProjetos: 0,
-    totalVisitas: 0,
     valorProjetos: 0,
     valorOportunidades: 0,
     projetosStatus: {} as Record<string, number>,
-    visitasStatus: {} as Record<string, number>,
     oportunidadesStatus: {} as Record<string, OportunidadeStatus>
   })
   
@@ -55,10 +51,10 @@ export default function Dashboard() {
     const carregarDados = async () => {
       try {
         // Carregar dados em paralelo
-        const [clientes, projetos, visitas, estatisticasOportunidades] = await Promise.all([
+        const [clientes, projetos, estatisticasOportunidades] = await Promise.all([
           clientesApi.listarClientes(),
           projetosApi.listarProjetos(),
-          visitasApi.listarVisitas(),
+
           oportunidadesApi.obterEstatisticas()
         ])
         
@@ -71,14 +67,7 @@ export default function Dashboard() {
           projetosStatus[projeto.status]++
         })
         
-        // Calcular estatísticas de visitas por status
-        const visitasStatus: Record<string, number> = {}
-        visitas.forEach((visita: Visita) => {
-          if (!visitasStatus[visita.status]) {
-            visitasStatus[visita.status] = 0
-          }
-          visitasStatus[visita.status]++
-        })
+
         
         // Calcular valor total de projetos
         const valorProjetos = projetos.reduce((total: number, projeto: Projeto) => {
@@ -91,11 +80,11 @@ export default function Dashboard() {
         setEstatisticas({
           totalClientes: clientes.length,
           totalProjetos: projetos.length,
-          totalVisitas: visitas.length,
+
           valorProjetos,
           valorOportunidades: estatisticasOportunidades?.valorTotal || 0,
           projetosStatus,
-          visitasStatus,
+
           oportunidadesStatus: estatisticasOportunidades?.porStatus 
             ? Object.entries(estatisticasOportunidades.porStatus).reduce((acc, [status, quantidade]) => {
                 acc[status] = { 
@@ -148,16 +137,6 @@ export default function Dashboard() {
     ],
   }
   
-  const dadosGraficoVisitas = {
-    labels: ['Realizada', 'Agendada'],
-    datasets: [
-      {
-        label: 'Visitas',
-        data: [estatisticas.visitasStatus['Realizada'] || 0, estatisticas.visitasStatus['Agendada'] || 0],
-        total: estatisticas.totalVisitas
-      }
-    ]
-  }
 
   if (carregando) {
     return (
@@ -302,7 +281,7 @@ export default function Dashboard() {
         <h3 className="text-sm font-medium mb-2">Indicadores de Performance</h3>
         <Separator className="mb-4" />
         
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
           {/* Gráfico de Projetos */}
           <Card className="shadow-sm hover:shadow-md transition-shadow flex flex-col">
             <CardHeader className="p-4 pb-2">
@@ -375,40 +354,7 @@ export default function Dashboard() {
             </CardFooter>
           </Card>
 
-          {/* Gráfico de Visitas */}
-          <Card className="shadow-sm hover:shadow-md transition-shadow flex flex-col">
-            <CardHeader className="p-4 pb-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <Badge className="bg-violet-100 hover:bg-violet-100 text-violet-700 border-none p-1.5">
-                      <CalendarIcon className="h-3.5 w-3.5" />
-                    </Badge>
-                    Visitas por Status
-                  </CardTitle>
-                  <CardDescription className="text-xs mt-1">
-                    Distribuição das visitas
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-4 pt-0 flex-grow flex flex-col justify-center">
-              <div className="flex justify-center items-center h-[280px]">
-                <div className="w-full h-full" style={{ maxWidth: '280px' }}>
-                  <DoughnutChart data={dadosGraficoVisitas} />
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="p-0 mt-auto">
-              <Link 
-                href="/visitas" 
-                className="w-full text-center text-xs py-1.5 border-t hover:bg-muted/50 transition-colors font-medium text-primary flex items-center justify-center gap-1"
-              >
-                <span>Ver detalhes</span>
-                <ExternalLink className="h-3 w-3" />
-              </Link>
-            </CardFooter>
-          </Card>
+
         </div>
       </div>
     </div>

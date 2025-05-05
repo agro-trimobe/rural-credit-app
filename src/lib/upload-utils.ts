@@ -10,7 +10,7 @@ export async function uploadFile(
     fileName?: string;
     contentType?: string;
     tenantId?: string;
-    tipoEntidade?: 'clientes' | 'projetos' | 'propriedades' | 'visitas';
+    tipoEntidade?: 'clientes' | 'projetos' | 'propriedades';
     entidadeId?: string;
     tipoArquivo?: 'documentos' | 'fotos';
     arquivoId?: string;

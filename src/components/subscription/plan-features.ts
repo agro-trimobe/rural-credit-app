@@ -16,7 +16,7 @@ export const planFeatures: PlanFeaturesMap = {
     { text: 'Organização completa de documentos e contratos' },
     { text: 'Simulações de financiamento com cálculos precisos' },
     { text: 'Dashboard com métricas de desempenho em tempo real' },
-    { text: 'Controle integrado de visitas técnicas' },
+    { text: 'Gestão completa de tarefas e compromissos' },
     { text: 'Recursos de Inteligência Artificial', disabled: true }
   ],
   'PREMIUM': [

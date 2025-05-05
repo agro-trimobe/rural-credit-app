@@ -12,7 +12,6 @@ import { useSubscription } from '@/hooks/use-subscription'
 import {
   Users,
   FileText,
-  Calendar,
   LineChart,
   Calculator,
   LayoutDashboard,
@@ -23,11 +22,11 @@ import {
   Home as HomeIcon,
   User,
   FolderOpen,
-  MessageSquare,
   Bot,
   Lock,
   AlertCircle,
   ArrowUpCircle,
+  Trello,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -147,19 +146,14 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
       icon: FileText,
     },
     {
-      title: 'Visitas',
-      href: '/visitas',
-      icon: Calendar,
+      title: 'Tarefas',
+      href: '/tarefas',
+      icon: Trello,
     },
     {
       title: 'Oportunidades',
       href: '/oportunidades',
       icon: LineChart,
-    },
-    {
-      title: 'Interações',
-      href: '/interacoes',
-      icon: MessageSquare,
     },
     {
       title: 'Documentos',

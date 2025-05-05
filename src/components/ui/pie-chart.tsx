@@ -110,7 +110,7 @@ export function PieChart({
                         className="fill-muted-foreground"
                         style={{ fill: 'hsl(var(--muted-foreground))', fontSize: '12px' }}
                       >
-                        {data.datasets[0].label || 'Visitas'}
+                        {data.datasets[0].label || 'Total'}
                       </tspan>
                     </text>
                   )

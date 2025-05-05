@@ -4,10 +4,11 @@ import {
   Propriedade, 
   Projeto, 
   Documento, 
-  Interacao, 
   Oportunidade, 
-  Visita,
-  Simulacao
+  Simulacao,
+  Quadro,
+  Lista,
+  Tarefa
 } from '../crm-utils';
 
 // Tipo base para todos os itens do DynamoDB
@@ -34,15 +35,108 @@ export interface ProjetoItem extends DynamoDBItem, Projeto {}
 
 export interface DocumentoItem extends DynamoDBItem, Documento {}
 
-export interface InteracaoItem extends DynamoDBItem, Interacao {}
+
 
 export interface OportunidadeItem extends DynamoDBItem, Oportunidade {}
 
-export interface VisitaItem extends DynamoDBItem, Visita {}
+
 
 export interface SimulacaoItem extends DynamoDBItem, Simulacao {}
 
+// Novos tipos para o sistema de Gestão de Tarefas
+export interface QuadroItem extends DynamoDBItem, Quadro {}
+
+export interface ListaItem extends DynamoDBItem, Lista {}
+
+export interface TarefaItem extends DynamoDBItem, Tarefa {}
+
 // Funções auxiliares para conversão entre tipos de domínio e tipos do DynamoDB
+
+// Funções para o sistema de Gestão de Tarefas
+export function quadroToItem(quadro: Quadro, tenantId: string): QuadroItem {
+  return {
+    PK: `TENANT#${tenantId}`,
+    SK: `QUADRO#${quadro.id}`,
+    GSI1PK: `QUADRO#${quadro.id}`,
+    GSI1SK: `TENANT#${tenantId}`,
+    tenantId,
+    ...quadro
+  };
+}
+
+export function itemToQuadro(item: QuadroItem): Quadro {
+  return {
+    id: item.id,
+    titulo: item.titulo,
+    descricao: item.descricao,
+    cor: item.cor,
+    dataCriacao: item.dataCriacao,
+    dataAtualizacao: item.dataAtualizacao
+  };
+}
+
+export function listaToItem(lista: Lista, tenantId: string): ListaItem {
+  return {
+    PK: `TENANT#${tenantId}`,
+    SK: `LISTA#${lista.id}`,
+    GSI1PK: `QUADRO#${lista.quadroId}`,
+    GSI1SK: `LISTA#${String(lista.ordem).padStart(4, '0')}#${lista.id}`,
+    tenantId,
+    ...lista
+  };
+}
+
+export function itemToLista(item: ListaItem): Lista {
+  return {
+    id: item.id,
+    quadroId: item.quadroId,
+    titulo: item.titulo,
+    ordem: item.ordem,
+    cor: item.cor,
+    dataCriacao: item.dataCriacao,
+    dataAtualizacao: item.dataAtualizacao
+  };
+}
+
+export function tarefaToItem(tarefa: Tarefa, tenantId: string): TarefaItem {
+  const item: TarefaItem = {
+    PK: `TENANT#${tenantId}`,
+    SK: `TAREFA#${tarefa.id}`,
+    GSI1PK: `LISTA#${tarefa.listaId}`,
+    GSI1SK: `TAREFA#${String(tarefa.ordem).padStart(4, '0')}#${tarefa.id}`,
+    tenantId,
+    ...tarefa
+  };
+  
+  // Adicionar índice para busca por cliente, se existir
+  if (tarefa.clienteId) {
+    item.GSI2PK = `CLIENTE#${tarefa.clienteId}`;
+    item.GSI2SK = `TAREFA#${tarefa.id}`;
+  }
+  
+  return item;
+}
+
+export function itemToTarefa(item: TarefaItem): Tarefa {
+  return {
+    id: item.id,
+    listaId: item.listaId,
+    quadroId: item.quadroId,
+    titulo: item.titulo,
+    descricao: item.descricao,
+    prazo: item.prazo,
+    responsavel: item.responsavel,
+    etiquetas: item.etiquetas,
+    prioridade: item.prioridade,
+    ordem: item.ordem,
+    clienteId: item.clienteId,
+    projetoId: item.projetoId,
+    propriedadeId: item.propriedadeId,
+    dataCriacao: item.dataCriacao,
+    dataAtualizacao: item.dataAtualizacao,
+    dataConclusao: item.dataConclusao
+  };
+}
 export function clienteToItem(cliente: Cliente, tenantId: string): ClienteItem {
   return {
     PK: `TENANT#${tenantId}`,
@@ -55,12 +149,12 @@ export function clienteToItem(cliente: Cliente, tenantId: string): ClienteItem {
     ...cliente,
     propriedades: cliente.propriedades?.map(p => p.id),
     projetos: cliente.projetos?.map(p => p.id),
-    interacoes: cliente.interacoes?.map(i => i.id)
+
   };
 }
 
 export function itemToCliente(item: ClienteItem): Cliente {
-  const { PK, SK, GSI1PK, GSI1SK, GSI2PK, GSI2SK, tenantId, propriedades, projetos, interacoes, ...cliente } = item;
+  const { PK, SK, GSI1PK, GSI1SK, GSI2PK, GSI2SK, tenantId, propriedades, projetos, ...cliente } = item;
   return cliente as Cliente;
 }
 
@@ -118,23 +212,9 @@ export function itemToDocumento(item: DocumentoItem): Documento {
   return documento as Documento;
 }
 
-export function interacaoToItem(interacao: Interacao, tenantId: string): InteracaoItem {
-  return {
-    PK: `TENANT#${tenantId}`,
-    SK: `INTERACAO#${interacao.id}`,
-    GSI1PK: `CLIENTE#${interacao.clienteId}`,
-    GSI1SK: `INTERACAO#${interacao.id}`,
-    GSI2PK: `TENANT#${tenantId}#DATA#${interacao.data}`,
-    GSI2SK: `INTERACAO#${interacao.id}`,
-    tenantId,
-    ...interacao
-  };
-}
 
-export function itemToInteracao(item: InteracaoItem): Interacao {
-  const { PK, SK, GSI1PK, GSI1SK, GSI2PK, GSI2SK, tenantId, ...interacao } = item;
-  return interacao as Interacao;
-}
+
+
 
 export function oportunidadeToItem(oportunidade: Oportunidade, tenantId: string): OportunidadeItem {
   return {
@@ -154,23 +234,9 @@ export function itemToOportunidade(item: OportunidadeItem): Oportunidade {
   return oportunidade as Oportunidade;
 }
 
-export function visitaToItem(visita: Visita, tenantId: string): VisitaItem {
-  return {
-    PK: `TENANT#${tenantId}`,
-    SK: `VISITA#${visita.id}`,
-    GSI1PK: `CLIENTE#${visita.clienteId}`,
-    GSI1SK: `VISITA#${visita.id}`,
-    GSI2PK: `PROPRIEDADE#${visita.propriedadeId}`,
-    GSI2SK: `VISITA#${visita.id}`,
-    tenantId,
-    ...visita
-  };
-}
 
-export function itemToVisita(item: VisitaItem): Visita {
-  const { PK, SK, GSI1PK, GSI1SK, GSI2PK, GSI2SK, tenantId, ...visita } = item;
-  return visita as Visita;
-}
+
+
 
 export function simulacaoToItem(simulacao: Simulacao, tenantId: string): SimulacaoItem {
   return {

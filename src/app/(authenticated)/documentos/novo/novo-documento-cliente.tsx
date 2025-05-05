@@ -22,9 +22,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ArrowLeft, Save, Upload } from 'lucide-react'
-import { Cliente, Documento, Visita } from '@/lib/crm-utils'
+import { Cliente, Documento } from '@/lib/crm-utils'
 import { formatarData } from '@/lib/formatters'
-import { documentosApi, clientesApi, visitasApi } from '@/lib/api'
+import { documentosApi, clientesApi } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 // Componente cliente que implementa toda a lógica com hooks
@@ -32,21 +32,20 @@ export default function NovoDocumentoCliente() {
   // Hooks do Next.js
   const router = useRouter()
   const searchParams = useSearchParams()
-  const visitaId = searchParams?.get('visitaId')
   const clienteIdParam = searchParams?.get('clienteId')
 
   // Estados do componente - TODOS os hooks devem ser declarados antes de qualquer condicional
   const [isMounted, setIsMounted] = useState(false)
   const [salvando, setSalvando] = useState(false)
   const [clientes, setClientes] = useState<{ id: string; nome: string }[]>([])
-  const [visitas, setVisitas] = useState<{ id: string; data: string; clienteId: string }[]>([])
+
   const [carregando, setCarregando] = useState(true)
   const [formData, setFormData] = useState<Partial<Documento>>({
     nome: '',
     tipo: '',
     formato: 'pdf',
     clienteId: clienteIdParam || '',
-    visitaId: visitaId || '',
+
     status: 'Pendente',
     tamanho: 0,
     url: '',
@@ -66,23 +65,10 @@ export default function NovoDocumentoCliente() {
 
     const carregarDados = async () => {
       try {
-        const [clientesData, visitasData] = await Promise.all([
-          clientesApi.listarClientes(),
-          visitasApi.listarVisitas()
-        ])
-        
+        const clientesData = await clientesApi.listarClientes()
         setClientes(clientesData.map(c => ({ id: c.id, nome: c.nome })))
-        setVisitas(visitasData.map(v => ({ 
-          id: v.id, 
-          data: new Date(v.data).toLocaleDateString('pt-BR'), 
-          clienteId: v.clienteId 
-        })))
         
         // Preencher dados iniciais se fornecidos via query params
-        if (visitaId) {
-          setFormData(prev => ({ ...prev, visitaId }))
-        }
-        
         if (clienteIdParam) {
           setFormData(prev => ({ ...prev, clienteId: clienteIdParam }))
         }
@@ -95,7 +81,7 @@ export default function NovoDocumentoCliente() {
     }
     
     carregarDados()
-  }, [isMounted, visitaId, clienteIdParam])
+  }, [isMounted, clienteIdParam])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -147,8 +133,6 @@ export default function NovoDocumentoCliente() {
         tamanho: Number(formData.tamanho) || 0,
         url: formData.url || '',
         clienteId: formData.clienteId || '',
-        projetoId: formData.projetoId,
-        visitaId: formData.visitaId === 'nenhuma' ? '' : formData.visitaId,
         status: formData.status || 'Pendente',
         tags: [],
         descricao: formData.descricao || '' 
@@ -162,10 +146,8 @@ export default function NovoDocumentoCliente() {
         description: 'O documento foi adicionado com sucesso.',
       })
       
-      // Redirecionar com base na origem
-      if (visitaId) {
-        router.push(`/visitas/${visitaId}/documentos`)
-      } else {
+      // Redirecionar com base no contexto
+      if (novoDocumento.clienteId) {
         router.push('/documentos')
       }
     } catch (error) {
@@ -279,14 +261,8 @@ export default function NovoDocumentoCliente() {
     )
   }
 
-  // Botão de voltar diferente dependendo da origem
-  const botaoVoltar = visitaId ? (
-    <Button variant="outline" size="icon" asChild>
-      <Link href={`/visitas/${visitaId}/documentos`}>
-        <ArrowLeft className="h-4 w-4" />
-      </Link>
-    </Button>
-  ) : (
+  // Botão de voltar
+  const botaoVoltar = (
     <Button variant="outline" size="icon" asChild>
       <Link href="/documentos">
         <ArrowLeft className="h-4 w-4" />
@@ -365,42 +341,14 @@ export default function NovoDocumentoCliente() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="visitaId">Visita</Label>
-                <Select
-                  value={formData.visitaId || ''}
-                  onValueChange={(value) => handleSelectChange('visitaId', value)}
-                  disabled={!!visitaId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a visita" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="nenhuma">Nenhuma</SelectItem>
-                    {visitas
-                      .filter(v => !formData.clienteId || v.clienteId === formData.clienteId)
-                      .map((visita) => (
-                        <SelectItem key={visita.id} value={visita.id}>
-                          Visita {visita.data}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
 
             <ArquivoUpload />
           </CardContent>
           <CardFooter className="flex justify-between">
-            {visitaId ? (
-              <Button variant="outline" asChild>
-                <Link href={`/visitas/${visitaId}/documentos`}>Cancelar</Link>
-              </Button>
-            ) : (
-              <Button variant="outline" asChild>
-                <Link href="/documentos">Cancelar</Link>
-              </Button>
-            )}
+            <Button variant="outline" asChild>
+              <Link href="/documentos">Cancelar</Link>
+            </Button>
             <Button type="submit" disabled={salvando}>
               {salvando ? (
                 <>

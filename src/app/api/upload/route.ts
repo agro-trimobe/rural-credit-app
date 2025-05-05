@@ -114,7 +114,7 @@ async function ensureBucketExists(): Promise<void> {
  */
 function generateS3Path(
   tenantId: string,
-  tipoEntidade: 'clientes' | 'projetos' | 'propriedades' | 'visitas',
+  tipoEntidade: 'clientes' | 'projetos' | 'propriedades',
   entidadeId: string,
   tipoArquivo: 'documentos' | 'fotos',
   arquivoId: string,
@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
     const fileName = formData.get('fileName') as string || '';
     const contentType = formData.get('contentType') as string || '';
     const tenantId = formData.get('tenantId') as string || TENANT_ID;
-    const tipoEntidade = formData.get('tipoEntidade') as 'clientes' | 'projetos' | 'propriedades' | 'visitas' || 'clientes';
+    const tipoEntidade = formData.get('tipoEntidade') as 'clientes' | 'projetos' | 'propriedades' || 'clientes';
     const entidadeId = formData.get('entidadeId') as string || '';
     const tipoArquivo = formData.get('tipoArquivo') as 'documentos' | 'fotos' || 'documentos';
     const arquivoId = formData.get('arquivoId') as string || uuidv4();

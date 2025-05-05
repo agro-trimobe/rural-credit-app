@@ -22,7 +22,6 @@ export interface Cliente {
   dataAtualizacao?: string
   propriedades?: Propriedade[]
   projetos?: Projeto[]
-  interacoes?: Interacao[]
 }
 
 export interface Propriedade {
@@ -65,26 +64,14 @@ export interface Documento {
   tags?: string[]
   clienteId: string
   projetoId?: string
-  visitaId?: string
+
   dataCriacao: string
   dataAtualizacao?: string
   s3Path?: string
   extensao?: string
 }
 
-export interface Interacao {
-  id: string
-  clienteId: string
-  tipo: 'Ligação' | 'Email' | 'Reunião' | 'Visita' | 'Outro'
-  data: string
-  assunto: string
-  descricao: string
-  responsavel: string
-  status?: string
-  observacoes?: string
-  dataCriacao: string
-  dataAtualizacao?: string
-}
+
 
 export interface Oportunidade {
   id: string
@@ -111,18 +98,58 @@ export interface Simulacao {
   dataAtualizacao?: string
 }
 
-export interface Visita {
+// Tipos para sistema de Gestão de Tarefas (estilo Trello)
+
+/**
+ * Representa um quadro Kanban (board)
+ */
+export interface Quadro {
   id: string
-  clienteId: string
-  propriedadeId: string
-  projetoId?: string
-  data: string
-  status: 'Agendada' | 'Realizada' | 'Cancelada'
-  observacoes: string
-  fotos: string[]
+  titulo: string
+  descricao?: string
+  cor?: string
   dataCriacao: string
   dataAtualizacao?: string
 }
+
+/**
+ * Representa uma lista de tarefas dentro de um quadro (list)
+ */
+export interface Lista {
+  id: string
+  quadroId: string
+  titulo: string
+  ordem: number
+  cor?: string
+  dataCriacao: string
+  dataAtualizacao?: string
+}
+
+/**
+ * Representa uma tarefa dentro de uma lista (card)
+ */
+export interface Tarefa {
+  id: string
+  listaId: string
+  quadroId: string
+  titulo: string
+  descricao?: string
+  prazo?: string
+  responsavel?: string
+  ordem: number
+  clienteId?: string      // Opcional, para vincular a tarefa a um cliente
+  projetoId?: string      // Opcional, para vincular a tarefa a um projeto
+  propriedadeId?: string  // Opcional, para vincular a tarefa a uma propriedade
+  prioridade?: 'Baixa' | 'Média' | 'Alta'
+  concluida?: boolean    // Indica se a tarefa foi concluída
+  etiquetas?: string[]   // Etiquetas para categorização
+  dataVencimento?: string // Data de vencimento/prazo da tarefa
+  dataCriacao: string
+  dataAtualizacao?: string
+  dataConclusao?: string
+}
+
+
 
 // Re-exportar funções de formatação do arquivo formatters.ts
 export {
