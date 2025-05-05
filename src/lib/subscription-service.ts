@@ -230,7 +230,7 @@ export async function createUserSubscription(
       value: planValue,
       nextDueDate: nextDueDate.toISOString().split('T')[0], // Formato YYYY-MM-DD
       cycle: 'MONTHLY',
-      description: `Plano ${paymentData.plan === 'BASIC' ? 'Básico' : 'Premium'} Trimobe`,
+      description: `Plano ${paymentData.plan === 'BASIC' ? 'Básico' : 'Premium'} CREDITO RURAL`,
       creditCard: {
         holderName: paymentData.creditCard.holderName,
         number: paymentData.creditCard.number,
@@ -332,7 +332,7 @@ export async function updateSubscriptionPlan(
     
     await asaasApi.post(`/subscriptions/${subscriptionData.asaasSubscriptionId}`, {
       value: planValue,
-      description: `Plano ${newPlan === 'BASIC' ? 'Básico' : 'Premium'} Trimobe`,
+      description: `Plano ${newPlan === 'BASIC' ? 'Básico' : 'Premium'} CREDITO RURAL`,
     });
     
     // 3. Atualizar no DynamoDB
