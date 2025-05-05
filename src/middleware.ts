@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
+import { checkUserSubscription } from './lib/subscription-service';
+import { isSubscriptionActive } from './lib/types/subscription';
 
 // Páginas que não precisam de verificação de autenticação
 const PUBLIC_PATHS = [
@@ -8,6 +10,19 @@ const PUBLIC_PATHS = [
   '/auth/register',
   '/auth/confirm',
   '/auth/reset-password',
+  '/_next',
+  '/favicon.ico',
+];
+
+// Páginas que não precisam de verificação de assinatura
+const SUBSCRIPTION_EXEMPT_PATHS = [
+  '/api/auth',
+  '/api/subscription',
+  '/auth/login',
+  '/auth/register',
+  '/auth/confirm',
+  '/auth/reset-password',
+  '/subscription',
   '/_next',
   '/favicon.ico',
 ];
@@ -197,7 +212,69 @@ export async function middleware(request: NextRequest) {
       return addNoCacheHeaders(response);
     }
 
-    // Usuário autenticado acessando uma página protegida, permitir acesso
+    // Verificar status da assinatura para páginas que exigem assinatura
+    if (!SUBSCRIPTION_EXEMPT_PATHS.some(path => pathname.startsWith(path))) {
+      logDetalhe('Verificando status da assinatura para página protegida', {
+        pathname,
+        email: token.email
+      });
+      
+      // Verificar se o usuário já está na página de assinatura
+      if (pathname === '/subscription') {
+        return NextResponse.next();
+      }
+      
+      try {
+        // Garantir que temos o tenantId e o cognitoId
+        const tenantId = token.tenantId as string;
+        const cognitoId = token.sub as string;
+        
+        if (!tenantId || !cognitoId) {
+          throw new Error('Dados do usuário incompletos');
+        }
+        
+        // Obter dados da assinatura
+        const subscription = await checkUserSubscription(tenantId, cognitoId);
+        
+        // Se não houver assinatura ou ela não estiver ativa, redirecionar para a página de assinatura
+        if (!subscription || !isSubscriptionActive(subscription)) {
+          logDetalhe('Assinatura inativa ou expirada, redirecionando para página de assinatura', {
+            pathname,
+            email: token.email,
+            subscription: subscription ? {
+              status: subscription.status,
+              plan: subscription.plan,
+              expiresAt: subscription.expiresAt
+            } : 'Não encontrada'
+          });
+          
+          const urlSubscription = new URL('/subscription', baseUrl);
+          const response = NextResponse.redirect(urlSubscription);
+          return addNoCacheHeaders(response);
+        }
+        
+        // Se o usuário está tentando acessar o assistente inteligente, verificar se tem o plano premium
+        if (pathname.startsWith('/assistant') && subscription.plan !== 'PREMIUM') {
+          logDetalhe('Usuário sem acesso premium tentando acessar assistente inteligente', {
+            pathname,
+            email: token.email,
+            plan: subscription.plan
+          });
+          
+          // Redirecionar para o dashboard com parâmetro para mostrar modal de upgrade
+          const urlDashboard = new URL('/dashboard', baseUrl);
+          urlDashboard.searchParams.set('showUpgradeModal', 'true');
+          
+          const response = NextResponse.redirect(urlDashboard);
+          return addNoCacheHeaders(response);
+        }
+      } catch (error) {
+        console.error('[MIDDLEWARE] Erro ao verificar assinatura:', error);
+        // Em caso de erro na verificação, permitir o acesso para evitar bloqueio total
+      }
+    }
+    
+    // Usuário autenticado com assinatura válida acessando uma página protegida, permitir acesso
     logDetalhe('Usuário autenticado acessando página protegida, permitindo acesso', {
       pathname,
       email: token.email

@@ -82,25 +82,14 @@ export default function Home() {
                   Uma plataforma específica para projetos de crédito rural com inteligência artificial, que simplifica o MCR, automatiza documentos, otimiza a prospecção e centraliza informações para decisões estratégicas e ágeis.
                 </p>
                 <div className="flex justify-center sm:justify-start">
-                  <Link href="/auth/login">
+                  <Link href="/auth/login?mode=register">
                     <Button size="lg" className="rounded-md px-8 py-6 text-base sm:text-lg bg-primary hover:bg-primary/90 transition-colors w-full sm:w-auto">
                       Começar Agora
                       <ArrowRight className="ml-2 h-5 w-5" />
                     </Button>
                   </Link>
                 </div>
-                <div className="flex items-center mt-8">
-                  <div className="flex -space-x-2">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center border-2 border-background">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    ))}
-                  </div>
-                  <div className="ml-4 text-sm text-muted-foreground">
-                    <span className="font-medium">+125 profissionais</span> já utilizam nossa plataforma
-                  </div>
-                </div>
+                {/* O componente de exibição de usuários foi removido para otimização de espaço */}
               </div>
               
               {/* Imagem apenas para desktop */}
@@ -330,7 +319,7 @@ export default function Home() {
                           </Badge>
                         </div>
                       </div>
-                      <Link href="/auth/login" className="shrink-0 w-full md:w-auto">
+                      <Link href="/auth/login?mode=register" className="shrink-0 w-full md:w-auto">
                         <Button size="lg" className="w-full md:w-auto px-4 sm:px-8 py-2 bg-primary hover:bg-primary/90 transition-colors text-sm sm:text-base">
                           Começar agora
                           <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
@@ -355,24 +344,24 @@ export default function Home() {
                         <span className="text-2xl sm:text-3xl font-bold">R$ 57</span>
                         <span className="text-muted-foreground ml-2 mb-1 text-sm">/ mês</span>
                       </div>
-                      <p className="text-muted-foreground text-xs sm:text-sm">Gerencie todo seu negócio de crédito rural de forma eficiente.</p>
+                      <p className="text-muted-foreground text-xs sm:text-sm">Organize, acompanhe e feche mais projetos de crédito rural com metade do esforço.</p>
                       
                       <ul className="space-y-1.5 sm:space-y-2 py-3 sm:py-4 flex-1">
                         <li className="flex items-center">
                           <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mr-2" />
-                          <span className="text-xs sm:text-sm">Gestão completa de clientes</span>
+                          <span className="text-xs sm:text-sm">Centralização de dados de clientes e propriedades</span>
                         </li>
                         <li className="flex items-center">
                           <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mr-2" />
-                          <span className="text-xs sm:text-sm">Gestão de documentos</span>
+                          <span className="text-xs sm:text-sm">Organização completa de documentos e contratos</span>
                         </li>
                         <li className="flex items-center">
                           <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mr-2" />
-                          <span className="text-xs sm:text-sm">Simulações avançadas</span>
+                          <span className="text-xs sm:text-sm">Simulações de financiamento com cálculos precisos</span>
                         </li>
                         <li className="flex items-center">
                           <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mr-2" />
-                          <span className="text-xs sm:text-sm">Dashboard analítico</span>
+                          <span className="text-xs sm:text-sm">Dashboard com métricas de desempenho em tempo real</span>
                         </li>
                       </ul>
                     </div>
@@ -389,24 +378,24 @@ export default function Home() {
                         <span className="text-2xl sm:text-3xl font-bold">R$ 87</span>
                         <span className="text-muted-foreground ml-2 mb-1 text-sm">/ mês</span>
                       </div>
-                      <p className="text-muted-foreground text-xs sm:text-sm">Potencialize seu negócio com recursos avançados de inteligência artificial.</p>
+                      <p className="text-muted-foreground text-xs sm:text-sm">Dobre sua produtividade com IA que elimina o trabalho manual e potencializa seus resultados.</p>
                       
                       <ul className="space-y-1.5 sm:space-y-2 py-3 sm:py-4 flex-1">
                         <li className="flex items-center">
                           <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mr-2" />
-                          <span className="text-xs sm:text-sm">Tudo do plano CRM básico</span>
+                          <span className="text-xs sm:text-sm">Todos os recursos do plano básico + IA exclusiva</span>
                         </li>
                         <li className="flex items-center">
                           <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mr-2" />
-                          <span className="text-xs sm:text-sm">Assistente MCR inteligente</span>
+                          <span className="text-xs sm:text-sm">Assistente virtual especialista no Manual de Crédito Rural</span>
                         </li>
                         <li className="flex items-center">
                           <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mr-2" />
-                          <span className="text-xs sm:text-sm">Análise automática de documentos</span>
+                          <span className="text-xs sm:text-sm">Extração automática de dados de documentos em segundos</span>
                         </li>
                         <li className="flex items-center">
                           <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mr-2" />
-                          <span className="text-xs sm:text-sm">Previsões e recomendações</span>
+                          <span className="text-xs sm:text-sm">Recomendações inteligentes de linhas de crédito personalizadas</span>
                         </li>
                       </ul>
                     </div>

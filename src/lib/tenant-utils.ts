@@ -2,7 +2,7 @@ import { DynamoDBDocumentClient, PutCommand, ScanCommand } from '@aws-sdk/lib-dy
 import { dynamodb } from './aws-config';
 import crypto from 'crypto';
 
-export async function createTenantAndUser(cognitoId: string, email: string, name: string) {
+export async function createTenantAndUser(cognitoId: string, email: string, name: string): Promise<string> {
   console.log('Iniciando criação de tenant e usuário:', { cognitoId, email, name });
   const timestamp = new Date().toISOString();
   const tenantId = crypto.randomUUID();
@@ -82,7 +82,7 @@ export async function createTenantAndUser(cognitoId: string, email: string, name
       }
     }
 
-    return { tenantId, cognitoId };
+    return tenantId;
   } catch (error: unknown) {
     console.error('Erro na criação de tenant e usuário:', error);
     
@@ -109,6 +109,9 @@ export async function createTenantAndUser(cognitoId: string, email: string, name
     console.error('Detalhes do erro:', errorDetails);
     throw error;
   }
+  
+  // Retornar o tenantId para uso em outras funções
+  return tenantId;
 }
 
 export async function getUserByEmail(email: string) {

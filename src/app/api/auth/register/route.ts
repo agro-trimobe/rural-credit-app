@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { CognitoIdentityProviderClient, SignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
 import crypto from 'crypto';
 import { createTenantAndUser } from "@/lib/tenant-utils";
+import { initializeTrialSubscription } from "@/lib/subscription-service";
 
 function calculateSecretHash(username: string) {
   try {
@@ -122,8 +123,19 @@ export async function POST(request: Request) {
       // 2. Criar tenant e usuário no DynamoDB
       console.log('Criando tenant e usuário no DynamoDB para cognitoId:', cognitoId);
       try {
-        await createTenantAndUser(cognitoId, email, name);
+        // Criar tenant e usuário
+        const tenantId = await createTenantAndUser(cognitoId, email, name);
         console.log('Tenant e usuário criados com sucesso no DynamoDB');
+        
+        // 3. Inicializar período de teste de 14 dias
+        try {
+          console.log('Inicializando período de teste para o usuário:', { tenantId, cognitoId });
+          await initializeTrialSubscription(tenantId, cognitoId);
+          console.log('Período de teste inicializado com sucesso');
+        } catch (trialError) {
+          console.error('Erro ao inicializar período de teste:', trialError);
+          // Não interromper o fluxo se falhar apenas a inicialização do trial
+        }
       } catch (dbError: unknown) {
         console.error('Erro ao criar tenant e usuário no DynamoDB:', dbError);
         
