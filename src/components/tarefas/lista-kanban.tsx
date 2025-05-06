@@ -6,17 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Lista, Tarefa } from '@/lib/crm-utils';
 import { MoreHorizontal, PlusIcon } from 'lucide-react';
 import { TarefaCard } from './tarefa-card';
+import { useDragDrop, DroppableZone } from './drag-drop-context';
 
 interface ListaKanbanProps {
   lista: Lista;
   tarefas: Tarefa[];
-  onAddTarefa?: (listaId: string) => void;
-  onEditLista?: (lista: Lista) => void;
-  onDeleteLista?: (lista: Lista) => void;
+  onAddTarefa?: () => void;
+  onEditLista?: () => void;
+  onDeleteLista?: () => void;
   onEditTarefa?: (tarefa: Tarefa) => void;
   onDeleteTarefa?: (tarefa: Tarefa) => void;
-  onDragStart?: (tarefaId: string, listaId: string) => void;
-  onDragOver?: (listaId: string) => void;
 }
 
 export function ListaKanban({
@@ -27,26 +26,23 @@ export function ListaKanban({
   onDeleteLista,
   onEditTarefa,
   onDeleteTarefa,
-  onDragStart,
-  onDragOver,
 }: ListaKanbanProps) {
   const [showMenu, setShowMenu] = useState(false);
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    if (onDragOver) {
-      onDragOver(lista.id);
-    }
-  };
+  // Usando o contexto de drag-and-drop
+  const { dragState, isOverDropZone } = useDragDrop();
+  
+  // Verificando se esta lista está recebendo um item sendo arrastado
+  const isOver = isOverDropZone(lista.id);
 
   return (
-    <Card 
-      className="h-full flex flex-col w-72 min-w-[18rem]" 
-      style={{ 
-        borderTop: lista.cor ? `4px solid ${lista.cor}` : '4px solid #0ea5e9' 
-      }}
-      onDragOver={handleDragOver}
-    >
+    <DroppableZone listaId={lista.id} tarefas={tarefas}>
+      <Card 
+        className={`h-full flex flex-col w-72 min-w-[18rem] ${isOver ? 'ring-2 ring-primary ring-opacity-50' : ''}`}
+        style={{ 
+          borderTop: lista.cor ? `4px solid ${lista.cor}` : '4px solid #0ea5e9' 
+        }}
+      >
       <CardHeader className="p-3 pb-0">
         <div className="flex items-center justify-between">
           <CardTitle className="text-md font-medium">{lista.titulo}</CardTitle>
@@ -66,7 +62,7 @@ export function ListaKanban({
                     className="text-left w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     onClick={() => {
                       setShowMenu(false);
-                      onEditLista(lista);
+                      onEditLista();
                     }}
                   >
                     Editar lista
@@ -77,7 +73,7 @@ export function ListaKanban({
                     className="text-left w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                     onClick={() => {
                       setShowMenu(false);
-                      onDeleteLista(lista);
+                      onDeleteLista();
                     }}
                   >
                     Excluir lista
@@ -96,23 +92,24 @@ export function ListaKanban({
               tarefa={tarefa}
               onEdit={onEditTarefa}
               onDelete={onDeleteTarefa}
-              onDragStart={onDragStart}
             />
           ))}
         </div>
       </CardContent>
-      <div className="p-3 pt-0">
+      <div className="p-3 border-t">
         {onAddTarefa && (
           <Button
             variant="ghost"
+            size="sm"
             className="w-full justify-start text-muted-foreground hover:text-foreground"
-            onClick={() => onAddTarefa(lista.id)}
+            onClick={onAddTarefa}
           >
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Adicionar Tarefa
+            <PlusIcon className="mr-2 h-4 w-4" />
+            Adicionar tarefa
           </Button>
         )}
       </div>
     </Card>
+    </DroppableZone>
   );
 }

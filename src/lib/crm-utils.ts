@@ -108,6 +108,7 @@ export interface Quadro {
   titulo: string
   descricao?: string
   cor?: string
+  modeloId?: string
   dataCriacao: string
   dataAtualizacao?: string
 }

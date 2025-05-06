@@ -13,8 +13,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tarefa, Lista } from '@/lib/crm-utils';
-import { Select } from '@/components/ui/select';
-import { RadioGroup } from '@/components/ui/radio-group';
 
 interface TarefaDialogProps {
   open: boolean;
@@ -89,17 +87,18 @@ export function TarefaDialog({
           
           <div className="grid gap-2">
             <Label htmlFor="lista">Lista</Label>
-            <Select
+            <select
               id="lista"
               value={listaId}
-              onValueChange={setListaId}
+              onChange={(e) => setListaId(e.target.value)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             >
               {listas.map((lista) => (
                 <option key={lista.id} value={lista.id}>
                   {lista.titulo}
                 </option>
               ))}
-            </Select>
+            </select>
           </div>
           
           <div className="grid grid-cols-2 gap-4">
@@ -125,11 +124,7 @@ export function TarefaDialog({
           
           <div className="grid gap-2">
             <Label htmlFor="prioridade">Prioridade</Label>
-            <RadioGroup
-              value={prioridade}
-              onValueChange={setPrioridade}
-              className="flex space-x-4"
-            >
+            <div className="flex space-x-4">
               <div className="flex items-center space-x-2">
                 <input
                   type="radio"
@@ -160,7 +155,7 @@ export function TarefaDialog({
                 />
                 <label htmlFor="alta" className="text-sm">Alta</label>
               </div>
-            </RadioGroup>
+            </div>
           </div>
           
           <div className="grid gap-2">

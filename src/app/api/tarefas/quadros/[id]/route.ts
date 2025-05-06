@@ -5,9 +5,9 @@ import { quadroRepository } from '@/lib/repositories/quadro-repository';
 import { getUserSession } from '@/lib/user-session';
 
 interface RequestContext {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // GET - Obter um quadro específico
@@ -31,7 +31,9 @@ export async function GET(req: NextRequest, context: RequestContext) {
       );
     }
 
-    const { id } = context.params;
+    // Aguardar a resolução dos parâmetros antes de acessar suas propriedades
+    const params = await context.params;
+    const id = params.id;
     
     // Buscar quadro pelo ID
     const quadro = await quadroRepository.buscarQuadroPorId(tenantId, id);
@@ -45,7 +47,7 @@ export async function GET(req: NextRequest, context: RequestContext) {
 
     return NextResponse.json({ quadro });
   } catch (error) {
-    console.error(`Erro ao buscar quadro ${context.params.id}:`, error);
+    console.error(`Erro ao buscar quadro:`, error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
@@ -74,7 +76,9 @@ export async function PUT(req: NextRequest, context: RequestContext) {
       );
     }
 
-    const { id } = context.params;
+    // Aguardar a resolução dos parâmetros antes de acessar suas propriedades
+    const params = await context.params;
+    const id = params.id;
     
     // Verificar se o quadro existe
     const quadroExistente = await quadroRepository.buscarQuadroPorId(tenantId, id);
@@ -103,9 +107,9 @@ export async function PUT(req: NextRequest, context: RequestContext) {
       cor: quadroData.cor,
     });
 
-    return NextResponse.json({ quadro: quadroAtualizado });
+    return NextResponse.json({ 'message': `Quadro ${id} atualizado com sucesso` });
   } catch (error) {
-    console.error(`Erro ao atualizar quadro ${context.params.id}:`, error);
+    console.error(`Erro ao atualizar quadro:`, error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
@@ -134,7 +138,9 @@ export async function DELETE(req: NextRequest, context: RequestContext) {
       );
     }
 
-    const { id } = context.params;
+    // Aguardar a resolução dos parâmetros antes de acessar suas propriedades
+    const params = await context.params;
+    const id = params.id;
     
     // Verificar se o quadro existe
     const quadroExistente = await quadroRepository.buscarQuadroPorId(tenantId, id);
@@ -153,7 +159,7 @@ export async function DELETE(req: NextRequest, context: RequestContext) {
       { status: 200 }
     );
   } catch (error) {
-    console.error(`Erro ao excluir quadro ${context.params.id}:`, error);
+    console.error(`Erro ao excluir quadro:`, error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }

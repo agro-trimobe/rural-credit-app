@@ -7,30 +7,44 @@ import { Tarefa } from '@/lib/crm-utils';
 import { formatarData } from '@/lib/formatters';
 import { 
   AlarmClockIcon, 
-  MoreHorizontal, 
+  CheckSquareIcon,
+  MoreHorizontalIcon, 
   PenIcon, 
+  SquareIcon,
   TagIcon, 
   TrashIcon,
-  UserIcon
+  UserIcon,
+  CalendarIcon
 } from 'lucide-react';
-import { useState } from 'react';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { useDragDrop, DraggableItem } from './drag-drop-context';
 
 interface TarefaCardProps {
   tarefa: Tarefa;
+  onClick?: () => void;
   onEdit?: (tarefa: Tarefa) => void;
   onDelete?: (tarefa: Tarefa) => void;
-  onDragStart?: (tarefaId: string, listaId: string) => void;
+  onToggleComplete?: () => void;
 }
 
-export function TarefaCard({ tarefa, onEdit, onDelete, onDragStart }: TarefaCardProps) {
-  const [showMenu, setShowMenu] = useState(false);
+export function TarefaCard({ 
+  tarefa, 
+  onClick, 
+  onEdit, 
+  onDelete, 
+  onToggleComplete
+}: TarefaCardProps) {
 
-  const handleDragStart = (e: React.DragEvent) => {
-    if (onDragStart) {
-      e.dataTransfer.setData('tarefaId', tarefa.id);
-      onDragStart(tarefa.id, tarefa.listaId);
-    }
-  };
+  // Usando o contexto de drag-and-drop
+  const { dragState } = useDragDrop();
+  
+  // Verificando se este item está sendo arrastado
+  const isDragging = dragState.isDragging && dragState.draggedItem?.id === tarefa.id;
 
   // Função para determinar a cor de fundo baseada na prioridade
   const getPrioridadeBgColor = (prioridade?: string) => {
@@ -45,110 +59,150 @@ export function TarefaCard({ tarefa, onEdit, onDelete, onDragStart }: TarefaCard
         return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
     }
   };
+  
+  const handleClick = (e: React.MouseEvent) => {
+    if (onClick) {
+      e.preventDefault();
+      onClick();
+    }
+  };
 
   return (
-    <Card 
-      className="cursor-grab active:cursor-grabbing"
-      draggable
-      onDragStart={handleDragStart}
-    >
+    <DraggableItem tarefa={tarefa} listaId={tarefa.listaId}>
+      <Card 
+        className={`cursor-pointer hover:shadow-sm transition-shadow ${tarefa.concluida ? 'bg-muted/50' : ''} cursor-grab active:cursor-grabbing ${isDragging ? 'opacity-50 shadow-md' : ''}`}
+        onClick={handleClick}
+      >
       <CardContent className="p-3">
-        <div className="flex justify-between items-start">
-          <h3 className="font-medium text-sm line-clamp-2">{tarefa.titulo}</h3>
-          <div className="relative">
+        <div className="flex gap-2">
+          {onToggleComplete && (
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0 ml-2"
+              className="h-5 w-5 p-0 rounded-full"
               onClick={(e) => {
                 e.stopPropagation();
-                setShowMenu(!showMenu);
+                onToggleComplete();
               }}
             >
-              <MoreHorizontal className="h-3.5 w-3.5" />
+              {tarefa.concluida ? (
+                <CheckSquareIcon className="h-4 w-4 text-primary" />
+              ) : (
+                <SquareIcon className="h-4 w-4 text-muted-foreground" />
+              )}
             </Button>
-            {showMenu && (
-              <div className="absolute right-0 mt-1 w-36 rounded-md bg-white shadow-lg z-10 border py-1">
-                {onEdit && (
-                  <button
-                    className="text-left w-full px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 flex items-center"
-                    onClick={(e) => {
+          )}
+          
+          <div className="flex-1 min-w-0">
+            <div className="flex justify-between items-start">
+              <h3 className={`font-medium text-sm line-clamp-2 ${tarefa.concluida ? 'line-through text-muted-foreground' : ''}`}>
+                {tarefa.titulo}
+              </h3>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 ml-1 rounded-full"
+                  >
+                    <MoreHorizontalIcon className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  {onToggleComplete && (
+                    <DropdownMenuItem onClick={(e) => {
                       e.stopPropagation();
-                      setShowMenu(false);
+                      onToggleComplete();
+                    }}>
+                      {tarefa.concluida ? (
+                        <>
+                          <SquareIcon className="h-3.5 w-3.5 mr-2" />
+                          Marcar como pendente
+                        </>
+                      ) : (
+                        <>
+                          <CheckSquareIcon className="h-3.5 w-3.5 mr-2" />
+                          Marcar como concluída
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                  )}
+                  {onEdit && (
+                    <DropdownMenuItem onClick={(e) => {
+                      e.stopPropagation();
                       onEdit(tarefa);
-                    }}
-                  >
-                    <PenIcon className="h-3 w-3 mr-2" />
-                    Editar tarefa
-                  </button>
-                )}
-                {onDelete && (
-                  <button
-                    className="text-left w-full px-4 py-2 text-xs text-red-600 hover:bg-gray-100 flex items-center"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowMenu(false);
-                      onDelete(tarefa);
-                    }}
-                  >
-                    <TrashIcon className="h-3 w-3 mr-2" />
-                    Excluir tarefa
-                  </button>
-                )}
-              </div>
-            )}
+                    }}>
+                      <PenIcon className="h-3.5 w-3.5 mr-2" />
+                      Editar tarefa
+                    </DropdownMenuItem>
+                  )}
+                  {onDelete && (
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(tarefa);
+                      }}
+                    >
+                      <TrashIcon className="h-3.5 w-3.5 mr-2" />
+                      Excluir tarefa
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
 
         {tarefa.descricao && (
-          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+          <p className="text-xs text-muted-foreground line-clamp-2 mt-1.5">
             {tarefa.descricao}
           </p>
         )}
 
-        <div className="mt-3 space-y-2">
+        <div className="flex flex-wrap gap-1 mt-2">
           {tarefa.prioridade && (
-            <Badge 
-              variant="outline" 
-              className={`text-xs ${getPrioridadeBgColor(tarefa.prioridade)}`}
-            >
+            <Badge variant="outline" className={`text-xs px-1.5 ${getPrioridadeBgColor(tarefa.prioridade)}`}>
               {tarefa.prioridade}
             </Badge>
           )}
-          
+
+          {tarefa.dataVencimento && (
+            <Badge variant="outline" className="text-xs px-1.5 flex items-center gap-1">
+              <AlarmClockIcon className="h-3 w-3" />
+              <span>{formatarData(tarefa.dataVencimento)}</span>
+            </Badge>
+          )}
+
           {tarefa.etiquetas && tarefa.etiquetas.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {tarefa.etiquetas.map((etiqueta, index) => (
-                <div 
-                  key={index} 
-                  className="flex items-center text-xs font-medium"
-                >
-                  <TagIcon className="h-3 w-3 mr-1 text-muted-foreground" />
-                  <span className="text-muted-foreground">
-                    {etiqueta}
-                  </span>
-                </div>
-              ))}
-            </div>
+            <Badge variant="outline" className="text-xs px-1.5 flex items-center gap-1">
+              <TagIcon className="h-3 w-3" />
+              <span>{tarefa.etiquetas.length}</span>
+            </Badge>
           )}
         </div>
 
-        <div className="mt-3 pt-2 border-t flex items-center justify-between text-xs text-muted-foreground">
-          {tarefa.prazo && (
-            <div className="flex items-center">
-              <AlarmClockIcon className="h-3 w-3 mr-1" />
-              <span>{formatarData(tarefa.prazo)}</span>
-            </div>
-          )}
-          
-          {tarefa.responsavel && (
-            <div className="flex items-center">
+        <div className="flex justify-between items-center mt-2 text-xs text-muted-foreground">
+          {tarefa.responsavel ? (
+            <span className="flex items-center truncate max-w-[100px]">
+              <UserIcon className="h-3 w-3 mr-1 flex-shrink-0" />
+              <span className="truncate">{tarefa.responsavel}</span>
+            </span>
+          ) : tarefa.clienteId ? (
+            <span className="flex items-center">
               <UserIcon className="h-3 w-3 mr-1" />
-              <span>{tarefa.responsavel}</span>
-            </div>
+              Cliente
+            </span>
+          ) : (
+            <span></span>
           )}
+          <span className="flex items-center">
+            <CalendarIcon className="h-3 w-3 mr-1" />
+            {formatarData(tarefa.dataCriacao)}
+          </span>
         </div>
       </CardContent>
     </Card>
+    </DraggableItem>
   );
 }

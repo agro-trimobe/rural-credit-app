@@ -10,15 +10,12 @@ import { TarefaDialog } from '@/components/tarefas/tarefa-dialog';
 import { DragDropProvider } from '@/components/tarefas/drag-drop-context';
 import { Quadro, Lista, Tarefa } from '@/lib/crm-utils';
 
-interface QuadroPageProps {
-  params: {
-    id: string;
-  };
+interface QuadroContentProps {
+  quadroId: string;
 }
 
-export default function QuadroPage({ params }: QuadroPageProps) {
+export default function QuadroContent({ quadroId }: QuadroContentProps) {
   const router = useRouter();
-  const quadroId = params.id;
 
   const [quadro, setQuadro] = useState<Quadro | null>(null);
   const [listas, setListas] = useState<Lista[]>([]);
@@ -263,6 +260,28 @@ export default function QuadroPage({ params }: QuadroPageProps) {
 
   const handleSalvarTarefa = async (tarefaData: Partial<Tarefa>) => {
     try {
+      // Verificar e logar os dados para diagnóstico
+      console.log('Dados da tarefa:', tarefaData);
+      
+      // Verificar campos obrigatórios
+      if (!tarefaData.titulo) {
+        toast({
+          title: 'Erro ao salvar tarefa',
+          description: 'O título da tarefa é obrigatório',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      if (!tarefaData.listaId) {
+        toast({
+          title: 'Erro ao salvar tarefa',
+          description: 'O ID da lista é obrigatório',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
       const isEdicao = !!tarefaParaEditar;
       const url = isEdicao 
         ? `/api/tarefas/tarefas/${tarefaParaEditar.id}` 
@@ -274,9 +293,12 @@ export default function QuadroPage({ params }: QuadroPageProps) {
         ? tarefaData.ordem 
         : tarefasPorLista[tarefaData.listaId || '']?.length || 0;
       
+      // Garantir que todos os campos obrigatórios estejam presentes
       const tarefaCompleta = {
         ...tarefaData,
-        quadroId,
+        quadroId,  // Garantir que o quadroId esteja definido
+        listaId: tarefaData.listaId, // Garantir que o listaId esteja definido
+        titulo: tarefaData.titulo,   // Garantir que o título esteja definido
         ordem: novaOrdem,
       };
       

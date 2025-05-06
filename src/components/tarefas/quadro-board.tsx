@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Quadro, Lista, Tarefa } from '@/lib/crm-utils';
 import { ListaKanban } from './lista-kanban';
 import { PlusIcon, ArrowLeftIcon } from 'lucide-react';
+import { useDragDrop } from './drag-drop-context';
 
 interface QuadroBoardProps {
   quadro: Quadro;
@@ -33,51 +34,8 @@ export function QuadroBoard({
   onMoveTarefa,
 }: QuadroBoardProps) {
   const router = useRouter();
-  const [draggedTarefaId, setDraggedTarefaId] = useState<string | null>(null);
-  const [sourceListaId, setSourceListaId] = useState<string | null>(null);
-  const [targetListaId, setTargetListaId] = useState<string | null>(null);
-
-  const handleDragStart = (tarefaId: string, listaId: string) => {
-    setDraggedTarefaId(tarefaId);
-    setSourceListaId(listaId);
-  };
-
-  const handleDragOver = (listaId: string) => {
-    if (listaId !== targetListaId) {
-      setTargetListaId(listaId);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    
-    if (!draggedTarefaId || !targetListaId || !onMoveTarefa) return;
-    
-    // Se a lista de destino for diferente da lista de origem
-    if (targetListaId !== sourceListaId) {
-      // Definimos a nova ordem como a última posição da lista de destino
-      const novaPosicao = tarefas[targetListaId]?.length || 0;
-      onMoveTarefa(draggedTarefaId, targetListaId, novaPosicao);
-    }
-    
-    // Limpar estados
-    setDraggedTarefaId(null);
-    setSourceListaId(null);
-    setTargetListaId(null);
-  };
-
-  useEffect(() => {
-    // Adicionar evento de drop no documento
-    const handleGlobalDrop = (e: DragEvent) => {
-      handleDrop(e as unknown as React.DragEvent);
-    };
-
-    document.addEventListener('drop', handleGlobalDrop);
-    
-    return () => {
-      document.removeEventListener('drop', handleGlobalDrop);
-    };
-  }, [draggedTarefaId, sourceListaId, targetListaId]);
+  // Usando o contexto de drag-and-drop
+  const { dragState } = useDragDrop();
 
   return (
     <div className="h-full flex flex-col">
@@ -120,13 +78,11 @@ export function QuadroBoard({
             key={lista.id}
             lista={lista}
             tarefas={tarefas[lista.id] || []}
-            onAddTarefa={onAddTarefa}
-            onEditLista={onEditLista}
-            onDeleteLista={onDeleteLista}
+            onAddTarefa={onAddTarefa ? () => onAddTarefa(lista.id) : undefined}
+            onEditLista={onEditLista ? () => onEditLista(lista) : undefined}
+            onDeleteLista={onDeleteLista ? () => onDeleteLista(lista) : undefined}
             onEditTarefa={onEditTarefa}
             onDeleteTarefa={onDeleteTarefa}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
           />
         ))}
         
