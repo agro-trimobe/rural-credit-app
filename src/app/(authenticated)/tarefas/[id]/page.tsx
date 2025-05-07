@@ -8,7 +8,7 @@ import { QuadroBoard } from '@/components/tarefas/quadro-board';
 import { CriarListaDialog } from '@/components/tarefas/criar-lista-dialog';
 import { TarefaDialog } from '@/components/tarefas/tarefa-dialog';
 import { DragDropProvider } from '@/components/tarefas/drag-drop-context';
-import { Quadro, Lista, Tarefa } from '@/lib/crm-utils';
+import { Quadro, Lista, Tarefa, Cliente, Projeto, Propriedade } from '@/lib/crm-utils';
 
 interface QuadroPageProps {
   params: {
@@ -261,6 +261,94 @@ export default function QuadroPage({ params }: QuadroPageProps) {
     }
   };
 
+  // Função para carregar clientes para o diálogo de tarefas
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  
+  const carregarClientes = async () => {
+    try {
+      console.log('Carregando clientes - início da função');
+      
+      // Verificar se o fetch realmente está sendo executado
+      console.log('Iniciando fetch para /api/clientes');
+      const response = await fetch('/api/clientes', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
+      
+      console.log('Status da resposta:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`Erro ao carregar clientes: ${response.status}`);
+      }
+      
+      // Debug do corpo da resposta
+      const responseText = await response.text();
+      console.log('Resposta bruta:', responseText);
+      
+      // Converter texto para JSON
+      const data = JSON.parse(responseText);
+      console.log('Dados JSON recebidos:', data);
+      console.log('Status da API:', data.status);
+      console.log('Clientes retornados:', data.data ? data.data.length : 0);
+      
+      // Usando mock de clientes para debug
+      if (!data.data || data.data.length === 0) {
+        console.log('Nenhum cliente retornado, criando dados de teste');
+        const clientesTeste = [
+          { id: 'cliente1', nome: 'Cliente Teste 1', cpfCnpj: '123.456.789-00' },
+          { id: 'cliente2', nome: 'Cliente Teste 2', cpfCnpj: '987.654.321-00' }
+        ];
+        return clientesTeste;
+      }
+      
+      return data.data || [];
+    } catch (error) {
+      console.error('Erro ao carregar clientes:', error);
+      toast({
+        title: 'Erro ao carregar clientes',
+        description: 'Não foi possível carregar a lista de clientes.',
+        variant: 'destructive',
+      });
+      
+      // Retornar dados de teste em caso de erro
+      console.log('Retornando dados de teste após erro');
+      return [
+        { id: 'erro1', nome: 'Cliente Erro 1', cpfCnpj: '111.222.333-44' },
+        { id: 'erro2', nome: 'Cliente Erro 2', cpfCnpj: '555.666.777-88' }
+      ];
+    }
+  };
+  
+  // Funções para carregar projetos e propriedades
+  const carregarProjetos = async (clienteId?: string) => {
+    if (!clienteId) return [];
+    try {
+      const response = await fetch(`/api/projetos/cliente/${clienteId}`);
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.data || [];
+    } catch (error) {
+      console.error('Erro ao carregar projetos:', error);
+      return [];
+    }
+  };
+  
+  const carregarPropriedades = async (clienteId?: string) => {
+    if (!clienteId) return [];
+    try {
+      const response = await fetch(`/api/propriedades/cliente/${clienteId}`);
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.data || [];
+    } catch (error) {
+      console.error('Erro ao carregar propriedades:', error);
+      return [];
+    }
+  };
+
   const handleSalvarTarefa = async (tarefaData: Partial<Tarefa>) => {
     try {
       const isEdicao = !!tarefaParaEditar;
@@ -274,10 +362,16 @@ export default function QuadroPage({ params }: QuadroPageProps) {
         ? tarefaData.ordem 
         : tarefasPorLista[tarefaData.listaId || '']?.length || 0;
       
+      // Gerar ID aleatório para novas tarefas
+      const tarefaId = isEdicao ? tarefaParaEditar.id : crypto.randomUUID();
+      const dataCriacao = new Date().toISOString();
+      
       const tarefaCompleta = {
         ...tarefaData,
+        id: tarefaId,
         quadroId,
         ordem: novaOrdem,
+        dataCriacao: isEdicao ? tarefaParaEditar.dataCriacao : dataCriacao,
       };
       
       const response = await fetch(url, {
@@ -393,10 +487,13 @@ export default function QuadroPage({ params }: QuadroPageProps) {
       <TarefaDialog
         open={openTarefaDialog}
         onOpenChange={setOpenTarefaDialog}
+        tarefa={tarefaParaEditar}
         listas={listas}
         listaIdInicial={listaIdSelecionada}
-        tarefa={tarefaParaEditar}
         onSave={handleSalvarTarefa}
+        onCarregarClientes={carregarClientes}
+        onCarregarProjetos={carregarProjetos}
+        onCarregarPropriedades={carregarPropriedades}
       />
     </div>
   );

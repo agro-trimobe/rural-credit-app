@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Dialog, 
   DialogContent, 
@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Quadro, Lista } from '@/lib/crm-utils';
 import { KanbanIcon, CheckSquareIcon, ListIcon, FileTextIcon } from 'lucide-react';
@@ -67,11 +66,29 @@ export function CriarQuadroDialog({
   quadro,
   onSave 
 }: CriarQuadroDialogProps) {
-  const [titulo, setTitulo] = useState(quadro?.titulo || '');
-  const [descricao, setDescricao] = useState(quadro?.descricao || '');
-  const [cor, setCor] = useState(quadro?.cor || '#0ea5e9');
-  const [activeTab, setActiveTab] = useState<string>('personalizado');
-  const [modeloSelecionado, setModeloSelecionado] = useState<string | undefined>(quadro?.modeloId);
+  const [titulo, setTitulo] = useState('');
+  const [descricao, setDescricao] = useState('');
+  const [cor, setCor] = useState('#0ea5e9');
+  const [modeloSelecionado, setModeloSelecionado] = useState<string | undefined>(undefined);
+
+  // Carrega os dados do quadro quando for edição ou limpa os campos quando o modal abre
+  useEffect(() => {
+    if (open) {
+      if (quadro?.id) {
+        // Modo edição - carrega os dados existentes
+        setTitulo(quadro.titulo || '');
+        setDescricao(quadro.descricao || '');
+        setCor(quadro.cor || '#0ea5e9');
+        setModeloSelecionado(quadro.modeloId);
+      } else {
+        // Modo criação - limpa os campos
+        setTitulo('');
+        setDescricao('');
+        setCor('#0ea5e9');
+        setModeloSelecionado(undefined);
+      }
+    }
+  }, [open, quadro]);
 
   const handleSave = () => {
     if (!titulo.trim()) return;
@@ -123,99 +140,52 @@ export function CriarQuadroDialog({
           </DialogDescription>
         </DialogHeader>
         
-        {!quadro?.id && (
-          <Tabs defaultValue="personalizado" value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="personalizado">Personalizado</TabsTrigger>
-              <TabsTrigger value="modelos">Usar Modelo</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="personalizado" className="mt-4">
-              <div className="grid gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="titulo">Título</Label>
-                  <Input
-                    id="titulo"
-                    value={titulo}
-                    onChange={(e) => setTitulo(e.target.value)}
-                    placeholder="Título do quadro"
-                  />
-                </div>
-                
-                <div className="grid gap-2">
-                  <Label htmlFor="descricao">Descrição</Label>
-                  <Textarea
-                    id="descricao"
-                    value={descricao}
-                    onChange={(e) => setDescricao(e.target.value)}
-                    placeholder="Descrição do quadro"
-                    rows={3}
-                  />
-                </div>
-                
-                <div className="grid gap-2">
-                  <Label>Cor</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {coresPredefinidas.map((corPredefinida) => (
-                      <button
-                        key={corPredefinida}
-                        type="button"
-                        className={`w-8 h-8 rounded-full cursor-pointer ${cor === corPredefinida ? 'ring-2 ring-offset-2 ring-primary' : ''}`}
-                        style={{ backgroundColor: corPredefinida }}
-                        onClick={() => setCor(corPredefinida)}
-                        aria-label={`Cor ${corPredefinida}`}
-                      />
-                    ))}
-                    <div className="flex items-center">
-                      <Input
-                        type="color"
-                        value={cor}
-                        onChange={(e) => setCor(e.target.value)}
-                        className="w-8 h-8 p-0 border-none"
-                      />
-                    </div>
-                  </div>
-                </div>
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="titulo">Título</Label>
+            <Input
+              id="titulo"
+              value={titulo}
+              onChange={(e) => setTitulo(e.target.value)}
+              placeholder="Título do quadro"
+            />
+          </div>
+          
+          <div className="grid gap-2">
+            <Label htmlFor="descricao">Descrição</Label>
+            <Textarea
+              id="descricao"
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
+              placeholder="Descrição do quadro"
+              rows={3}
+            />
+          </div>
+          
+          <div className="grid gap-2">
+            <Label>Cor</Label>
+            <div className="flex flex-wrap gap-2">
+              {coresPredefinidas.map((corPredefinida) => (
+                <button
+                  key={corPredefinida}
+                  type="button"
+                  className={`w-8 h-8 rounded-full cursor-pointer ${cor === corPredefinida ? 'ring-2 ring-offset-2 ring-primary' : ''}`}
+                  style={{ backgroundColor: corPredefinida }}
+                  onClick={() => setCor(corPredefinida)}
+                  aria-label={`Cor ${corPredefinida}`}
+                />
+              ))}
+              <div className="flex items-center">
+                <Input
+                  type="color"
+                  value={cor}
+                  onChange={(e) => setCor(e.target.value)}
+                  className="w-8 h-8 p-0 border-none"
+                />
               </div>
-            </TabsContent>
-            
-            <TabsContent value="modelos" className="mt-4">
-              <div className="grid gap-4 md:grid-cols-3">
-                {modelos.map(modelo => (
-                  <Card 
-                    key={modelo.id} 
-                    className={`cursor-pointer hover:shadow-md transition-all ${modeloSelecionado === modelo.id ? 'ring-2 ring-primary' : ''}`}
-                    onClick={() => selecionarModelo(modelo.id)}
-                  >
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          {modelo.icon}
-                          {modelo.nome}
-                        </CardTitle>
-                      </div>
-                      <CardDescription className="text-xs line-clamp-2">
-                        {modelo.descricao}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="flex gap-1 mt-2">
-                        {modelo.listas.map((lista, index) => (
-                          <div 
-                            key={index}
-                            className="h-2 flex-1 rounded-full"
-                            style={{ backgroundColor: lista.cor }}
-                            title={lista.titulo}
-                          />
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </TabsContent>
-          </Tabs>
-        )}
+            </div>
+          </div>
+        </div>
         
         {/* Quando está editando um quadro, mostra apenas os campos básicos */}
         {quadro?.id && (

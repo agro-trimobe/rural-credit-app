@@ -14,7 +14,11 @@ import {
   TagIcon, 
   TrashIcon,
   UserIcon,
-  CalendarIcon
+  CalendarIcon,
+  HomeIcon,
+  FileTextIcon,
+  UserCircleIcon,
+  EyeIcon
 } from 'lucide-react';
 import { 
   DropdownMenu, 
@@ -22,6 +26,12 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useDragDrop, DraggableItem } from './drag-drop-context';
 
 interface TarefaCardProps {
@@ -29,6 +39,7 @@ interface TarefaCardProps {
   onClick?: () => void;
   onEdit?: (tarefa: Tarefa) => void;
   onDelete?: (tarefa: Tarefa) => void;
+  onView?: (tarefa: Tarefa) => void;
   onToggleComplete?: () => void;
 }
 
@@ -37,6 +48,7 @@ export function TarefaCard({
   onClick, 
   onEdit, 
   onDelete, 
+  onView,
   onToggleComplete
 }: TarefaCardProps) {
 
@@ -70,7 +82,16 @@ export function TarefaCard({
   return (
     <DraggableItem tarefa={tarefa} listaId={tarefa.listaId}>
       <Card 
-        className={`cursor-pointer hover:shadow-sm transition-shadow ${tarefa.concluida ? 'bg-muted/50' : ''} cursor-grab active:cursor-grabbing ${isDragging ? 'opacity-50 shadow-md' : ''}`}
+        className={`cursor-pointer hover:shadow-sm transition-shadow border-t-2 ${
+          tarefa.concluida ? 'bg-muted/50' : ''
+        } cursor-grab active:cursor-grabbing ${
+          isDragging ? 'opacity-50 shadow-md' : ''
+        } ${
+          tarefa.prioridade === 'Alta' ? 'border-t-red-500' :
+          tarefa.prioridade === 'Média' ? 'border-t-amber-500' :
+          tarefa.prioridade === 'Baixa' ? 'border-t-green-500' :
+          'border-t-transparent'
+        }`}
         onClick={handleClick}
       >
       <CardContent className="p-3">
@@ -127,6 +148,15 @@ export function TarefaCard({
                       )}
                     </DropdownMenuItem>
                   )}
+                  {onView && (
+                    <DropdownMenuItem onClick={(e) => {
+                      e.stopPropagation();
+                      onView(tarefa);
+                    }}>
+                      <EyeIcon className="h-3.5 w-3.5 mr-2" />
+                      Ver detalhes
+                    </DropdownMenuItem>
+                  )}
                   {onEdit && (
                     <DropdownMenuItem onClick={(e) => {
                       e.stopPropagation();
@@ -180,21 +210,68 @@ export function TarefaCard({
               <span>{tarefa.etiquetas.length}</span>
             </Badge>
           )}
+          
+          {/* Badges de relacionamento com entidades */}
+          <TooltipProvider>
+            {tarefa.clienteId && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge 
+                    variant="outline" 
+                    className="text-xs px-1.5 bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800"
+                  >
+                    <UserCircleIcon className="h-3 w-3 mr-1" />
+                    Cliente
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Vinculado a um cliente</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            
+            {tarefa.projetoId && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge 
+                    variant="outline" 
+                    className="text-xs px-1.5 bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800"
+                  >
+                    <FileTextIcon className="h-3 w-3 mr-1" />
+                    Projeto
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Vinculado a um projeto</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            
+            {tarefa.propriedadeId && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge 
+                    variant="outline" 
+                    className="text-xs px-1.5 bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800"
+                  >
+                    <HomeIcon className="h-3 w-3 mr-1" />
+                    Propriedade
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Vinculado a uma propriedade</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </TooltipProvider>
         </div>
 
-        <div className="flex justify-between items-center mt-2 text-xs text-muted-foreground">
-          {tarefa.responsavel ? (
-            <span className="flex items-center truncate max-w-[100px]">
-              <UserIcon className="h-3 w-3 mr-1 flex-shrink-0" />
-              <span className="truncate">{tarefa.responsavel}</span>
-            </span>
-          ) : tarefa.clienteId ? (
+        <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-muted-foreground">
+          {tarefa.responsavel && (
             <span className="flex items-center">
               <UserIcon className="h-3 w-3 mr-1" />
-              Cliente
+              {tarefa.responsavel}
             </span>
-          ) : (
-            <span></span>
           )}
           <span className="flex items-center">
             <CalendarIcon className="h-3 w-3 mr-1" />

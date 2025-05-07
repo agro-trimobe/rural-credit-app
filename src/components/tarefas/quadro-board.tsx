@@ -18,6 +18,7 @@ interface QuadroBoardProps {
   onAddTarefa?: (listaId: string) => void;
   onEditTarefa?: (tarefa: Tarefa) => void;
   onDeleteTarefa?: (tarefa: Tarefa) => void;
+  onViewTarefa?: (tarefa: Tarefa) => void;
   onMoveTarefa?: (tarefaId: string, novaListaId: string, novaOrdem: number) => void;
 }
 
@@ -31,6 +32,7 @@ export function QuadroBoard({
   onAddTarefa,
   onEditTarefa,
   onDeleteTarefa,
+  onViewTarefa,
   onMoveTarefa,
 }: QuadroBoardProps) {
   const router = useRouter();
@@ -83,6 +85,7 @@ export function QuadroBoard({
             onDeleteLista={onDeleteLista ? () => onDeleteLista(lista) : undefined}
             onEditTarefa={onEditTarefa}
             onDeleteTarefa={onDeleteTarefa}
+            onViewTarefa={onViewTarefa}
           />
         ))}
         

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Dialog, 
   DialogContent, 
@@ -28,8 +28,23 @@ export function CriarListaDialog({
   lista,
   onSave 
 }: CriarListaDialogProps) {
-  const [titulo, setTitulo] = useState(lista?.titulo || '');
-  const [cor, setCor] = useState(lista?.cor || '#0ea5e9');
+  const [titulo, setTitulo] = useState('');
+  const [cor, setCor] = useState('#0ea5e9');
+
+  // Efeito para limpar os campos ao abrir o diálogo ou carregar dados para edição
+  useEffect(() => {
+    if (open) {
+      if (lista?.id) {
+        // Modo edição - carrega os dados existentes
+        setTitulo(lista.titulo || '');
+        setCor(lista.cor || '#0ea5e9');
+      } else {
+        // Modo criação - limpa os campos
+        setTitulo('');
+        setCor('#0ea5e9');
+      }
+    }
+  }, [open, lista]);
 
   const handleSave = () => {
     if (!titulo.trim()) return;

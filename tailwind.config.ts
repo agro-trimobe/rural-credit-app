@@ -23,8 +23,8 @@ export default {
   			primary: {
   				DEFAULT: '#A020F0',
   				foreground: 'hsl(var(--primary-foreground))',
-                light: '#B24CF0',
-                dark: '#8015D0'
+  				light: '#B24CF0',
+  				dark: '#8015D0'
   			},
   			secondary: {
   				DEFAULT: 'hsl(var(--secondary))',
@@ -51,19 +51,41 @@ export default {
   				'3': 'hsl(var(--chart-3))',
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))',
-                '6': '200 70% 50%',
-                '7': '150 70% 50%',
-                '8': '100 70% 50%',
-                '9': '250 70% 50%',
-                '10': '300 70% 50%',
-                '11': '50 70% 50%',
-                '12': '0 0% 60%'
+  				'6': '200 70% 50%',
+  				'7': '150 70% 50%',
+  				'8': '100 70% 50%',
+  				'9': '250 70% 50%',
+  				'10': '300 70% 50%',
+  				'11': '50 70% 50%',
+  				'12': '0 0% 60%'
   			}
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
+  		},
+  		keyframes: {
+  			'accordion-down': {
+  				from: {
+  					height: '0'
+  				},
+  				to: {
+  					height: 'var(--radix-accordion-content-height)'
+  				}
+  			},
+  			'accordion-up': {
+  				from: {
+  					height: 'var(--radix-accordion-content-height)'
+  				},
+  				to: {
+  					height: '0'
+  				}
+  			}
+  		},
+  		animation: {
+  			'accordion-down': 'accordion-down 0.2s ease-out',
+  			'accordion-up': 'accordion-up 0.2s ease-out'
   		}
   	}
   },

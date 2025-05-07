@@ -19,6 +19,10 @@ export interface DynamoDBItem {
   GSI1SK?: string;
   GSI2PK?: string;
   GSI2SK?: string;
+  GSI3PK?: string;
+  GSI3SK?: string;
+  GSI4PK?: string;
+  GSI4SK?: string;
   tenantId: string;
 }
 
@@ -112,6 +116,18 @@ export function tarefaToItem(tarefa: Tarefa, tenantId: string): TarefaItem {
   if (tarefa.clienteId) {
     item.GSI2PK = `CLIENTE#${tarefa.clienteId}`;
     item.GSI2SK = `TAREFA#${tarefa.id}`;
+  }
+  
+  // Adicionar índice para busca por projeto, se existir
+  if (tarefa.projetoId) {
+    item.GSI3PK = `PROJETO#${tarefa.projetoId}`;
+    item.GSI3SK = `TAREFA#${tarefa.id}`;
+  }
+  
+  // Adicionar índice para busca por propriedade, se existir
+  if (tarefa.propriedadeId) {
+    item.GSI4PK = `PROPRIEDADE#${tarefa.propriedadeId}`;
+    item.GSI4SK = `TAREFA#${tarefa.id}`;
   }
   
   return item;

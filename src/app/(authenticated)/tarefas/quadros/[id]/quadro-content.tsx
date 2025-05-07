@@ -7,8 +7,13 @@ import { toast } from '@/hooks/use-toast';
 import { QuadroBoard } from '@/components/tarefas/quadro-board';
 import { CriarListaDialog } from '@/components/tarefas/criar-lista-dialog';
 import { TarefaDialog } from '@/components/tarefas/tarefa-dialog';
+import { TarefaDetalhesDialog } from '@/components/tarefas/tarefa-detalhes-dialog';
 import { DragDropProvider } from '@/components/tarefas/drag-drop-context';
-import { Quadro, Lista, Tarefa } from '@/lib/crm-utils';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { Quadro, Lista, Tarefa, Cliente, Projeto, Propriedade } from '@/lib/crm-utils';
+import { clientesApi } from '@/lib/api/clientes';
+import { projetosApi } from '@/lib/api/projetos';
+import { propriedadesApi } from '@/lib/api/propriedades';
 
 interface QuadroContentProps {
   quadroId: string;
@@ -28,6 +33,23 @@ export default function QuadroContent({ quadroId }: QuadroContentProps) {
   const [openTarefaDialog, setOpenTarefaDialog] = useState(false);
   const [tarefaParaEditar, setTarefaParaEditar] = useState<Tarefa | undefined>(undefined);
   const [listaIdSelecionada, setListaIdSelecionada] = useState<string | undefined>(undefined);
+  
+  // Estados para diálogos de confirmação
+  const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
+  const [confirmDialogProps, setConfirmDialogProps] = useState({
+    title: '',
+    description: '',
+    onConfirm: () => {},
+  });
+  const [tarefaParaExcluir, setTarefaParaExcluir] = useState<Tarefa | null>(null);
+  const [listaParaExcluir, setListaParaExcluir] = useState<Lista | null>(null);
+  
+  // Estados para o diálogo de detalhes da tarefa
+  const [openTarefaDetalhesDialog, setOpenTarefaDetalhesDialog] = useState(false);
+  const [tarefaParaVisualizar, setTarefaParaVisualizar] = useState<Tarefa | null>(null);
+  const [clienteTarefa, setClienteTarefa] = useState<Cliente | null>(null);
+  const [projetoTarefa, setProjetoTarefa] = useState<Projeto | null>(null);
+  const [propriedadeTarefa, setPropriedadeTarefa] = useState<Propriedade | null>(null);
 
   // Carregar o quadro, listas e tarefas ao montar o componente
   useEffect(() => {
@@ -145,35 +167,39 @@ export default function QuadroContent({ quadroId }: QuadroContentProps) {
     setOpenListaDialog(true);
   };
 
-  const handleExcluirLista = async (lista: Lista) => {
-    if (!confirm(`Tem certeza que deseja excluir a lista "${lista.titulo}"?`)) {
-      return;
-    }
+  const handleExcluirLista = (lista: Lista) => {
+    setListaParaExcluir(lista);
+    setConfirmDialogProps({
+      title: 'Excluir Lista',
+      description: `Tem certeza que deseja excluir a lista "${lista.titulo}"? Esta ação não pode ser desfeita.`,
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/tarefas/listas/${lista.id}`, {
+            method: 'DELETE',
+          });
 
-    try {
-      const response = await fetch(`/api/tarefas/listas/${lista.id}`, {
-        method: 'DELETE',
-      });
+          if (!response.ok) {
+            throw new Error(`Erro ao excluir lista: ${response.status}`);
+          }
 
-      if (!response.ok) {
-        throw new Error(`Erro ao excluir lista: ${response.status}`);
-      }
+          toast({
+            title: 'Lista excluída',
+            description: 'A lista foi excluída com sucesso.',
+          });
 
-      toast({
-        title: 'Lista excluída',
-        description: 'A lista foi excluída com sucesso.',
-      });
-
-      // Atualizar a lista de listas
-      carregarListas();
-    } catch (error) {
-      console.error('Erro ao excluir lista:', error);
-      toast({
-        title: 'Erro ao excluir lista',
-        description: 'Não foi possível excluir a lista. Tente novamente mais tarde.',
-        variant: 'destructive',
-      });
-    }
+          // Atualizar as listas
+          carregarListas();
+        } catch (error) {
+          console.error('Erro ao excluir lista:', error);
+          toast({
+            title: 'Erro ao excluir lista',
+            description: 'Não foi possível excluir a lista. Tente novamente mais tarde.',
+            variant: 'destructive',
+          });
+        }
+      },
+    });
+    setOpenConfirmDialog(true);
   };
 
   const handleSalvarLista = async (listaData: Partial<Lista>) => {
@@ -226,36 +252,85 @@ export default function QuadroContent({ quadroId }: QuadroContentProps) {
     setTarefaParaEditar(tarefa);
     setOpenTarefaDialog(true);
   };
+  
+  const handleVisualizarTarefa = async (tarefa: Tarefa) => {
+    console.log('Visualizando tarefa:', tarefa);
+    setTarefaParaVisualizar(tarefa);
+    
+    // Carregar dados relacionados para exibir nos detalhes
+    try {
+      // Carregar cliente se tiver ID de cliente
+      if (tarefa.clienteId) {
+        console.log('Carregando cliente:', tarefa.clienteId);
+        const cliente = await clientesApi.buscarClientePorId(tarefa.clienteId);
+        console.log('Cliente carregado:', cliente);
+        setClienteTarefa(cliente);
+      } else {
+        console.log('Tarefa sem clienteId');
+        setClienteTarefa(null);
+      }
+      
+      // Carregar projeto se tiver ID de projeto
+      if (tarefa.projetoId) {
+        console.log('Carregando projeto:', tarefa.projetoId);
+        const projeto = await projetosApi.buscarProjetoPorId(tarefa.projetoId);
+        console.log('Projeto carregado:', projeto);
+        setProjetoTarefa(projeto);
+      } else {
+        console.log('Tarefa sem projetoId');
+        setProjetoTarefa(null);
+      }
+      
+      // Carregar propriedade se tiver ID de propriedade
+      if (tarefa.propriedadeId) {
+        console.log('Carregando propriedade:', tarefa.propriedadeId);
+        const propriedade = await propriedadesApi.buscarPropriedadePorId(tarefa.propriedadeId);
+        console.log('Propriedade carregada:', propriedade);
+        setPropriedadeTarefa(propriedade);
+      } else {
+        console.log('Tarefa sem propriedadeId');
+        setPropriedadeTarefa(null);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados relacionados:', error);
+    }
+    
+    setOpenTarefaDetalhesDialog(true);
+  };
 
   const handleExcluirTarefa = async (tarefa: Tarefa) => {
-    if (!confirm(`Tem certeza que deseja excluir a tarefa "${tarefa.titulo}"?`)) {
-      return;
-    }
+    setTarefaParaExcluir(tarefa);
+    setConfirmDialogProps({
+      title: 'Excluir Tarefa',
+      description: `Tem certeza que deseja excluir a tarefa "${tarefa.titulo}"? Esta ação não pode ser desfeita.`,
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/tarefas/tarefas/${tarefa.id}`, {
+            method: 'DELETE',
+          });
 
-    try {
-      const response = await fetch(`/api/tarefas/tarefas/${tarefa.id}`, {
-        method: 'DELETE',
-      });
+          if (!response.ok) {
+            throw new Error(`Erro ao excluir tarefa: ${response.status}`);
+          }
 
-      if (!response.ok) {
-        throw new Error(`Erro ao excluir tarefa: ${response.status}`);
-      }
+          toast({
+            title: 'Tarefa excluída',
+            description: 'A tarefa foi excluída com sucesso.',
+          });
 
-      toast({
-        title: 'Tarefa excluída',
-        description: 'A tarefa foi excluída com sucesso.',
-      });
-
-      // Atualizar as tarefas
-      carregarTarefas();
-    } catch (error) {
-      console.error('Erro ao excluir tarefa:', error);
-      toast({
-        title: 'Erro ao excluir tarefa',
-        description: 'Não foi possível excluir a tarefa. Tente novamente mais tarde.',
-        variant: 'destructive',
-      });
-    }
+          // Atualizar as tarefas
+          carregarTarefas();
+        } catch (error) {
+          console.error('Erro ao excluir tarefa:', error);
+          toast({
+            title: 'Erro ao excluir tarefa',
+            description: 'Não foi possível excluir a tarefa. Tente novamente mais tarde.',
+            variant: 'destructive',
+          });
+        }
+      },
+    });
+    setOpenConfirmDialog(true);
   };
 
   const handleSalvarTarefa = async (tarefaData: Partial<Tarefa>) => {
@@ -401,6 +476,7 @@ export default function QuadroContent({ quadroId }: QuadroContentProps) {
           onEditTarefa={handleEditarTarefa}
           onDeleteTarefa={handleExcluirTarefa}
           onMoveTarefa={handleMoverTarefa}
+          onViewTarefa={handleVisualizarTarefa}
         />
       </DragDropProvider>
 
@@ -419,6 +495,47 @@ export default function QuadroContent({ quadroId }: QuadroContentProps) {
         listaIdInicial={listaIdSelecionada}
         tarefa={tarefaParaEditar}
         onSave={handleSalvarTarefa}
+        onCarregarClientes={async () => {
+          console.log('QuadroContent - Carregando clientes...');
+          const clientes = await clientesApi.listarClientes();
+          console.log(`QuadroContent - ${clientes.length} clientes carregados`);
+          return clientes;
+        }}
+        onCarregarProjetos={async (clienteId?: string) => {
+          if (!clienteId) return [];
+          console.log(`QuadroContent - Carregando projetos do cliente ${clienteId}...`);
+          const projetos = await projetosApi.listarProjetosPorCliente(clienteId);
+          return projetos;
+        }}
+        onCarregarPropriedades={async (clienteId?: string) => {
+          if (!clienteId) return [];
+          console.log(`QuadroContent - Carregando propriedades do cliente ${clienteId}...`);
+          const propriedades = await propriedadesApi.listarPropriedadesPorCliente(clienteId);
+          return propriedades;
+        }}
+      />
+      
+      {/* Diálogo de confirmação para exclusões */}
+      <ConfirmationDialog
+        open={openConfirmDialog}
+        onOpenChange={setOpenConfirmDialog}
+        title={confirmDialogProps.title}
+        description={confirmDialogProps.description}
+        onConfirm={confirmDialogProps.onConfirm}
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        variant="destructive"
+      />
+      
+      {/* Diálogo de detalhes da tarefa */}
+      <TarefaDetalhesDialog
+        open={openTarefaDetalhesDialog}
+        onOpenChange={setOpenTarefaDetalhesDialog}
+        tarefa={tarefaParaVisualizar}
+        cliente={clienteTarefa}
+        projeto={projetoTarefa}
+        propriedade={propriedadeTarefa}
+        onEdit={handleEditarTarefa}
       />
     </div>
   );
